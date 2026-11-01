@@ -6,7 +6,8 @@ import {Input} from '../components/ui/input';
 import {Label} from '../components/ui/label';
 import {Empty,EmptyHeader,EmptyTitle,EmptyDescription,EmptyContent} from '../components/ui/empty';
 import {FilterOptions} from '../components/FilterOptions';
-import {links,resources,routeParam,type Resource} from '../content';
+import {links,resources,type Resource} from '../content';
+import {onRouteChange} from '../router';
 import {titles,Intro,SampleNote,WindowBar} from '../components/shared';
 import {dur,spring,type MotionLevel} from '../motion';
 import {useMotionLevel} from '../motion/level';
@@ -46,10 +47,12 @@ function GridHeight({children}:{children:ReactNode}){
 }
 
 const categories=['All','Learning','Community','Support'];
-// The category comes from the URL (`#resources/learning`), so the Home resource stack can link straight to a filter.
-const fromHash=()=>categories.find(c=>c.toLowerCase()===routeParam(location.hash))??'All';
-export function Resources({onOpen}:{onOpen:(resource:Resource,origin:DOMRect)=>void}){const [category,setCategory]=useState(fromHash);useEffect(()=>{const sync=()=>setCategory(fromHash());window.addEventListener('hashchange',sync);return()=>window.removeEventListener('hashchange',sync)},[]);
- // replaceState rather than a hash change, so picking a filter doesn't trigger the page wipe or add history entries.
- const choose=(next:string)=>{setCategory(next);history.replaceState(null,'',`#resources${next==='All'?'':`/${next.toLowerCase()}`}`)};const [query,setQuery]=useState('');const [search,setSearch]=useState('');
+// The category comes from the URL (`/resources?category=learning`), so the Home resource stack can link straight to a filter.
+const fromUrl=()=>categories.find(c=>c.toLowerCase()===new URLSearchParams(location.search).get('category')?.toLowerCase())??'All';
+export function Resources({onOpen}:{onOpen:(resource:Resource,origin:DOMRect)=>void}){const [category,setCategory]=useState(fromUrl);
+ // While a guide is open the address is the guide's own, so the filter behind it stays as it was.
+ useEffect(()=>onRouteChange(()=>{if(location.pathname==='/resources')setCategory(fromUrl())}),[]);
+ // replaceState, so picking a filter doesn't trigger the page wipe or add history entries.
+ const choose=(next:string)=>{setCategory(next);const url=new URL(location.href);if(next==='All')url.searchParams.delete('category');else url.searchParams.set('category',next.toLowerCase());history.replaceState(history.state,'',url)};const [query,setQuery]=useState('');const [search,setSearch]=useState('');
  // Search filters 120ms after typing stops, so the grid animates once per search rather than per keystroke.
  useEffect(()=>{const timer=setTimeout(()=>setSearch(query),120);return()=>clearTimeout(timer)},[query]);const settled=useRef(false);useEffect(()=>{settled.current=true},[]);const list=resources.filter(r=>(category==='All'||r.category===category)&&`${r.title} ${r.description}`.toLowerCase().includes(search.trim().toLowerCase()));return <><Intro path="resources" sub={category==="All"?"":category.toLowerCase()} title={titles.resources}>Guides for getting started, getting unstuck and working out what to try next.</Intro><div className="wrap"><section className="site-section listing-section"><div className="event-tools"><FilterOptions id="resources" label="Resource category" options={categories} value={category} onChange={choose}/><div className="search-control"><Label htmlFor="resource-search" className="sr-only">Search sample resources</Label><Search size={18} aria-hidden="true"/><Input id="resource-search" placeholder="Find something useful" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<Button variant="ghost" aria-label="Clear resource search" onClick={()=>{setQuery('');document.getElementById('resource-search')?.focus()}}><X size={16}/></Button>}</div></div><div className="list-status"><span role="status"><FlipText value={String(list.length)} replay={`${category}|${search}`}/> resource preview{list.length===1?'':'s'}{category!=='All'&&<span className="sr-only"> in {category}</span>}</span><span>Learning at your own pace</span></div><SampleNote>Example material for the prototype. Publication needs a named maintainer and review date.</SampleNote><GridHeight>{!list.length&&<Empty className="site-empty resources-empty"><EmptyHeader><EmptyTitle><Typed text="No resources found." trigger="mount"/></EmptyTitle><EmptyDescription>Try another category or a shorter search.</EmptyDescription></EmptyHeader><EmptyContent><Button variant="outline" onClick={()=>{choose('All');setQuery('');setSearch('');document.getElementById('resource-search')?.focus()}}>Clear filters</Button></EmptyContent></Empty>}<div className="website-bento"><AnimatePresence initial={false} mode="popLayout">{list.map(resource=><ResourceCard key={resource.id} resource={resource} onOpen={onOpen} entering={settled.current}/>)}<SuggestCard key="suggest"/></AnimatePresence></div></GridHeight></section></div></>}

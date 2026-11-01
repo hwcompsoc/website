@@ -1,14 +1,14 @@
 import {type ReactNode,useLayoutEffect,useRef} from 'react';
 import {ArrowRight,ArrowUpRight} from 'lucide-react';
 import {Button} from './ui/button';
-import {type Page} from '../content';
+import {pagePath,type Page,type View} from '../content';
 import {Reveal} from '../motion/Reveal';
 import {Typed} from '../motion/Typed';
 import {Select} from '../motion/Select';
 
 export const asset=(name:string)=>`/website-assets/${name}`;
 export const external={target:'_blank',rel:'noopener noreferrer'} as const;
-export const titles:Record<Page,string>={home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
+export const titles:Record<View,string>={notfound:'File not found',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
 export function External({href,children,className=''}:{href:string;children:ReactNode;className?:string}){return <a href={href} {...external} className={className}>{children}<ArrowUpRight size={17} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a>}
 export function LinkButton({href,children,secondary=false}:{href:string;children:ReactNode;secondary?:boolean}){return <Button asChild className={secondary?'site-button secondary':'site-button'}><a href={href} {...external}>{children}<ArrowUpRight size={17} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>}
 // Page intro as a window: the title bar types the page's path as the wipe uncovers. `sub` retypes only the end of the path.
@@ -19,7 +19,7 @@ export function WindowBar({name,meta,selected}:{name:string;meta?:ReactNode;sele
 export function SectionHeading({label,title,action}:{label?:string;title:string;action?:ReactNode}){return <div className="section-heading"><div>{label&&<span className="eyebrow">{label}</span>}<Reveal as="h2" lines={[title]}/></div>{action}</div>}
 // A heading that rises out of its mask as it scrolls in.
 export function RevealHeading({children,id,as='h2'}:{children:string;id?:string;as?:'h2'|'h3'}){return <Reveal as={as} id={id} lines={[children]}/>}
-export function RouteLink({page,children,className=''}:{page:Page;children:ReactNode;className?:string}){return <a href={`#${page}`} className={`text-link ${className}`}>{children}<ArrowRight size={17} aria-hidden="true"/></a>}
+export function RouteLink({page,children,className=''}:{page:Page;children:ReactNode;className?:string}){return <a href={pagePath(page)} className={`text-link ${className}`}>{children}<ArrowRight size={17} aria-hidden="true"/></a>}
 // Sample-content marker: a mono tag inline with the note, not a banner.
 export function SampleNote({children}:{children:ReactNode}){return <p className="sample-note"><span className="sample-tag">Sample</span>{children}</p>}
 // Our dialogs and the mobile menu are opened from code, not Radix triggers, and Radix doesn't hand focus back on its own here:

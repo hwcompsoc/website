@@ -19,6 +19,7 @@ npm test
 - `src/pages`, `src/components`: the site. `src/components/ui` holds the shadcn/ui components it uses.
 - `src/motion`, `src/motion.ts`: the motion system. `scripts/webkit-guard.test.mjs` fails on animation patterns that stutter on iPhones.
 - `src/content.ts`: events, guides and committee text.
+- `src/router.ts`: real paths, back and forward, and scroll restore. `route()` in `src/content.ts` decides what each address shows, and `vercel.json` sends every address to the app.
 - `src/website.css`: styles, with the colour tokens and the dark theme. `src/motion.css`: motion component styles.
 - `src/theme.ts`: light and dark themes. A short script in `index.html` applies the theme before first paint, so keep the two in step.
 

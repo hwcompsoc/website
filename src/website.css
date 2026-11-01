@@ -214,3 +214,17 @@ h1,h2,h3{text-wrap:balance}
 :root[data-theme=dark] .hero-cursor img:nth-child(2){filter:brightness(0) invert(1)}
 :root[data-theme=dark] [role=radio]{border-color:var(--ink);color:var(--ink)}
 :root[data-theme=dark] .format-dot{background:var(--ink)}
+/* 404. The pixel font stays on multiples of 11px so it stays crisp. */
+.nf-window{position:relative}
+.nf-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:48px;align-items:center}
+.nf-code{font-family:var(--font-pixel);font-size:176px;line-height:1;color:var(--select-strong)}
+.not-found{padding-bottom:96px}
+.not-found h1{margin:0 0 16px}
+.nf-text p{margin:0 0 16px}
+.nf-path{font-family:ui-monospace,monospace;overflow-wrap:anywhere}
+.nf-suggest{font-size:18px}
+.nf-suggest-link{font-family:ui-monospace,monospace;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.nf-actions{display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-top:24px}
+.nf-home-label{display:inline-flex;align-items:center;gap:8px}
+@media(max-width:1050px){.nf-code{font-size:132px}.nf-body{gap:32px}}
+@media(max-width:800px){.nf-body{grid-template-columns:1fr;gap:16px}.nf-code{font-size:88px}.not-found{padding-bottom:64px}}

@@ -1,9 +1,8 @@
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
 export const pages=[{id:'home',name:'Home'},{id:'join',name:'Join'},{id:'events',name:'Events'},{id:'resources',name:'Resources'},{id:'about',name:'About'},{id:'partners',name:'Partners'}] as const;
 export type Page=typeof pages[number]['id'];
-// `#resources/support` is the Resources page with a filter: the first segment picks the page, the second is for that page to read.
-export function route(hash:string):Page{const id=hash.slice(1).split('/')[0];return pages.some(p=>p.id===id)?id as Page:'home'}
-export const routeParam=(hash:string)=>hash.slice(1).split('/')[1]??'';
+export type View=Page|'notfound';
+export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
 export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean};
 export const events:Event[]=[
  {id:'web',title:'Your first web app',category:'Workshop',day:'12',month:'NOV',date:'Thursday 12 November 2026',time:'17:30–19:00 GMT',venue:'Campus venue · placeholder',description:'Bring a laptop and a little curiosity. Explore the building blocks of a simple web page, together.',level:'Beginner friendly',start:'20261112T173000Z',end:'20261112T190000Z'},
@@ -34,3 +33,22 @@ export type Resource=typeof resources[number];
 export function filterEvents(category:string,query:string,past:boolean){return events.filter(e=>!!e.past===past&&(category==='All'||e.category===category)&&`${e.title} ${e.description} ${e.category}`.toLowerCase().includes(query.trim().toLowerCase()))}
 export function calendar(event:Event){const escape=(s:string)=>s.replaceAll('\\','\\\\').replaceAll('\n','\\n').replaceAll(',','\\,').replaceAll(';','\\;');return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HW CompSoc//Local Prototype Examples//EN','BEGIN:VEVENT',`UID:prototype-${event.id}@example.invalid`,'DTSTAMP:20261030T120000Z',`DTSTART:${event.start}`,`DTEND:${event.end}`,`SUMMARY:${escape('[PROTOTYPE EXAMPLE] '+event.title)}`,`DESCRIPTION:${escape('Illustrative event only. This is not a confirmed HW activity. '+event.description)}`,`LOCATION:${escape(event.venue)}`,'END:VEVENT','END:VCALENDAR',''].join('\r\n')}
 export function enquiryMail(org:string,email:string,format:string,message:string){return `mailto:${links.email}?subject=${encodeURIComponent('Partnership enquiry: '+org)}&body=${encodeURIComponent(`Organisation: ${org}\nReply email: ${email}\nInterested in: ${format}\n\n${message}`)}`}
+// Routes. `/events/web` and `/resources/git` open one item; a Resources filter is a query (`/resources?category=support`), because "support" is also a guide.
+const segments=(path:string)=>path.toLowerCase().split('/').filter(Boolean);
+export const canonicalPath=(path:string)=>'/'+segments(path).join('/');
+export function route(path:string):{view:View;item:string}{const parts=segments(path);if(!parts.length)return {view:'home',item:''};
+ const [first,item='',...rest]=parts;const page=pages.find(p=>p.id===first&&p.id!=='home');if(!page||rest.length)return {view:'notfound',item:''};if(!item)return {view:page.id,item:''};
+ const found=(page.id==='events'&&events.some(e=>e.id===item))||(page.id==='resources'&&resources.some(r=>r.id===item));return found?{view:page.id,item}:{view:'notfound',item:''}}
+// Links shared before paths existed, such as `#events` or `#resources/support`.
+export function legacyPath(hash:string):string|null{const [id,param]=hash.slice(1).toLowerCase().split('/');const page=pages.find(p=>p.id===id);if(!page)return null;return page.id==='resources'&&param?`/resources?category=${encodeURIComponent(param)}`:pagePath(page.id)}
+// Optimal string alignment: a swapped pair of letters ("abuot") counts as one typo.
+function typos(a:string,b:string){const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)] as number[]);for(let j=0;j<=b.length;j++)d[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}
+ return d[a.length][b.length]}
+// Allows about one typo per three letters of the part that could be wrong, so a long path doesn't match anything.
+const allowance=(part:string)=>Math.max(1,Math.floor(part.length/3));
+function closest(value:string,options:string[],limit:number){let best:string|null=null,score=limit+1;for(const option of options){const t=typos(value,option);if(t<score){best=option;score=t}}return best}
+const pagePaths=()=>pages.filter(p=>p.id!=='home').map(p=>pagePath(p.id));
+// The real address closest to a wrong one, or null if nothing is close: first the whole path, then just its first part.
+export function suggestPath(path:string):string|null{const parts=segments(path);if(!parts.length)return null;if(parts.length===1&&['home','index','index.html'].includes(parts[0]))return '/';
+ const whole=closest('/'+parts.join('/'),[...pagePaths(),...events.map(e=>`/events/${e.id}`),...resources.map(r=>`/resources/${r.id}`)],allowance(parts[parts.length-1]));return whole??closest('/'+parts[0],pagePaths(),allowance(parts[0]))}

@@ -190,3 +190,14 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 .header-inner nav>a:not([aria-current])::after{background:LinkText}}
 @media(max-width:400px){
 .board-row{grid-template-columns:auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time arrow" "cat cat cat" "main main main" "level level level"}}
+/* 404 cursor: placed from the window's top-right corner; its tip is the image's top left. It flies in from off to the side, so the page clips sideways. */
+.not-found{overflow-x:clip}
+.nf-cursor{position:absolute;top:0;left:100%;z-index:2;width:17px;height:26px;pointer-events:none;transform-origin:0 0}
+.nf-cursor-lean{position:absolute;inset:0;display:block;transform-origin:0 0}
+.nf-cursor img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.nf-cursor[data-bob] img{animation:cursor-bob 6s ease-in-out 3}
+.nf-cursor-dark{display:none}
+:root[data-theme=dark] .nf-cursor-light{display:none}
+:root[data-theme=dark] .nf-cursor-dark{display:block}
+.nf-actions a[data-pressed]{transform:scale(.97)}
+@media(forced-colors:active){.nf-cursor{display:none}}
