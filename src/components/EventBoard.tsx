@@ -7,7 +7,7 @@ import {useMotionLevel} from '../motion/level';
 import {FlipText} from '../motion/FlipText';
 import {PixelBuild} from '../motion/PixelBuild';
 
-// Departures board (MOTION-PLAN §8.4). Rows that leave collapse, rows that arrive open and build in pixel by pixel,
+// Departures board. Rows that leave collapse, rows that arrive open and build in pixel by pixel,
 // and dates/times flip whenever `replay` changes (the filter state). Each row opens its event from the date block.
 export function EventBoard({events,onOpen,replay}:{events:Event[];onOpen:(event:Event,origin:DOMRect)=>void;replay?:unknown}){
  const level=useMotionLevel();const settled=useRef(false);useEffect(()=>{settled.current=true},[]);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readdirSync,readFileSync} from 'node:fs';
 import path from 'node:path';
 
-// Mobile WebKit hazards (MOTION-PLAN 13.1), learned from the iOS stutter bug fixed in 6cd5d2b.
+// Mobile WebKit hazards, learned from the iOS stutter bug fixed in 6cd5d2b.
 // Limits: Motion props are only checked when written inline, so values passed through variables aren't seen. The hero
 // cursor does that on purpose: its pose shares an element with per-frame x/y, because the highlight follows it in JS.
 const lineOf=(text,index)=>text.slice(0,index).split('\n').length;
@@ -56,7 +56,7 @@ test('Visitor site has none of the mobile WebKit animation hazards',()=>{
  const problems=[];
  for(const f of css)for(const [line,why] of checkCss(readFileSync(f,'utf8')))problems.push(`${f}:${line} ${why}`);
  for(const f of ts)for(const [line,why] of checkTs(readFileSync(f,'utf8')))problems.push(`${f}:${line} ${why}`);
- assert.deepEqual(problems,[],`WebKit hazards (see MOTION-PLAN 13.1):\n${problems.join('\n')}`);
+ assert.deepEqual(problems,[],`WebKit hazards:\n${problems.join('\n')}`);
 });
 
 test('The guard catches each hazard and allows the safe forms',()=>{

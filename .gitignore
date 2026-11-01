@@ -6,4 +6,5 @@ qa
 scripts/qa
 COPY-DRAFT.md
 MOTION-PLAN.md
+MOTION-RULES.md
 WEBSITE.md

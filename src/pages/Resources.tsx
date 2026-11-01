@@ -14,9 +14,9 @@ import {FlipText} from '../motion/FlipText';
 import {PixelBuild} from '../motion/PixelBuild';
 import {Typed} from '../motion/Typed';
 
-// Resources are "files" (MOTION-PLAN §8.5, §11.2): a window whose title bar filename is selected on hover or focus, the whole card is the
+// Resources are "files": a window whose title bar filename is selected on hover or focus, the whole card is the
 // "Explore guide" button's hit area, and the guide grows out of the card it was opened from.
-// When a filter changes (§8.5), leaving cards fade and drop out of the grid, staying cards slide to their new slot and arriving cards build in.
+// When a filter changes, leaving cards fade and drop out of the grid, staying cards slide to their new slot and arriving cards build in.
 const cardMotion=(level:MotionLevel)=>level==='off'?{initial:false as const,exit:{opacity:0,transition:{duration:0}}}:{...(level==='full'?{layout:'position' as const}:{}),initial:{opacity:0},animate:{opacity:1},exit:{opacity:0,transition:{duration:dur.instant}},transition:{layout:spring.layout,opacity:{duration:dur.instant}}};
 function ResourceCard({resource,onOpen,entering}:{resource:Resource;onOpen:(resource:Resource,origin:DOMRect)=>void;entering:boolean}){
  const [over,setOver]=useState(false);const card=useRef<HTMLDivElement>(null);const level=useMotionLevel();const [built]=useState(!entering);
@@ -26,7 +26,7 @@ function ResourceCard({resource,onOpen,entering}:{resource:Resource;onOpen:(reso
   <div className="resource-bottom"><span className="resource-type">{resource.type}</span><Button variant="link" className="resource-open" onClick={()=>onOpen(resource,card.current!.getBoundingClientRect())}>Explore guide<span className="sr-only">: {resource.title}</span><ArrowRight size={17} aria-hidden="true"/></Button></div></div>
  </PixelBuild></div></m.div>}
 
-// The page's closing call to action (R5): the next file in the grid, not yet written. Same window as a guide card, with a dashed frame,
+// The page's closing call to action: the next file in the grid, not yet written. Same window as a guide card, with a dashed frame,
 // a faded "Create a new guide" title and placeholder lines; the whole card is the email link's hit area.
 function SuggestCard(){
  const [over,setOver]=useState(false);const level=useMotionLevel();

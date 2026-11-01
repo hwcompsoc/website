@@ -1,4 +1,4 @@
-/* Motion component styles (MOTION-PLAN §6.4). Tokens mirror src/website/motion.ts. */
+/* Motion component styles. Tokens mirror src/website/motion.ts. */
 :root{--dur-hover:.16s;--dur-ui:.28s;--dur-reveal:.6s;--ease-enter:cubic-bezier(.22,1,.36,1);--ease-move:cubic-bezier(.65,0,.35,1);--select:#00a1cc;--select-strong:#007e9f;--focus-ring:#007e9f;--control-line:#6b8fa2;--grid:8px}
 
 /* Select: white-on-cyan copy clipped over the real text */
@@ -11,7 +11,7 @@
 .typed-live{position:absolute;inset:0}
 .caret{display:inline-block;width:.55em;height:1em;margin-left:.08em;vertical-align:-.12em;background:currentColor;animation:caret-blink 1s linear infinite}
 .caret[data-typing]{animation:none}
-/* Stepped looks use hold keyframes with linear timing: Safari won't run steps() on the GPU (MOTION-PLAN 13.1). */
+/* Stepped looks use hold keyframes with linear timing: Safari won't run steps() on the GPU. */
 @keyframes caret-blink{0%,49.9%{opacity:1}50%,100%{opacity:0}}
 
 /* Reveal: each line rises out of its own mask; small padding keeps descenders unclipped */
@@ -42,7 +42,7 @@
 .burst-press{transition:transform var(--dur-hover) var(--ease-enter)}
 .burst-press:active{transform:scale(.97)}
 
-/* Hero cursor (MOTION-PLAN §7.1): the hero clips sideways so the off-panel start never adds a scrollbar; travel layer rotates/scales around the tip; white and blue copies swap on/off the panel */
+/* Hero cursor: the hero clips sideways so the off-panel start never adds a scrollbar; travel layer rotates/scales around the tip; white and blue copies swap on/off the panel */
 .hero-cursor-travel{position:absolute;inset:0;display:block;transform-origin:15% 1%}
 .hero-cursor img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0}
 .hero-cursor img[data-shown]{opacity:1}
@@ -50,7 +50,7 @@
 @keyframes cursor-bob{0%,80%,100%{transform:translateY(0)}90%{transform:translateY(-4px)}}
 .home-hero{overflow-x:clip}
 
-/* Header (MOTION-PLAN §8.1). Small-text highlights use --select-strong for contrast.
+/* Header. Small-text highlights use --select-strong for contrast.
    Sweeps and highlights move smoothly; stepped timing is kept for pixels and characters (wipes, builds, flips, carets, ticks). */
 .header-inner nav>a{isolation:isolate}
 .nav-select{position:absolute;inset:9px -8px;z-index:-1;background:var(--select-strong)}
@@ -63,7 +63,7 @@
 .header-join:is(:hover,:focus-visible) svg{transform:translate(2px,-2px)}
 .sheet-build{position:absolute;inset:0;z-index:60;pointer-events:none}
 
-/* Filters and small controls (MOTION-PLAN §8.4) */
+/* Filters and small controls */
 .filter-indicator{position:absolute;inset:0;border-radius:4px;background:var(--surface);box-shadow:0 0 0 1px var(--control-line)}
 .filter-label{position:relative}
 .checkbox-label [role=checkbox][data-state=checked] svg{animation:tick .18s linear both}
@@ -72,7 +72,7 @@
 .download-pulse{animation:download-drop .3s linear both}
 @keyframes download-drop{0%,21.9%{transform:translateY(-3px)}22%,43.9%{transform:translateY(-1.3333px)}44%,65.9%{transform:translateY(.3333px)}66%,77.2%{transform:translateY(2px)}77.3%,88.5%{transform:translateY(1.3333px)}88.6%,99.9%{transform:translateY(.6667px)}100%{transform:translateY(0)}}
 
-/* Departures board (MOTION-PLAN §8.4). The whole row is the title button's hit area; hover and keyboard focus share the sweep. */
+/* Departures board. The whole row is the title button's hit area; hover and keyboard focus share the sweep. */
 .event-board{list-style:none;margin:0;padding:0;border-top:2px solid var(--rule)}
 .board-item{overflow:hidden;border-bottom:1px solid var(--line)}
 .board-row{display:grid;grid-template-columns:5.5rem 4rem 7.5rem minmax(0,1fr) auto 1.25rem;gap:24px;align-items:center;padding:20px 16px;isolation:isolate;color:var(--ink)}
@@ -107,7 +107,7 @@
 .art-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
 .art-rise{display:inline-block}
 
-/* ---- Phase 2b (MOTION-PLAN §8.2–8.8) ---- */
+/* ---- Page choreography ---- */
 /* Buttons give slightly under a press */
 .site-button{transition:transform var(--dur-hover) var(--ease-enter),background-color var(--dur-hover)}
 .site-button:active{transform:scale(.97)}

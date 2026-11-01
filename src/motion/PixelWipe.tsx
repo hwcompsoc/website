@@ -4,7 +4,7 @@ import {cellDelays,dur} from '../motion';
 import {useMotionLevel} from './level';
 
 export type WipePhase='idle'|'cover'|'uncover';
-// Full-screen pixel transition (MOTION-PLAN §7.2). The parent drives the phases:
+// Full-screen pixel transition. The parent drives the phases:
 // cover → onCovered (swap the page underneath) → uncover → onDone. Timers, not animation events,
 // advance the phases, so navigation still completes if CSS animation is disabled.
 export function PixelWipe({phase,onCovered,onDone,cols=12,rows=8,direction='ltr',color='#004066'}:{phase:WipePhase;onCovered:()=>void;onDone:()=>void;cols?:number;rows?:number;direction?:'ltr'|'rtl';color?:string}){

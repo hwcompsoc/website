@@ -12,7 +12,7 @@ import {PixelBuild} from '../motion/PixelBuild';
 import {useClickBurst} from '../motion/ClickBurst';
 import {usePointerLean} from '../motion/usePointerLean';
 
-// Hero sequence (MOTION-PLAN §7.1), in seconds. Each step unlocks when its time is reached.
+// Hero sequence, in seconds. Each step unlocks when its time is reached.
 // The cursor reaches the headline at travel + out.duration (1.6s), presses, drags left to select the phrase
 // (drag + drag.duration ≈ 2.32s) and releases; the panel then types and the cursor goes home.
 const timeline={grid:0,headline:.3,travel:.7,click:1.6,drag:1.72,release:2.35,caption:2.5,words:2.6,return:3.9,lean:4.8};

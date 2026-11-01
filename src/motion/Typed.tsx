@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {typedLength,typing} from '../motion';
 import {useMotionLevel,useTrigger,type Trigger} from './level';
 
-// Typing with a block caret (MOTION-PLAN §4.3). Screen readers get the full text immediately;
+// Typing with a block caret. Screen readers get the full text immediately;
 // an invisible full-length copy reserves the space so typing never shifts the layout.
 export function Typed({text,caret=true,speed=typing.char,trigger='inView',play=false,delay=0,instant=false,onDone,className=''}:{text:string;instant?:boolean;caret?:boolean;speed?:number;trigger?:Trigger;play?:boolean;delay?:number;onDone?:()=>void;className?:string}){
  const level=useMotionLevel();const {ref,active}=useTrigger<HTMLSpanElement>(trigger,play);const still=level!=='full'||instant;const [count,setCount]=useState(still?text.length:0);

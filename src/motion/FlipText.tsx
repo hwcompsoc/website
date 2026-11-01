@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {flip,flipFrame} from '../motion';
 import {useMotionLevel,useTrigger,type Trigger} from './level';
 
-// Departures-board flip (MOTION-PLAN §8.4): characters cycle through look-alikes and settle left to right.
+// Departures-board flip: characters cycle through look-alikes and settle left to right.
 // Plays when triggered and again whenever `value` or `replay` changes. Screen readers only get the real value.
 export function FlipText({value,replay,trigger='inView',play=true,className=''}:{value:string;replay?:unknown;trigger?:Trigger;play?:boolean;className?:string}){
  const level=useMotionLevel();const {ref,active}=useTrigger<HTMLSpanElement>(trigger,play);const [shown,setShown]=useState(value);

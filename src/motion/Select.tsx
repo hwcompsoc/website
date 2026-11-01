@@ -6,9 +6,9 @@ import {useMotionLevel,useTrigger,type Trigger} from './level';
 type Mode='persist'|'flash'|'hover';
 const clips={hidden:{left:'inset(0% 100% 0% 0%)',right:'inset(0% 0% 0% 100%)'},shown:'inset(0% 0% 0% 0%)'};
 
-// Text selection sweep (MOTION-PLAN §4.1). The real text stays in place; an aria-hidden white-on-cyan copy is clipped over it.
+// Text selection sweep. The real text stays in place; an aria-hidden white-on-cyan copy is clipped over it.
 // Best on a phrase that fits one line: the fill covers the phrase's whole box when it wraps.
-// Sweeps are smooth (MOTION-PLAN §2). `driven` hands the clip to the caller, e.g. the hero cursor dragging the selection.
+// Sweeps are smooth. `driven` hands the clip to the caller, e.g. the hero cursor dragging the selection.
 export function Select({children,mode='persist',trigger=mode==='hover'?'manual':'inView',play=false,from='left',delay=0,duration=.45,instant=false,driven,className=''}:{children:string;instant?:boolean;driven?:MotionValue<string>;mode?:Mode;trigger?:Trigger;play?:boolean;from?:'left'|'right';delay?:number;duration?:number;className?:string}){
  const level=useMotionLevel();const {ref,active}=useTrigger<HTMLSpanElement>(trigger,play);const [hovered,setHovered]=useState(false);
  const shown=mode==='hover'?hovered||active:active;const hidden=clips.hidden[from];const still=level!=='full'||instant;// instant: show the end state without animating

@@ -8,7 +8,7 @@ import {Select} from '../motion/Select';
 import {useTrigger} from '../motion/level';
 import {useClickBurst} from '../motion/ClickBurst';
 
-// Step numbers are "clicked" in order as they scroll in: each number is selected with a small burst (MOTION-PLAN §8.3).
+// Step numbers are "clicked" in order as they scroll in: each number is selected with a small burst.
 function StepNumber({num}:{num:string}){const fire=useClickBurst();const {ref,active}=useTrigger<HTMLSpanElement>('inView');const [clicked,setClicked]=useState(false);
  useEffect(()=>{if(!active)return;const timer=setTimeout(()=>{setClicked(true);const r=ref.current?.getBoundingClientRect();if(r)fire(r.left+r.width/2,r.top+r.height/2,{count:4})},200+(Number(num)-1)*150);return()=>clearTimeout(timer)},[active]);
  return <span ref={ref} className="step-number"><Select mode="persist" trigger="manual" play={clicked} className="select-strong">{num}</Select></span>}

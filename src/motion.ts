@@ -1,4 +1,4 @@
-// Motion tokens for the visitor site (see MOTION-PLAN.md §5). Components never hard-code timings.
+// Motion tokens for the visitor site. Components never hard-code timings.
 // Kept free of imports so scripts/motion.test.mjs can load it directly.
 export const dur={instant:.12,hover:.16,ui:.28,wipe:.45,reveal:.6,hero:1.2} as const;
 type Bezier=[number,number,number,number];

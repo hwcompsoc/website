@@ -12,7 +12,7 @@ import {PixelBuild} from '../motion/PixelBuild';
 import {Typed} from '../motion/Typed';
 
 export type Modal={kind:'event';event:Event;origin?:DOMRect}|{kind:'resource';resource:Resource;origin?:DOMRect}|{kind:'document';title:string}|null;
-// The clicked row's date block grows into the dialog's (MOTION-PLAN §8.4): a measured FLIP from the row, run as the
+// The clicked row's date block grows into the dialog's: a measured FLIP from the row, run as the
 // dialog content mounts (Radix renders the portal a render later, so this lives inside it). A copy makes the trip above
 // the dialog, because the dialog's scroll area and the body's pixel build would otherwise hide most of the journey.
 function MorphDate({event:e,origin}:{event:Event;origin?:DOMRect}){const level=useMotionLevel();const ref=useRef<HTMLDivElement>(null);
@@ -22,7 +22,7 @@ function MorphDate({event:e,origin}:{event:Event;origin?:DOMRect}){const level=u
   const land=()=>{ghost.remove();el.style.opacity=''};run.onfinish=land;return()=>{run.cancel();land()}},[]);
  return <div className="dialog-date" ref={ref} aria-hidden="true"><b>{e.day}</b><span>{e.month}</span></div>}
 
-// The guide grows out of the resource card it was opened from (MOTION-PLAN §8.5). The dialog is centred with the CSS
+// The guide grows out of the resource card it was opened from. The dialog is centred with the CSS
 // `translate` property, so the animation offsets from that base value rather than replacing it.
 function OpenFrom({origin}:{origin?:DOMRect}){const level=useMotionLevel();const ref=useRef<HTMLSpanElement>(null);
  useLayoutEffect(()=>{const dialog=ref.current?.closest('[role=dialog]') as HTMLElement|null;if(!dialog||!origin||level!=='full')return;const to=dialog.getBoundingClientRect();const scale=Math.min(origin.width/to.width,origin.height/to.height);

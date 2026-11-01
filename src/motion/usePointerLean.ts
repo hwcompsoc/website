@@ -2,7 +2,7 @@ import {useEffect,useState,type RefObject} from 'react';
 import {useSpring} from 'motion/react';
 import {spring} from '../motion';
 
-// Drag verb (MOTION-PLAN §4.5): the element leans toward the mouse, up to `distance` px and `angle` degrees,
+// Drag verb: the element leans toward the mouse, up to `distance` px and `angle` degrees,
 // on a soft spring. Fine pointers only; on touch, `bob` tells the caller to use its idle bob instead.
 export function usePointerLean(ref:RefObject<Element|null>,enabled:boolean,{distance=6,angle=3}={}){
  const soft={stiffness:spring.soft.stiffness,damping:spring.soft.damping};

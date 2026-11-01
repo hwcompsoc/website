@@ -1,4 +1,4 @@
-// Light and dark themes (MOTION-PLAN 11.7). A short script in the page's <head> applies the theme before first paint, so
+// Light and dark themes. A short script in the page's <head> applies the theme before first paint, so
 // keep its storage key and rules in step with this file (index.html).
 export type ThemeChoice='system'|'light'|'dark';
 const KEY='hwcs-theme';

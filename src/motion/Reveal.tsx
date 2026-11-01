@@ -4,7 +4,7 @@ import {dur,ease,stagger as defaultStagger} from '../motion';
 import {useMotionLevel,useTrigger,type Trigger} from './level';
 
 type Tag='h1'|'h2'|'h3'|'p'|'span'|'div';
-// Line-mask reveal (MOTION-PLAN §6.4): each line rises out of its own overflow mask. Text is in the DOM from the first frame.
+// Line-mask reveal: each line rises out of its own overflow mask. Text is in the DOM from the first frame.
 export function Reveal({lines,as:As='div',trigger='inView',play=false,delay=0,stagger=defaultStagger,className='',id}:{lines:ReactNode[];as?:Tag;trigger?:Trigger;play?:boolean;delay?:number;stagger?:number;className?:string;id?:string}){
  const level=useMotionLevel();const {ref,active}=useTrigger<HTMLElement>(trigger,play);
  const Root=As as 'div';

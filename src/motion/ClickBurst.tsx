@@ -9,7 +9,7 @@ const BurstContext=createContext<Fire>(()=>{});
 export const useClickBurst=()=>useContext(BurstContext);
 const LIFETIME=220;
 
-// One fixed overlay for every burst on the page (MOTION-PLAN §4.2); components request bursts through useClickBurst().
+// One fixed overlay for every burst on the page; components request bursts through useClickBurst().
 export function ClickBurstProvider({children}:{children:ReactNode}){
  const level=useMotionLevel();const [bursts,setBursts]=useState<Burst[]>([]);const next=useRef(0);
  const fire=useCallback<Fire>((x,y,{count=5,color=selectColor}={})=>{if(level!=='full')return;const id=next.current++;
@@ -20,7 +20,7 @@ export function ClickBurstProvider({children}:{children:ReactNode}){
 }
 
 const interactive='a[href],button:not(:disabled),summary,label,[role=button],[role=radio],[role=checkbox],[role=tab]';
-// Click verb for the whole page (MOTION-PLAN §7.3): five pixels when pressing something interactive,
+// Click verb for the whole page: five pixels when pressing something interactive,
 // a subtle four on the page background (mouse only), nothing inside form fields.
 export function GlobalBursts(){
  const fire=useClickBurst();

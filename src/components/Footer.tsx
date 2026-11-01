@@ -11,7 +11,7 @@ import {Typed} from '../motion/Typed';
 import {Logo} from './Logo';
 
 // The page's last screen: a clear closing action, contact in one line, then a quiet row of logo, tagline and links
-// (the full nav already lives in the header). The logo leans toward the mouse; "Email copied" types out (MOTION-PLAN §8.8).
+// (the full nav already lives in the header). The logo leans toward the mouse; "Email copied" types out.
 // Join hides the closing section: that page has just asked the same thing in its steps.
 // The closing section is .footer-hello, not .footer-cta: ad blockers' annoyance lists hide .footer-cta outright.
 // The copy button is icon-only until used (its label stays for screen readers and as a tooltip).
