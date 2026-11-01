@@ -1,0 +1,192 @@
+/* Motion component styles (MOTION-PLAN §6.4). Tokens mirror src/website/motion.ts. */
+:root{--dur-hover:.16s;--dur-ui:.28s;--dur-reveal:.6s;--ease-enter:cubic-bezier(.22,1,.36,1);--ease-move:cubic-bezier(.65,0,.35,1);--select:#00a1cc;--select-strong:#007e9f;--focus-ring:#007e9f;--control-line:#6b8fa2;--grid:8px}
+
+/* Select: white-on-cyan copy clipped over the real text */
+.select{position:relative;display:inline-block;max-width:100%}
+.select-fill{position:absolute;inset:0 -.08em;padding-inline:.08em;background:var(--select);color:var(--on-accent);pointer-events:none;user-select:none}
+
+/* Typed: invisible full copy reserves the space; live text sits on top */
+.typed-visual{position:relative;display:inline-block;max-width:100%}
+.typed-ghost{visibility:hidden}
+.typed-live{position:absolute;inset:0}
+.caret{display:inline-block;width:.55em;height:1em;margin-left:.08em;vertical-align:-.12em;background:currentColor;animation:caret-blink 1s linear infinite}
+.caret[data-typing]{animation:none}
+/* Stepped looks use hold keyframes with linear timing: Safari won't run steps() on the GPU (MOTION-PLAN 13.1). */
+@keyframes caret-blink{0%,49.9%{opacity:1}50%,100%{opacity:0}}
+
+/* Reveal: each line rises out of its own mask; small padding keeps descenders unclipped */
+.reveal-line{display:block;overflow:hidden;padding-bottom:.1em;margin-bottom:-.1em}
+.reveal-inner{display:block}
+
+/* Pixel wipe and pixel build share the stepped cell animations */
+/* The wipe runs under the sticky header (z-index 30), so the nav highlight can be seen sliding the whole way. */
+.pixel-wipe{position:fixed;inset:0;z-index:25;display:grid;pointer-events:none}
+.pixel-wipe[data-phase=cover]{pointer-events:auto}
+/* Each cell flips at the end of its slot (delay + dur) over one frame (--flip). This replaces steps(1): Safari will not
+   run a steps() animation on the GPU, so the cells stuttered whenever the page was busy. */
+.pixel-wipe>span,.pixel-build-cover>span{--flip:.016s;transform:scale(1.02)}
+.pixel-wipe[data-phase=cover]>span{animation:pixel-on var(--flip) linear calc(var(--cell-delay) + var(--cell-dur) - var(--flip)) both}
+.pixel-wipe[data-phase=uncover]>span{animation:pixel-off var(--flip) linear calc(var(--cell-delay) + var(--cell-dur) - var(--flip)) both}
+.pixel-build{position:relative}
+.pixel-build-cover{position:absolute;inset:0;z-index:1;display:grid;overflow:hidden;pointer-events:none}
+.pixel-build-cover[data-active]>span{animation:pixel-off var(--flip) linear calc(var(--cell-delay) + var(--cell-dur) - var(--flip)) both}
+/* Opacity, not visibility, so the flips run on the compositor. Builds remove their cover when done, so cells left unpainted by WebKit cannot linger. */
+@keyframes pixel-on{from{opacity:0}to{opacity:1}}
+@keyframes pixel-off{from{opacity:1}to{opacity:0}}
+
+/* Click burst: square pixels thrown out from the pointer in three frames */
+.burst-layer{position:fixed;inset:0;z-index:95;pointer-events:none}
+.burst{position:absolute;width:0;height:0}
+.burst>span{position:absolute;left:-2px;top:-2px;width:4px;height:4px;animation:burst .22s linear both}
+@keyframes burst{0%,33.2%{transform:translate(0,0);opacity:1}33.3%,66.5%{transform:translate(calc(var(--dx)/3),calc(var(--dy)/3));opacity:.6667}66.6%,99.9%{transform:translate(calc(var(--dx)*2/3),calc(var(--dy)*2/3));opacity:.3333}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.burst-press{transition:transform var(--dur-hover) var(--ease-enter)}
+.burst-press:active{transform:scale(.97)}
+
+/* Hero cursor (MOTION-PLAN §7.1): the hero clips sideways so the off-panel start never adds a scrollbar; travel layer rotates/scales around the tip; white and blue copies swap on/off the panel */
+.hero-cursor-travel{position:absolute;inset:0;display:block;transform-origin:15% 1%}
+.hero-cursor img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0}
+.hero-cursor img[data-shown]{opacity:1}
+.hero-cursor[data-bob] img{animation:cursor-bob 6s ease-in-out 3}
+@keyframes cursor-bob{0%,80%,100%{transform:translateY(0)}90%{transform:translateY(-4px)}}
+.home-hero{overflow-x:clip}
+
+/* Header (MOTION-PLAN §8.1). Small-text highlights use --select-strong for contrast.
+   Sweeps and highlights move smoothly; stepped timing is kept for pixels and characters (wipes, builds, flips, carets, ticks). */
+.header-inner nav>a{isolation:isolate}
+.nav-select{position:absolute;inset:9px -8px;z-index:-1;background:var(--select-strong)}
+.nav-label{position:relative}
+.header-inner nav>a[aria-current=page],.header-inner nav>a[aria-current=page]:hover{color:var(--on-accent)}
+.header-inner nav>a:not([aria-current])::after{content:'';position:absolute;left:0;right:0;bottom:8px;height:2px;background:var(--select);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-ui) var(--ease-enter)}
+.header-inner nav>a:not([aria-current]):is(:hover,:focus-visible)::after{transform:scaleX(1)}
+.scroll-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--select);transform-origin:left;pointer-events:none}
+.header-join svg{transition:transform var(--dur-hover) var(--ease-enter)}
+.header-join:is(:hover,:focus-visible) svg{transform:translate(2px,-2px)}
+.sheet-build{position:absolute;inset:0;z-index:60;pointer-events:none}
+
+/* Filters and small controls (MOTION-PLAN §8.4) */
+.filter-indicator{position:absolute;inset:0;border-radius:4px;background:var(--surface);box-shadow:0 0 0 1px var(--control-line)}
+.filter-label{position:relative}
+.checkbox-label [role=checkbox][data-state=checked] svg{animation:tick .18s linear both}
+@keyframes tick{0%,33.2%{clip-path:inset(0 100% 0 0)}33.3%,66.5%{clip-path:inset(0 66.6667% 0 0)}66.6%,99.9%{clip-path:inset(0 33.3333% 0 0)}100%{clip-path:inset(0)}}
+.search-control input{caret-shape:block}
+.download-pulse{animation:download-drop .3s linear both}
+@keyframes download-drop{0%,21.9%{transform:translateY(-3px)}22%,43.9%{transform:translateY(-1.3333px)}44%,65.9%{transform:translateY(.3333px)}66%,77.2%{transform:translateY(2px)}77.3%,88.5%{transform:translateY(1.3333px)}88.6%,99.9%{transform:translateY(.6667px)}100%{transform:translateY(0)}}
+
+/* Departures board (MOTION-PLAN §8.4). The whole row is the title button's hit area; hover and keyboard focus share the sweep. */
+.event-board{list-style:none;margin:0;padding:0;border-top:2px solid var(--rule)}
+.board-item{overflow:hidden;border-bottom:1px solid var(--line)}
+.board-row{display:grid;grid-template-columns:5.5rem 4rem 7.5rem minmax(0,1fr) auto 1.25rem;gap:24px;align-items:center;padding:20px 16px;isolation:isolate;color:var(--ink)}
+.board-row::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--select-strong);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-ui) var(--ease-enter)}
+.board-row:is(:hover,:has(.board-open:focus-visible))::before{transform:scaleX(1)}
+/* Text turns white just behind the sweep's leading edge. */
+.board-row:is(:hover,:has(.board-open:focus-visible)) :is(span,h3,button,svg){color:var(--on-accent);transition:color var(--dur-hover) ease .08s}
+.board-date,.board-time,.board-cat,.board-sample,.dialog-date{font-family:var(--font-pixel,ui-monospace,monospace)}
+.board-date{font-size:16px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.board-time{font-size:14px}
+.board-cat{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent-text)}
+.board-main{min-width:0}
+.board-main h3{font-size:19px;line-height:1.3;margin:0 0 4px}
+.board-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left}
+.board-open::after{content:'';position:absolute;inset:0;z-index:2}
+.board-venue{display:block;font-size:12px;color:var(--text-quiet)}
+.board-level{font-size:11px;color:var(--text);text-align:right}
+.board-sample{display:block;margin-top:4px;font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--text-quiet)}
+.board-arrow{width:18px;transition:transform var(--dur-hover) var(--ease-enter)}
+/* Restates the transform transition, which the white-text rule above would otherwise replace. */
+.board-row:is(:hover,:has(.board-open:focus-visible)) .board-arrow{transform:translateX(4px);transition:transform var(--dur-hover) var(--ease-enter),color var(--dur-hover) ease .08s}
+@media(max-width:800px){.board-row{grid-template-columns:auto auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time cat arrow" "main main main main" "level level level level";gap:8px 14px;padding:18px 4px}.board-date{grid-area:date}.board-time{grid-area:time}.board-cat{grid-area:cat}.board-main{grid-area:main}.board-level{grid-area:level;text-align:left}.board-arrow{grid-area:arrow}.board-sample{display:inline;margin:0 0 0 8px}}
+.dialog-date-ghost{position:fixed;z-index:60;margin:0;pointer-events:none}
+.dialog-date{display:inline-flex;align-self:flex-start;flex-direction:column;align-items:center;min-width:56px;padding:8px;margin-bottom:12px;background:var(--tint);border:1px solid var(--line);border-radius:4px;transform-origin:0 0}
+.dialog-date b{line-height:1.1}
+.dialog-date span{font-weight:700;letter-spacing:1.2px}
+/* The event body is wrapped for its pixel build; keep the dialog's own spacing and paragraph style inside the wrapper. */
+.dialog-build{display:grid;gap:20px}
+.dialog-build>p{font-size:13px;margin:0}
+
+/* Hero panel words: each rises out of its own mask; padding keeps descenders (y, g) unclipped */
+.art-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
+.art-rise{display:inline-block}
+
+/* ---- Phase 2b (MOTION-PLAN §8.2–8.8) ---- */
+/* Buttons give slightly under a press */
+.site-button{transition:transform var(--dur-hover) var(--ease-enter),background-color var(--dur-hover)}
+.site-button:active{transform:scale(.97)}
+.select-strong .select-fill{background:var(--select-strong)}
+
+/* Home quick links: selection sweep fills the row, text turns white behind its edge, the arrow nudges */
+.journey-strip{overflow:hidden}
+.journey-strip>a{position:relative;isolation:isolate}
+.journey-strip>a::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--select-strong);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-ui) var(--ease-enter)}
+.journey-strip>a:is(:hover,:focus-visible)::before{transform:scaleX(1)}
+.journey-strip>a :is(b,small,.flip){transition:color var(--dur-hover) ease .08s}
+.journey-strip>a>svg{transition:transform var(--dur-hover) var(--ease-enter),color var(--dur-hover) ease .08s}
+.journey-strip>a:is(:hover,:focus-visible) :is(b,small,.flip,svg){color:var(--on-accent)}
+.journey-strip>a:is(:hover,:focus-visible)>svg{transform:translateX(4px)}
+
+/* Home resource rows as small windows: title bar with three pixels; lift with a hard shadow */
+.resource-stack>a{position:relative;padding-top:34px;transition:transform var(--dur-hover) var(--ease-enter),box-shadow var(--dur-hover) var(--ease-enter);padding:0}
+.resource-stack>a::before{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--line);background:linear-gradient(var(--dots),var(--dots)) 10px 5px/4px 4px no-repeat,linear-gradient(var(--dots),var(--dots)) 18px 5px/4px 4px no-repeat,linear-gradient(var(--dots),var(--dots)) 26px 5px/4px 4px no-repeat;content:none}
+.resource-stack>a:is(:hover,:focus-visible){transform:translate(-2px,-2px);box-shadow:var(--shadow-hard)}
+
+/* Join FAQ: the open question is highlighted; answers open and close smoothly (Radix sets the content height variable) */
+.faq-q{padding:2px 4px;margin:-2px -4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
+[data-state=open]>.faq-q{background-size:100% 100%;color:var(--on-accent)}
+.two-column [role=region]{overflow:hidden}
+.two-column [role=region][data-state=open]{animation:faq-open var(--dur-ui) var(--ease-enter)}
+.two-column [role=region][data-state=closed]{animation:faq-close var(--dur-hover) var(--ease-move)}
+@keyframes faq-open{from{height:0;opacity:0}to{height:var(--radix-accordion-content-height);opacity:1}}
+@keyframes faq-close{from{height:var(--radix-accordion-content-height)}to{height:0}}
+
+/* Resource cards as files: the whole card opens the guide; it lifts on hover or keyboard focus */
+.resource-card>div{position:relative;transition:transform var(--dur-hover) var(--ease-enter),box-shadow var(--dur-hover) var(--ease-enter)}
+.resource-card:is(:hover,:has(:focus-visible))>div{transform:translate(-2px,-2px);box-shadow:var(--shadow-hard)}
+.resource-open::after{content:'';position:absolute;inset:0}
+.resource-card .eyebrow{font-size:var(--pixel-sm,11px);letter-spacing:.04em}
+
+/* About avatars build in at their own size */
+.avatar-build{width:max-content}
+
+/* Partners form: the focused field's label is selected, fields use a block caret, the radio dot slides between options */
+.enquiry-form-shell [data-slot=field-label]{width:max-content;padding:1px 4px;margin-inline:-4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
+.enquiry-form-shell [data-slot=field]:focus-within [data-slot=field-label]{background-size:100% 100%;color:var(--on-accent)}
+.enquiry-form-shell :is(input,textarea){caret-shape:block}
+.enquiry-radios label{position:relative}
+.enquiry-radios [role=radio]>*{display:none}
+.format-dot{position:absolute;left:4px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--panel);pointer-events:none}
+
+/* Footer nav links: a smooth underline draws in */
+.footer-nav>a{position:relative;width:max-content}
+.footer-nav>a::after{content:'';position:absolute;left:0;right:0;bottom:6px;height:2px;background:var(--select);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-ui) var(--ease-enter)}
+.footer-nav>a:is(:hover,:focus-visible)::after{transform:scaleX(1)}
+
+/* Logo (drawn inline by components/Logo.tsx): on hover or focus the cursor nudges down-right, as if clicking the
+   wordmark, and presses while held. Lengths are SVG user units: 20 units is about 2px at header size. */
+/* overflow: the logo artwork ends exactly at the viewBox edge, so the nudged cursor would otherwise be clipped */
+.site-logo,.footer-logo{display:block;overflow:visible}
+.footer-logo-lean{display:inline-block;vertical-align:top}/* top: matches the old <img> line box exactly */
+.logo-cursor{transform-box:fill-box;transform-origin:0 0;transition:transform var(--dur-hover) var(--ease-enter)}
+.logo-link:is(:hover,:focus-visible) .logo-cursor{transform:translate(20px,20px)}
+.logo-link:active .logo-cursor{transform:translate(20px,20px) scale(.9)}
+body[data-motion=off] .logo-cursor{transform:none!important}
+@media(prefers-reduced-motion:reduce){.logo-cursor{transform:none!important}}
+/* Pixel accents: labels, numbers and captions */
+.eyebrow,.art-caption,.art-bottom,.journey-strip>a>span,.step-number,.example-tag,.board-cat,.board-sample{font-family:var(--font-pixel);font-size:var(--pixel-sm);font-weight:400;letter-spacing:.04em}
+.board-date,.board-time{font-size:var(--pixel-lg);font-weight:400;letter-spacing:0}
+@media(min-width:801px){
+.board-row{grid-template-columns:6.5rem 5rem 7.5rem minmax(0,1fr) auto 1.25rem}}
+.dialog-date b{font-size:var(--pixel-lg);font-weight:400}
+.dialog-date span{font-size:var(--pixel-sm);font-weight:400}
+.header-inner{height:72px}
+@media(max-width:800px){
+.header-inner{height:64px}}
+.resource-card .resource-bottom>.resource-type{font-family:var(--font-pixel);font-size:var(--pixel-sm)}
+.resource-stack>a:nth-child(2){background:var(--surface)}
+.resource-card .suggest-title{font-size:29px;letter-spacing:-.8px}
+@media(max-width:540px){
+.resource-card .suggest-title{font-size:28px}}
+@media(forced-colors:active){
+.select-fill,.nav-select,.scroll-progress,.format-dot,.caret{background:Highlight;color:HighlightText}
+.header-inner nav>a[aria-current=page]{color:HighlightText}
+.header-inner nav>a:not([aria-current])::after{background:LinkText}}
+@media(max-width:400px){
+.board-row{grid-template-columns:auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time arrow" "cat cat cat" "main main main" "level level level"}}

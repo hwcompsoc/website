@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="25" height="32" viewBox="0 0 160 207" role="img" aria-labelledby="title desc" shape-rendering="geometricPrecision">
+  <title id="title">HW CompSoc pointer cursor</title>
+  <desc id="desc">An outlined pixel-style pointing hand based on the original CompSoc cursor, in deep blue with a cyan accent and a transparent background.</desc>
+  <!-- The original cursor's approximately 13-unit steps, slim upright,
+       open centre, and single cyan pixel are carried into the hand. -->
+  <g fill="#004066">
+    <path d="M55 2H81V15H89V67H107V80H132V93H145V106H158V158H145V184H132V205H55V184H42V171H29V158H16V132H3V106H16V93H29V106H42V119H47V15H55Z
+             M60 15V132H42V119H29V106H16V119H29V145H42V158H55V171H68V192H119V171H132V145H145V119H132V106H119V93H94V80H76V15Z" fill-rule="evenodd"/>
+    <!-- Separate square-ended finger creases echo the original's pixel blocks. -->
+    <path d="M76 81H89V119H76ZM102 94H115V132H102ZM128 120H141V133H128Z"/>
+  </g>
+  <path fill="#00A1CC" d="M145 160H158V173H145Z"/>
+</svg>

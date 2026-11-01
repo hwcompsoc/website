@@ -1,0 +1,9 @@
+.claude
+dist
+node_modules
+qa
+*.tsbuildinfo
+scripts/qa
+COPY-DRAFT.md
+MOTION-PLAN.md
+WEBSITE.md
