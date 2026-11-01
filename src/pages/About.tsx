@@ -13,8 +13,9 @@ import dh from '../committee/dh.webp';
 import ar from '../committee/ar.webp';
 import rs from '../committee/rs.webp';
 import lmr from '../committee/lmr.webp';
+import nw from '../committee/nw.webp';
 
-const photos:Record<string,string>={rd,tp,kp,az,dh,ar,rs,lmr};
+const photos:Record<string,string>={rd,tp,kp,az,dh,ar,rs,lmr,nw};
 // Committee headshot: the photo builds in from pixels; anyone without a photo gets their initials on a pixel tile.
 // The name is always beside it, so the image itself is decorative.
 function Headshot({member,delay}:{member:Member;delay:number}){return <PixelBuild className="headshot-build" cols={6} rows={6} duration={.4} delay={delay}>{member.photo?<img className="headshot" src={photos[member.photo]} alt="" width={96} height={96} loading="lazy"/>:<span className="headshot headshot-initials" aria-hidden="true">{initials(member.name)}</span>}</PixelBuild>}

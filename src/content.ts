@@ -17,7 +17,7 @@ export const committee:{role:string;text:string;members:Member[]}[]=[
  {role:'President',text:'Helps coordinate the society and its direction.',members:[{name:'Ryan Dawson',role:'President',photo:'rd'}]},
  {role:'Vice President',text:'Supports the president and keeps projects moving.',members:[{name:'Thomas Prowse',role:'Vice President',photo:'tp'}]},
  {role:'Secretary',text:'Helps maintain records and continuity.',members:[{name:'Ella Koleola',role:'Secretary'}]},
- {role:'Treasurer',text:'Helps keep the society’s finances organised.',members:[{name:'Nathan Walker',role:'Treasurer'}]},
+ {role:'Treasurer',text:'Helps keep the society’s finances organised.',members:[{name:'Nathan Walker',role:'Treasurer',photo:'nw'}]},
  {role:'Industry Liaison',text:'Helps build conversations with organisations and supporters.',members:[{name:'Lewis Robertson',role:'Industry Liaison',photo:'lmr'}]},
  {role:'Community Manager',text:'Helps people find their place in the community.',members:[{name:'Kevin Paul Job',role:'Community Manager',photo:'kp'}]},
  {role:'Social Media Manager',text:'Shares what’s happening on Instagram and Discord.',members:[{name:'Amanda Zhang',role:'Social Media Manager',photo:'az'}]},
