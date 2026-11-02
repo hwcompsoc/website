@@ -2,7 +2,7 @@
 export const NATIVE_CREATE='https://promoters.native.fm/event/event/create';
 export const LUMA_CREATE='https://luma.com/create';
 
-export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';published_at?:string|null};
+export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';published_at?:string|null;updated_at?:string};
 export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,luma_url:null,socials_sent:false,status:'draft'});
 
 export const slugify=(title:string)=>title.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60).replace(/-+$/,'');
@@ -71,3 +71,15 @@ const uk=(iso:string,options:Intl.DateTimeFormatOptions)=>new Intl.DateTimeForma
 export const shortDate=(iso:string|null)=>iso?`${uk(iso,{day:'2-digit'})} ${uk(iso,{month:'short'}).slice(0,3).toUpperCase()}`:'';
 export const fullDate=(iso:string)=>`${uk(iso,{weekday:'long'})} ${uk(iso,{day:'numeric'})} ${uk(iso,{month:'long'})} ${uk(iso,{year:'numeric'})}`;
 export const timeRange=(start:string,end:string|null)=>{const at=(iso:string)=>uk(iso,{hour:'2-digit',minute:'2-digit',hourCycle:'h23'});return end?`${at(start)}–${at(end)}`:at(start)};
+
+// Has the public site caught up? The site's published list is compared with the saved event, field by field.
+export type SiteRow=Pick<AdminEvent,'slug'|'title'|'category'|'level'|'starts_at'|'ends_at'|'venue'|'description'|'signup_required'|'luma_url'|'status'>;
+const time=(iso:string|null)=>iso?new Date(iso).getTime():null;
+export function matchesSite(event:AdminEvent,row:SiteRow){return row.title===event.title&&row.category===event.category&&row.level===event.level&&time(row.starts_at)===time(event.starts_at)&&time(row.ends_at)===time(event.ends_at)&&row.venue===event.venue&&row.description===event.description&&row.signup_required===event.signup_required&&(row.luma_url??null)===(event.luma_url??null)&&row.status===event.status}
+export type SitePhase='hidden'|'live'|'publishing'|'updating'|'removing'|'unknown';
+export function sitePhase(event:AdminEvent,rows:SiteRow[]|null):SitePhase{const row=rows?.find(r=>r.slug===event.slug);if(event.status==='draft'){if(!rows)return event.published_at?'unknown':'hidden';return row?'removing':'hidden'}if(!rows)return 'unknown';if(!row)return 'publishing';return matchesSite(event,row)?'live':'updating'}
+export const siteBusy=(phase:SitePhase)=>phase==='publishing'||phase==='updating'||phase==='removing';
+// A rebuild takes minutes. Past this, something has probably gone wrong.
+export const SITE_SLOW_AFTER=10*60*1000;
+export const siteSlow=(event:AdminEvent,now=Date.now())=>!!event.updated_at&&now-new Date(event.updated_at).getTime()>SITE_SLOW_AFTER;
+export function badgeFor(event:Pick<AdminEvent,'status'>,phase:SitePhase|null){if(phase==='publishing')return {label:'Going live',state:'busy'};if(phase==='updating')return {label:'Updating',state:'busy'};return {label:statusLabel[event.status],state:event.status}}

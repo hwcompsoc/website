@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,calendar,enquiryMail,liveEvent} from '../src/content.ts';
-import {missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange} from '../src/admin-rules.ts';
+import {missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -46,6 +46,12 @@ test('Dates and times in the form mean UK time, including events past midnight',
  assert.deepEqual(whenToIso({date:'',start:'18:00',end:'',nextDay:false}),{starts_at:null,ends_at:null});
  assert.ok(whenProblems({date:'2027-01-14',start:'23:00',end:'01:00',nextDay:false},'V').end);assert.deepEqual(whenProblems({date:'2027-01-14',start:'23:00',end:'01:00',nextDay:true},'V'),{});assert.equal(Object.keys(whenProblems({date:'',start:'',end:'',nextDay:false},'')).length,4);assert.deepEqual(whenProblems({date:'',start:'',end:'',nextDay:false},'',false),{});
  assert.equal(slugAttempt('talk',1),'talk');assert.equal(slugAttempt('talk',2),'talk-2');assert.ok(slugAttempt('x'.repeat(60),12).length<=60);assert.equal(shortDate('2027-07-01T17:30:00Z'),'01 JUL');assert.equal(fullDate('2027-07-01T17:30:00Z'),'Thursday 1 July 2027');assert.equal(timeRange('2027-07-01T17:30:00Z','2027-07-01T19:00:00Z'),'18:30–20:00');
+});
+test('The admin only says an event is live once the public site really has it',()=>{
+ const event={...blankEvent(),title:'Talk',slug:'talk',starts_at:'2030-01-01T18:00:00+00:00',ends_at:'2030-01-01T19:00:00+00:00',venue:'V',description:'D',signup_required:false,status:'published',published_at:'x'};const row={slug:'talk',title:'Talk',category:event.category,level:event.level,starts_at:'2030-01-01T18:00:00.000Z',ends_at:'2030-01-01T19:00:00.000Z',venue:'V',description:'D',signup_required:false,luma_url:null,status:'published'};
+ assert.equal(matchesSite(event,row),true);assert.equal(sitePhase(event,[]),'publishing');assert.equal(sitePhase(event,[row]),'live');assert.equal(sitePhase({...event,venue:'New'},[row]),'updating');assert.equal(sitePhase({...event,status:'cancelled'},[row]),'updating');assert.equal(sitePhase({...event,status:'cancelled'},[{...row,status:'cancelled'}]),'live');assert.equal(sitePhase({...event,status:'draft'},[row]),'removing');assert.equal(sitePhase({...event,status:'draft'},[]),'hidden');assert.equal(sitePhase(event,null),'unknown');assert.equal(sitePhase({...blankEvent(),slug:'new'},null),'hidden');
+ assert.equal(siteBusy('publishing'),true);assert.equal(siteBusy('live'),false);assert.equal(siteBusy('unknown'),false);assert.equal(badgeFor(event,'publishing').label,'Going live');assert.equal(badgeFor(event,'live').label,'Live');assert.equal(badgeFor(event,'updating').label,'Updating');
+ assert.equal(siteSlow({...event,updated_at:new Date(1000).toISOString()},1000+11*60000),true);assert.equal(siteSlow({...event,updated_at:new Date(1000).toISOString()},1000+60000),false);assert.equal(siteSlow(event),false);
 });
 test('Weak passwords are turned down',()=>{
  for(const weak of ['short','changeme123','changeme12345','Password12345','hwcompsoc2026!','123456789012'])assert.ok(passwordProblem(weak),weak);assert.equal(passwordProblem('purple-otter-lamp-river'),null);

@@ -4,8 +4,10 @@
 import {existsSync,mkdirSync,writeFileSync} from 'node:fs';
 import {SUPABASE_URL,SUPABASE_KEY,LIVE_EVENT_COLUMNS} from '../src/supabase-config.ts';
 const file=new URL('../src/generated/events.json',import.meta.url);
+// The same list, published with the site. The admin compares it with what was saved, to tell when a change has really gone live.
+const published=new URL('../public/live-events.json',import.meta.url);
 mkdirSync(new URL('.',file),{recursive:true});
-const save=rows=>writeFileSync(file,JSON.stringify(rows,null,1)+'\n');
+const save=rows=>{const text=JSON.stringify(rows,null,1)+'\n';writeFileSync(file,text);writeFileSync(published,text)};
 if(process.argv.includes('--empty')){save([]);process.exit(0)}
 try{
  const response=await fetch(`${SUPABASE_URL}/rest/v1/events?select=${LIVE_EVENT_COLUMNS}&order=starts_at`,{headers:{apikey:SUPABASE_KEY},signal:AbortSignal.timeout(20000)});
