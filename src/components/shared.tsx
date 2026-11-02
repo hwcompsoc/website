@@ -8,7 +8,7 @@ import {Select} from '../motion/Select';
 
 export const asset=(name:string)=>`/website-assets/${name}`;
 export const external={target:'_blank',rel:'noopener noreferrer'} as const;
-export const titles:Record<View,string>={notfound:'File not found',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
+export {titles} from '../content';
 export function External({href,children,className=''}:{href:string;children:ReactNode;className?:string}){return <a href={href} {...external} className={className}>{children}<ArrowUpRight size={17} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a>}
 export function LinkButton({href,children,secondary=false}:{href:string;children:ReactNode;secondary?:boolean}){return <Button asChild className={secondary?'site-button secondary':'site-button'}><a href={href} {...external}>{children}<ArrowUpRight size={17} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>}
 // Page intro as a window: the title bar types the page's path as the wipe uncovers. `sub` retypes only the end of the path.

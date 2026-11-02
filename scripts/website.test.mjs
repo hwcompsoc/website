@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,calendar,enquiryMail,liveEvent} from '../src/content.ts';
+import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
@@ -97,4 +98,15 @@ test('Event images: both shapes and a description are required to go live, and t
  const row={slug:'talk',title:'Talk',category:'Workshop',level:'Everyone welcome',starts_at:ready.starts_at,ends_at:ready.ends_at,venue:'EM1.82',description:'A talk',signup_required:false,luma_url:null,status:'published'};
  const shown=liveEvent({...row,cover_path:path,cover_alt:'A poster for the talk'});assert.equal(shown.coverAlt,'A poster for the talk');assert.equal(shown.cover,'/event-covers/'+path);assert.equal(shown.thumb,'/event-covers/00000000-0000-0000-0000-000000000000-thumb.jpg');assert.equal(liveEvent(row).cover,undefined);
  const live={...complete,status:'published'};const site={...row,cover_path:path,cover_alt:complete.cover_alt};assert.equal(sitePhase(live,[site]),'live');assert.equal(sitePhase(live,[row]),'updating');assert.equal(sitePhase({...live,cover_alt:'New'},[site]),'updating');assert.equal(sitePhase({...live,square_path:'other'},[site]),'live');
+});
+
+test('Every address has its own share details, and they are written safely into the page',()=>{
+ const base={title:'Rust & "friends"',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'x '.repeat(200),signup_required:false,luma_url:null,status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust'};
+ const event=liveEvent({...base,cover_path:'00000000-0000-0000-0000-000000000000.jpg',cover_alt:'A crab <holding> a laptop'},Date.parse('2027-01-01'));const list=sharePages([event,liveEvent({...base,slug:'off',status:'cancelled'},Date.parse('2027-01-01'))]);
+ const paths=list.map(s=>s.path);for(const path of ['/','/join','/events','/resources','/about','/partners','/events/rust','/events/off','/resources/git'])assert.ok(paths.includes(path),path);assert.equal(new Set(paths).size,paths.length);for(const share of list){assert.ok(share.title.endsWith(' · HW CompSoc'));assert.ok(share.description.length>0&&share.description.length<=200,share.path);assert.equal(route(share.path).view==='notfound',share.path.startsWith('/events/'),share.path)}
+ const shared=list.find(s=>s.path==='/events/rust');assert.equal(shared.image,'/event-covers/00000000-0000-0000-0000-000000000000.jpg');assert.ok(shared.description.startsWith('Thursday 1 July 2027, 18:30–20:00 BST, EM1.82. '));assert.equal(list.find(s=>s.path==='/about').image,DEFAULT_IMAGE);assert.ok(list.find(s=>s.path==='/events/off').description.startsWith('Cancelled. '));
+ const template='<html><head><meta name="description" content="old"><title>old</title></head></html>';const page=sharePage(template,shared,'https://example.com');
+ assert.ok(page.includes('<title>Rust &amp; &quot;friends&quot; · HW CompSoc</title>'));assert.ok(!page.includes('content="old"')&&!page.includes('<title>old'));assert.ok(page.includes('<meta property="og:image" content="https://example.com/event-covers/00000000-0000-0000-0000-000000000000.jpg">'));assert.ok(page.includes('<meta property="og:url" content="https://example.com/events/rust">'));assert.ok(page.includes('content="A crab &lt;holding&gt; a laptop"'));assert.ok(page.includes('<link rel="canonical" href="https://example.com/events/rust">'));
+ assert.ok(sharePage(template,list.find(s=>s.path==='/'),'https://example.com').includes('<meta property="og:url" content="https://example.com">'));const local=sharePage(template,shared,'');assert.ok(!local.includes('og:image'));assert.ok(local.includes('<meta property="og:title"'));
+ assert.ok(readFileSync(new URL('../public'+DEFAULT_IMAGE,import.meta.url)).length>1000);
 });

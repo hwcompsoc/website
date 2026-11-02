@@ -4,6 +4,7 @@ import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
 import {supabase} from '../supabase';
+import {COVER_BUCKET,coverThumb} from '../supabase-config';
 import {badgeFor,checklist,editableFields,progress,sitePhase,type AdminEvent,type SitePhase,type SiteRow} from '../admin-rules';
 
 export const useTitle=(title:string)=>useEffect(()=>{document.title=`${title} · CompSoc admin`},[title]);
@@ -14,7 +15,9 @@ export const friendly=(error:{code?:string;message:string})=>error.code==='23505
 export async function loadEvents(){const {data,error}=await supabase.from('events').select('*').order('starts_at',{ascending:false,nullsFirst:true});if(error)throw new Error(friendly(error));return data as AdminEvent[]}
 export async function loadEvent(id:string){const {data,error}=await supabase.from('events').select('*').eq('id',id).maybeSingle();if(error)throw new Error(friendly(error));return data as AdminEvent|null}
 export async function saveEvent(event:AdminEvent){const body=editableFields(event);const query=event.id?supabase.from('events').update(body).eq('id',event.id):supabase.from('events').insert(body);const {data,error}=await query.select().single();if(error)throw Object.assign(new Error(friendly(error)),{code:error.code});return data as AdminEvent}
-export async function deleteEvent(id:string){const {error}=await supabase.from('events').delete().eq('id',id);if(error)throw new Error(friendly(error))}
+// An image's address stays public until the file is gone, so nothing may be left behind. Small copies that don't exist are ignored.
+export async function removeImages(paths:(string|null|undefined)[]){const names=paths.filter((path):path is string=>!!path).flatMap(path=>[path,coverThumb(path)]);if(!names.length)return;const {error}=await supabase.storage.from(COVER_BUCKET).remove(names);if(error)console.warn(`Could not remove images ${names.join(', ')}: ${error.message}`)}
+export async function deleteEvent(event:AdminEvent){const {error}=await supabase.from('events').delete().eq('id',event.id!);if(error)throw new Error(friendly(error));await removeImages([event.cover_path,event.square_path])}
 
 // Loads a list or a record once, with the loading and error states every page needs.
 export function useLoad<T>(load:()=>Promise<T>,key:string){const [state,setState]=useState<{data?:T;error?:string;loading:boolean}>({loading:true});
