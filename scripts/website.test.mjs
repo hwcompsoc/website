@@ -108,6 +108,12 @@ test('Privacy has its own address, and nothing the note denies has crept in',()=
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(!/googletagmanager|gtag|plausible|posthog|analytics/i.test(html));assert.ok(!/https?:\/\//.test(html),'index.html loads nothing from another address');
  const headers=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8')).headers.find(h=>h.source==='/(.*)').headers;assert.ok(headers.some(h=>h.key==='X-Frame-Options'&&h.value==='DENY'));assert.ok(headers.some(h=>h.key==='X-Content-Type-Options'));
 });
+test('The privacy page keeps the expected order, a date, and everything the ICO asks for',()=>{
+ const page=readFileSync(new URL('../src/pages/Privacy.tsx',import.meta.url),'utf8');const list=page.match(/const SECTIONS=(\[.*?\]) as const/)[1];const ids=[...list.matchAll(/\['([a-z-]+)','/g)].map(m=>m[1]);
+ assert.deepEqual(ids,['who-we-are','what-we-collect','why-we-use-it','who-we-share-it-with','how-long-we-keep-it','your-rights','contact-or-complain','changes']);
+ assert.deepEqual([...page.matchAll(/<Heading id="([a-z-]+)"\/>/g)].map(m=>m[1]),ids,'each section appears once, in the same order as the jump links');
+ assert.match(page,/^const UPDATED='\d{1,2} [A-Z][a-z]+ \d{4}';/m);for(const phrase of ['legal basis','right to object','Information Commissioner','0303 123 1113','for 2 years','UK Extension'])assert.ok(page.includes(phrase),phrase);
+});
 test('Every address has its own share details, and they are written safely into the page',()=>{
  const base={title:'Rust & "friends"',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'x '.repeat(200),signup_required:false,luma_url:null,status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust'};
  const event=liveEvent({...base,cover_path:'00000000-0000-0000-0000-000000000000.jpg',cover_alt:'A crab <holding> a laptop'},Date.parse('2027-01-01'));const list=sharePages([event,liveEvent({...base,slug:'off',status:'cancelled'},Date.parse('2027-01-01'))]);

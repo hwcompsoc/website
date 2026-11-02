@@ -247,7 +247,14 @@ ol.guide-list{list-style:decimal}
 /* Privacy note */
 .privacy-content{max-width:720px;font-size:16px;line-height:1.7}
 .privacy-content h2{margin:32px 0 10px;font-size:24px}
-.privacy-content h2:first-child{margin-top:0}
+.privacy-content h3{margin:24px 0 8px;font-size:18px}
+.privacy-content :is(p,li) .text-link{display:inline;min-height:0}
+.privacy-content :is(p,li) .text-link svg{display:inline;margin-left:4px;vertical-align:-3px}
+.privacy-updated{font-size:14px;color:var(--text-quiet)}
+.privacy-contents{margin:0 0 8px;padding:20px 24px;background:var(--tint);border:1px solid var(--line);border-radius:4px}
+.privacy-content .privacy-contents ul{margin:0;padding:0;list-style:none;gap:0}
+.privacy-contents a{display:flex;align-items:center;min-height:32px;font-weight:600;color:var(--ink)}
+.privacy-contents a:hover{text-decoration:underline}
 .privacy-content p{margin:0 0 14px}
 .privacy-content ul{margin:0 0 14px;padding-left:22px;list-style:disc;display:grid;gap:6px}
 /* Text people type into the admin can be one long word or link, which must wrap rather than widen the page. */
