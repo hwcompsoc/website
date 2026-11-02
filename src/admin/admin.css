@@ -127,9 +127,19 @@
 @media(max-width:560px){.admin-images{grid-template-columns:minmax(0,1fr)}}
 .admin-preview-cover{margin:6px 0 14px}
 .admin-details-cover{max-width:240px}
-.admin-cover-frame{display:grid;place-items:center;aspect-ratio:16/9;background:var(--tint);border:1px dashed var(--line-strong);color:var(--text);font-size:14px}
+.admin-cover-frame{position:relative;display:grid;place-items:center;width:100%;padding:0;aspect-ratio:16/9;overflow:hidden;background:var(--tint);border:1px dashed var(--line-strong);color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:var(--site-pointer,pointer);transition:border-color var(--dur-hover) ease,background-color var(--dur-hover) ease}
+.admin-cover-frame:is(:hover,:focus-visible,[data-drag]):not(:disabled){border-color:var(--select-strong);border-style:solid}
+.admin-cover-frame:is(:hover,[data-drag]):not(:disabled,:has(img)){background:var(--surface)}
+.admin-cover-frame:focus-visible{outline:2px solid var(--select-strong);outline-offset:2px}
+.admin-cover-frame:disabled{cursor:progress}
+.admin-cover-frame svg{flex:none}
+.admin-cover-prompt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px;text-align:center}
+.admin-cover-prompt svg{width:28px;height:28px;color:var(--select-strong)}
+.admin-cover-badge{position:absolute;right:8px;bottom:8px;display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:13px;background:var(--surface);border:1px solid var(--line-strong);transition:background-color var(--dur-hover) ease,color var(--dur-hover) ease}
+.admin-cover-badge svg{width:15px;height:15px}
+.admin-cover-frame:is(:hover,:focus-visible,[data-drag]):not(:disabled) .admin-cover-badge{background:var(--select-strong);border-color:var(--select-strong);color:var(--on-accent)}
 .admin-cover-frame:has(img){border-style:solid;border-color:var(--line)}
-.admin-cover-frame[aria-busy=true]{opacity:.6}
+.admin-cover-frame[aria-busy=true] img{opacity:.6}
 .admin-cover-actions{margin:0}
 
 .admin-event-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start}
