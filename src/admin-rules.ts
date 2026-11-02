@@ -1,5 +1,5 @@
 // The publishing rules as the form explains them. The database enforces the same rules, so it has the final say.
-import {COMMITTEE_BUCKET,COVER_BUCKET,SUPABASE_URL,coverThumb} from './supabase-config.ts';
+import {COMMITTEE_BUCKET,COVER_BUCKET,DOCUMENT_BUCKET,SUPABASE_URL,coverThumb} from './supabase-config.ts';
 export const NATIVE_CREATE='https://promoters.native.fm/event/event/create';
 export const LUMA_CREATE='https://luma.com/create';
 
@@ -50,9 +50,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -134,3 +134,12 @@ export function reviewDue(reviewed:string|null|undefined,now=Date.now()){if(!rev
 export type SiteGuide=Pick<Guide,'slug'|'title'|'category'|'kind'|'description'|'body'|'status'|'reviewed_on'>;
 const shownGuides=(guides:SiteGuide[])=>JSON.stringify(guides.filter(guide=>guide.status!=='draft').map(guide=>[guide.slug,guide.title,guide.category,guide.kind,guide.description,guide.body,guide.status,guide.reviewed_on??null]));
 export const guidePhase=(saved:SiteGuide[]|undefined,site:SiteGuide[]|null):SitePhase=>phaseFrom(saved?shownGuides(saved):null,site&&shownGuides(site));
+
+// Documents. What a visitor would see decides whether the site has caught up.
+export const DOCUMENT_MAX=20*1024*1024;
+export const documentProblem=(size:number,startsAsPdf:boolean)=>!startsAsPdf?'That file isn’t a PDF. Save it as a PDF and try again.':size>DOCUMENT_MAX?'That file is over 20 MB. Try making it smaller.':null;
+export const documentUrl=(path:string)=>`${SUPABASE_URL}/storage/v1/object/public/${DOCUMENT_BUCKET}/${path}`;
+export const readableSize=(bytes:number)=>bytes<1024*1024?`${Math.max(1,Math.round(bytes/1024))} KB`:`${(bytes/1024/1024).toFixed(1)} MB`;
+export type SiteDocument={title:string;approved_on:string;file_path:string};
+const shownDocuments=(rows:SiteDocument[])=>JSON.stringify(rows.map(row=>[row.title,row.approved_on,row.file_path]));
+export const documentPhase=(saved:SiteDocument[]|undefined,site:SiteDocument[]|null):SitePhase=>phaseFrom(saved?shownDocuments(saved):null,site&&shownDocuments(site));

@@ -1,12 +1,10 @@
 import {useRef,useState} from 'react';
-import {Camera,Check,Copy,Info,MessageCircle} from 'lucide-react';
+import {Camera,Check,Copy,MessageCircle} from 'lucide-react';
 import {Button} from './ui/button';
-import {Popover,PopoverTrigger,PopoverContent} from './ui/popover';
 import {links,pagePath,pages,type View} from '../content';
 import {LinkButton,RevealHeading,RouteLink} from './shared';
 import {m} from 'motion/react';
 import {usePointerLean} from '../motion/usePointerLean';
-import {PixelBuild} from '../motion/PixelBuild';
 import {Typed} from '../motion/Typed';
 import {Logo} from './Logo';
 
@@ -21,5 +19,5 @@ export function Footer({page}:{page:View}){const logo=useRef<HTMLSpanElement>(nu
   {page!=='join'&&<section className="footer-hello" aria-labelledby="footer-hello-title"><div><RevealHeading id="footer-hello-title">Come and say hello.</RevealHeading><p>The quickest way in is the Discord.</p></div><div className="footer-actions"><LinkButton href={links.discord}><MessageCircle aria-hidden="true"/>Join the Discord</LinkButton><LinkButton href={links.instagram} secondary><Camera aria-hidden="true"/>Follow @hwcompsoc</LinkButton></div></section>}
   <div className="footer-contact"><a className="email-link" href={`mailto:${links.email}`}>{links.email}</a><Button variant="ghost" onClick={copy} className="footer-copy" title={copied?undefined:'Copy email address'}>{copied?<><Check aria-hidden="true"/><Typed text="Email copied" caret={false} trigger="mount"/></>:<><Copy aria-hidden="true"/><span className="sr-only">Copy email address</span></>}</Button><p role="status" className={copyError?'footer-status':'footer-status sr-only'}>{copyError?'Copy is unavailable here. Select the address or open your email app.':copied?'Email copied.':''}</p><p className="footer-partners">Thinking about supporting the society? <RouteLink page="partners">Let’s talk partnerships</RouteLink></p></div>
   <div className="footer-meta"><a href="/" aria-label="HW CompSoc home" className="logo-link"><m.span ref={logo} style={lean.style} className="footer-logo-lean"><Logo tone="white" align="left" className="footer-logo"/></m.span></a><p className="footer-tagline">Computing. Community.<br/>A place to find your people.</p><nav className="footer-nav" aria-label="Footer navigation">{pages.filter(p=>p.id!=='home').map(p=><a key={p.id} href={pagePath(p.id)}>{p.name}</a>)}</nav></div>
-  <div className="footer-bottom"><span className="footer-legal"><span>Heriot-Watt Computer Science Society</span><span className="footer-sep" aria-hidden="true"> · </span><span>Local prototype</span></span><Popover><PopoverTrigger asChild><Button variant="ghost"><Info size={14} aria-hidden="true"/>About this prototype</Button></PopoverTrigger><PopoverContent className="website-popover"><PixelBuild trigger="mount" cols={6} rows={4} duration={.3}><h3>What’s real, what’s a preview.</h3><p>The branding, Discord, Instagram, Union destination and society email are supplied or confirmed links. Role descriptions, guides and partnership content are samples. Enquiry drafts stay on this page. No live booking or form service is connected.</p></PixelBuild></PopoverContent></Popover></div>
+  <div className="footer-bottom"><span className="footer-legal"><span>Heriot-Watt Computer Science Society</span></span></div>
  </div></footer>}

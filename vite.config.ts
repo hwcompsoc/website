@@ -11,7 +11,7 @@ const ours=(path:string)=>{const file=normalizePath(path);return file.includes('
 function liveEvents():Plugin{
  return {name:'live-events',apply:'serve',enforce:'pre',
   config:()=>({server:{watch:{ignored:ours}}}),
-  hotUpdate({file:changed}){if(ours(changed)||/\/public\/(event-covers|committee-photos)\//.test(normalizePath(changed)))return []},
+  hotUpdate({file:changed}){if(ours(changed)||/\/public\/(event-covers|committee-photos|documents)\//.test(normalizePath(changed)))return []},
   configureServer(server){
    const check=async()=>{try{
     if(!saveContent(await fetchContent(4000)))return;

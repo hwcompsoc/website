@@ -2,6 +2,7 @@ import live from './generated/events.json' with {type:'json'};
 import teams from './generated/committee.json' with {type:'json'};
 import faqRows from './generated/faqs.json' with {type:'json'};
 import guides from './generated/guides.json' with {type:'json'};
+import documentRows from './generated/documents.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
@@ -18,6 +19,11 @@ export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee
 export const committee=liveCommittee(teams as LiveTeam[]);
 export type Faq={id:string;question:string;answer:string};
 export const faqs=faqRows as Faq[];
+// Approved documents (About), from the admin.
+export type LiveDocument={id:string;title:string;approved_on:string;file_path:string;size_bytes:number};
+const fileSize=(bytes:number)=>bytes<1024*1024?`${Math.max(1,Math.round(bytes/1024))} KB`:`${(bytes/1024/1024).toFixed(1)} MB`;
+export const liveDocument=(row:LiveDocument)=>({id:row.id,title:row.title,approved:new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(`${row.approved_on}T00:00:00Z`)),href:`/documents/${row.file_path}`,size:fileSize(row.size_bytes)});
+export const documents=(documentRows as LiveDocument[]).map(liveDocument);
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
 // Guides (Resources), from the admin. Anything still a draft never reaches the site.
 export type LiveGuide={slug:string;title:string;category:string;kind:string;description:string;body:string;status:string;reviewed_on:string|null};
