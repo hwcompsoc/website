@@ -283,3 +283,27 @@ ol.guide-list{list-style:decimal}
 .guide-reader [data-radix-scroll-area-viewport]>div{display:block!important}
 .guide-content{min-width:0;overflow-wrap:anywhere}
 .guide-content pre{max-width:100%;overflow-x:auto}
+/* Touch sizes: 44px tap areas on phones, the size Apple recommends. Where a control looks right small, an invisible pseudo-element grows the tap area so the layout doesn't move. Links inside sentences stay as they are. */
+.overlay-close::after{content:'';position:absolute;inset:-8px 0 -8px -16px}
+@media(max-width:800px){
+.overlay-close::after{inset:-14px}
+.filter-options>label{display:flex;align-items:center;justify-content:center;min-height:44px;padding-block:0}
+.search-control button{right:0;width:44px;min-height:44px}
+.search-control button:focus-visible{outline-offset:-4px}
+.checkbox-label{min-height:44px;margin-block:-5px}
+.enquiry-radios{gap:0}
+.enquiry-radios label{min-height:44px}
+.calendar-menu li a{min-height:44px}
+.calendar-copy input{height:44px}
+.privacy-contents a{min-height:44px}
+.footer-legal a{position:relative}
+.footer-nav>a::before,.footer-legal a::before{content:'';position:absolute;inset:0 -8px}
+}
+@media(max-width:540px){
+.hero-actions>.text-link,.section-heading>.text-link,.quiet-callout>.text-link{position:relative}
+.hero-actions>.text-link::after,.section-heading>.text-link::after,.quiet-callout>.text-link::after{content:'';position:absolute;inset:-7px 0}
+}
+/* iPhone Safari zooms the page when a field's text is under 16px. */
+@media(max-width:800px),(pointer:coarse){
+html :is(input:not([type=checkbox],[type=radio],[type=file]),textarea,select){font-size:16px}
+}
