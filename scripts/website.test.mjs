@@ -68,7 +68,7 @@ test('Did you mean finds close addresses and stays quiet otherwise',()=>{
  for(const typed of ['/x','/abc','/wp-admin','/contact','/'])assert.equal(suggestPath(typed),null,typed);
 });
 test('The host sends every address to the app, so paths survive a refresh',()=>{
- const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(rewrites,[{source:'/(.*)',destination:'/index.html'}]);
+ const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(rewrites,[{source:'/((?!assets/).*)',destination:'/index.html'}]);
 });
 test('Event filters separate past events, and there are no sample events left',()=>{
  assert.ok(!readFileSync(new URL('../src/content.ts',import.meta.url),'utf8').includes('sample:true'));
@@ -172,4 +172,9 @@ test('Documents: only real PDFs under the limit, and live once the site has them
 });
 test('The public site no longer calls itself a prototype',()=>{
  for(const file of ['components/Footer.tsx','pages/About.tsx','pages/Partners.tsx','components/DetailDialog.tsx'])assert.ok(!/prototype/i.test(readFileSync(new URL('../src/'+file,import.meta.url),'utf8')),file);
+});
+test('A missing build file is a real 404, and the page retries instead of staying blank',()=>{
+ const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));const sends=new RegExp(`^${rewrites[0].source}$`);
+ for(const path of ['/','/about','/admin/documents','/events/some-talk','/assetsfolder'])assert.ok(sends.test(path),path);assert.ok(!sends.test('/assets/index-abc.js'));
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('hwcs-load-retries'));assert.ok(html.indexOf('hwcs-load-retries')<html.indexOf('type="module"'),'the retry has to be listening before the app loads');
 });
