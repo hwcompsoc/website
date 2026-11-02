@@ -69,8 +69,6 @@
 .checkbox-label [role=checkbox][data-state=checked] svg{animation:tick .18s linear both}
 @keyframes tick{0%,33.2%{clip-path:inset(0 100% 0 0)}33.3%,66.5%{clip-path:inset(0 66.6667% 0 0)}66.6%,99.9%{clip-path:inset(0 33.3333% 0 0)}100%{clip-path:inset(0)}}
 .search-control input{caret-shape:block}
-.download-pulse{animation:download-drop .3s linear both}
-@keyframes download-drop{0%,21.9%{transform:translateY(-3px)}22%,43.9%{transform:translateY(-1.3333px)}44%,65.9%{transform:translateY(.3333px)}66%,77.2%{transform:translateY(2px)}77.3%,88.5%{transform:translateY(1.3333px)}88.6%,99.9%{transform:translateY(.6667px)}100%{transform:translateY(0)}}
 
 /* Departures board. The whole row is the title button's hit area; hover and keyboard focus share the sweep. */
 .event-board{list-style:none;margin:0;padding:0;border-top:2px solid var(--rule)}

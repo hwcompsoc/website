@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,calendar,enquiryMail,liveEvent} from '../src/content.ts';
+import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent} from '../src/content.ts';
+import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
@@ -109,4 +110,15 @@ test('Every address has its own share details, and they are written safely into 
  assert.ok(page.includes('<title>Rust &amp; &quot;friends&quot; · HW CompSoc</title>'));assert.ok(!page.includes('content="old"')&&!page.includes('<title>old'));assert.ok(page.includes('<meta property="og:image" content="https://example.com/event-covers/00000000-0000-0000-0000-000000000000.jpg">'));assert.ok(page.includes('<meta property="og:url" content="https://example.com/events/rust">'));assert.ok(page.includes('content="A crab &lt;holding&gt; a laptop"'));assert.ok(page.includes('<link rel="canonical" href="https://example.com/events/rust">'));
  assert.ok(sharePage(template,list.find(s=>s.path==='/'),'https://example.com').includes('<meta property="og:url" content="https://example.com">'));const local=sharePage(template,shared,'');assert.ok(!local.includes('og:image'));assert.ok(local.includes('<meta property="og:title"'));
  assert.ok(readFileSync(new URL('../public'+DEFAULT_IMAGE,import.meta.url)).length>1000);
+});
+
+test('Calendar files follow the format, and their links carry the event',()=>{
+ const base={title:'Rust; a talk, with notes',category:'Workshop',level:'Everyone welcome',venue:'EM1.82, Earl Mountbatten',description:'Line one\nLine two – '+'é'.repeat(120),signup_required:true,luma_url:'https://luma.com/x',status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust'};
+ const event=liveEvent(base,Date.parse('2027-01-01'));const cancelled=liveEvent({...base,slug:'off',status:'cancelled',signup_required:false},Date.parse('2027-01-01'));const site='https://example.com';const now=Date.parse('2027-01-01T00:00:00Z');
+ const feed=calendarFeed([event,cancelled],site,now);assert.ok(feed.endsWith('END:VCALENDAR\r\n'));assert.equal(feed.replaceAll('\r\n','').includes('\n'),false);for(const line of feed.split('\r\n'))assert.ok(Buffer.byteLength(line)<=75,line);
+ const text=feed.replaceAll('\r\n ','');assert.equal(text.split('BEGIN:VEVENT').length,3);assert.ok(text.includes('X-WR-CALNAME:HW CompSoc events'));assert.ok(text.includes('UID:rust@hwcompsoc'));assert.ok(text.includes('DTSTAMP:20270101T000000Z'));assert.ok(text.includes('DTSTART:20270701T173000Z'));assert.ok(text.includes('SUMMARY:Rust\\; a talk\\, with notes'));assert.ok(text.includes('LOCATION:EM1.82\\, Earl Mountbatten'));assert.ok(text.includes('Line one\\nLine two – '+'é'.repeat(120)+'\\nSign up: https://luma.com/x\\nMore: https://example.com/events/rust'));assert.ok(text.includes('URL:https://example.com/events/rust'));assert.ok(text.includes('SUMMARY:Cancelled: Rust'));assert.ok(text.includes('STATUS:CANCELLED'));assert.ok(text.includes('STATUS:CONFIRMED'));
+ const one=calendar(event,'',now);assert.equal(one.split('BEGIN:VEVENT').length,2);assert.ok(!one.includes('X-WR-CALNAME'));assert.ok(!one.includes('URL:'));assert.equal(eventFilePath(event),'/events/rust.ics');
+ const links=eventCalendarLinks(event,site);const google=new URL(links[0].href);assert.equal(google.searchParams.get('dates'),'20270701T173000Z/20270701T190000Z');assert.equal(google.searchParams.get('text'),base.title);assert.ok(google.searchParams.get('details').includes('Sign up: https://luma.com/x'));const outlook=new URL(links[1].href);assert.equal(outlook.host,'outlook.office.com');assert.equal(outlook.searchParams.get('startdt'),'2027-07-01T17:30:00Z');assert.equal(new URL(links[2].href).host,'outlook.live.com');assert.deepEqual([links[3].href,links[3].download],['/events/rust.ics','rust.ics']);
+ const subscribe=feedCalendarLinks(site);assert.equal(new URL(subscribe[0].href).searchParams.get('cid'),'webcal://example.com/events.ics');assert.equal(new URL(subscribe[1].href).searchParams.get('url'),'https://example.com/events.ics');assert.equal(subscribe[3].href,'webcal://example.com/events.ics');
+ const {headers}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.ok(headers[0].headers.some(h=>h.value.startsWith('text/calendar')));
 });
