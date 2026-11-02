@@ -50,9 +50,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'))return {name:a};
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
 // Only ever return to somewhere inside the admin area after signing in.
@@ -111,4 +111,8 @@ export function moved<T extends {id:string;position:number}>(rows:T[],id:string,
 // Has the public site caught up with the committee? Compared as the About page would show it, in order.
 export type SiteTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
 const shownCommittee=(teams:SiteTeam[])=>JSON.stringify(teams.map(team=>[team.name,team.description,team.committee_people.map(person=>[person.name,person.photo_path??null])]));
-export const committeePhase=(saved:SiteTeam[]|undefined,site:SiteTeam[]|null):SitePhase=>!site?'unknown':!saved||shownCommittee(saved)===shownCommittee(site)?'live':'updating';
+const phaseFrom=(saved:string|null,site:string|null):SitePhase=>site===null?'unknown':saved===null||saved===site?'live':'updating';
+export const committeePhase=(saved:SiteTeam[]|undefined,site:SiteTeam[]|null):SitePhase=>phaseFrom(saved?shownCommittee(saved):null,site&&shownCommittee(site));
+export type SiteFaq={question:string;answer:string};
+const shownFaqs=(faqs:SiteFaq[])=>JSON.stringify(faqs.map(faq=>[faq.question,faq.answer]));
+export const faqPhase=(saved:SiteFaq[]|undefined,site:SiteFaq[]|null):SitePhase=>phaseFrom(saved?shownFaqs(saved):null,site&&shownFaqs(site));

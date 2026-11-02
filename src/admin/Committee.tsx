@@ -1,6 +1,5 @@
 import {useEffect,useRef,useState,type ChangeEvent,type DragEvent,type FormEvent} from 'react';
-import {AnimatePresence,m} from 'motion/react';
-import {ArrowDown,ArrowUp,Check,ImageUp,Pencil,Plus,Trash2} from 'lucide-react';
+import {ImageUp,Pencil,Plus,Trash2} from 'lucide-react';
 import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Textarea} from '../components/ui/textarea';
@@ -8,27 +7,20 @@ import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogT
 import {initials} from '../content';
 import {supabase} from '../supabase';
 import {COMMITTEE_BUCKET,COMMITTEE_SELECT} from '../supabase-config';
-import {PHOTO_MIN,PHOTO_QUALITY,PHOTO_SIZE,SITE_SLOW_AFTER,committeeNameProblem,committeePhase,moved,nextPosition,photoProblem,photoUrl,siteBusy,type SitePhase,type SiteTeam} from '../admin-rules';
-import {useMotionLevel} from '../motion/level';
-import {useClickBurst} from '../motion/ClickBurst';
-import {Typed} from '../motion/Typed';
-import {SiteSteps,busyText,foldDuration,useFinish} from './SiteProgress';
+import {PHOTO_MIN,PHOTO_QUALITY,PHOTO_SIZE,committeeNameProblem,committeePhase,moved,nextPosition,photoProblem,photoUrl,siteBusy,type SiteTeam} from '../admin-rules';
+import {SAVED,SAVED_UNKNOWN,SiteProgress,useLiveNotice} from './SiteProgress';
 import {withImage,toSquareJpeg} from './images';
-import {ConfirmDialog,Failure,Field,fieldProps,friendly,useLoad,useSiteRows,useTitle,type Confirm} from './ui';
+import {ConfirmDialog,Failure,Field,MoveButtons,fieldProps,friendly,useLoad,useSiteRows,useTitle,type Confirm} from './ui';
 import {PeopleSkeleton} from './skeletons';
 
 type Person={id:string;team_id:string;name:string;photo_path:string|null;position:number};
 type Team={id:string;name:string;description:string;position:number;committee_people:Person[]};
-const SAVED='Saved.';
-const SAVED_UNKNOWN='Saved. The site usually updates within a few minutes.';
 
 async function loadTeams(){const {data,error}=await supabase.from('committee_teams').select(COMMITTEE_SELECT).order('position').order('position',{referencedTable:'committee_people'});if(error)throw new Error(friendly(error));return data as unknown as Team[]}
 const check=({error}:{error:{code?:string;message:string}|null})=>{if(error)throw new Error(friendly(error))};
 // An image's address stays public until the file is gone, so a replaced or removed photo goes straight away.
 async function removePhotos(paths:(string|null)[]){const names=paths.filter((path):path is string=>!!path);if(!names.length)return;const {error}=await supabase.storage.from(COMMITTEE_BUCKET).remove(names);if(error)console.warn(`Could not remove photos ${names.join(', ')}: ${error.message}`)}
 async function uploadPhoto(blob:Blob){const path=`${crypto.randomUUID()}.jpg`;const {error}=await supabase.storage.from(COMMITTEE_BUCKET).upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'});if(error)throw new Error(friendly(error));return path}
-
-function MoveButtons({label,first,last,busy,onMove}:{label:string;first:boolean;last:boolean;busy:boolean;onMove:(by:-1|1)=>void}){return <span className="admin-move"><Button type="button" variant="ghost" size="icon" disabled={busy||first} aria-label={`Move ${label} up`} onClick={()=>onMove(-1)}><ArrowUp aria-hidden="true"/></Button><Button type="button" variant="ghost" size="icon" disabled={busy||last} aria-label={`Move ${label} down`} onClick={()=>onMove(1)}><ArrowDown aria-hidden="true"/></Button></span>}
 
 type TeamDraft={id?:string;name:string;description:string};
 function TeamDialog({draft,busy,error,onSave,onClose}:{draft:TeamDraft|null;busy:boolean;error:string;onSave:(draft:TeamDraft)=>void;onClose:()=>void}){const [name,setName]=useState('');const [description,setDescription]=useState('');const [problem,setProblem]=useState('');useEffect(()=>{setName(draft?.name??'');setDescription(draft?.description??'');setProblem('')},[draft]);
@@ -49,15 +41,7 @@ function PersonDialog({draft,teams,busy,error,onSave,onClose}:{draft:PersonDraft
   <div className="admin-field admin-photo-field"><span className="admin-image-label">Photo</span><small id="person-photo-hint">Optional. At least {PHOTO_MIN} pixels, front-facing, and cropped to a square from the middle. Without one, they get their initials.</small><button type="button" className="admin-cover-frame admin-photo-frame" data-kind="square" data-drag={dragging||undefined} aria-label={`${shown?'Replace':'Choose'} photo`} aria-describedby="person-photo-hint" onClick={()=>input.current?.click()} onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={drop}>{shown&&<img src={shown} alt=""/>}{shown?<span className="admin-cover-badge"><ImageUp aria-hidden="true"/>Replace</span>:<span className="admin-cover-prompt"><ImageUp aria-hidden="true"/>Choose or drop a photo</span>}</button><input ref={input} type="file" accept="image/*" hidden tabIndex={-1} aria-label="Photo" onChange={choose}/>{shown&&<div className="admin-actions admin-cover-actions"><Button type="button" variant="ghost" size="sm" onClick={()=>{setBlob(null);setPreview('');setRemoved(true)}}><Trash2 aria-hidden="true"/>Remove photo</Button></div>}<Failure>{photoError}</Failure></div>
   <Failure>{error}</Failure><DialogFooter><Button type="button" variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" className="site-button" disabled={busy}>{busy?'Saving…':'Save'}</Button></DialogFooter></form></DialogContent></Dialog>}
 
-// Follows a change all the way out, as an event's page does. It only says "live" once the public site really has it, then folds away.
-function SiteProgress({phase}:{phase:SitePhase}){const level=useMotionLevel();const finish=useFinish(phase);const fire=useClickBurst();const lastMark=useRef<HTMLSpanElement>(null);const stage=finish?.stage;const busy=siteBusy(phase);const since=useRef(0);if(busy&&!since.current)since.current=Date.now();if(!busy&&!finish)since.current=0;const [now,setNow]=useState(0);
- useEffect(()=>{if(!busy)return;const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer)},[busy]);
- useEffect(()=>{if(stage!=='done')return;const box=lastMark.current?.getBoundingClientRect();if(box)fire(box.left+box.width/2,box.top+box.height/2,{count:6})},[stage]);
- const slow=busy&&!!since.current&&now-since.current>SITE_SLOW_AFTER;const finished=stage==='done'||stage==='settling';const title=finished?'Live on the site':slow?'This is taking longer than usual':busyText.updating.title;const duration=foldDuration(level);
- return <AnimatePresence initial={false}>{(busy||finish)&&<m.div key="progress" className="admin-site-fold" exit={{height:0,opacity:0}} transition={{duration,ease:[.2,0,0,1]}}><section className="admin-card admin-site admin-committee-site" data-phase={finished?'live':'busy'} aria-labelledby="site-title"><h2 id="site-title" role="status">{finished&&<span className="admin-step-mark" data-tick={finish?'':undefined} aria-hidden="true"><Check size={15}/></span>}{finished?<Typed key={title} text={title} caret={false} speed={.02} trigger="mount"/>:title}</h2><AnimatePresence initial={false}>{stage!=='settling'&&<SiteSteps key="steps" text={busyText.updating} stage={stage} slow={slow} finished={finished} lastMark={lastMark} exitDuration={duration}/>}</AnimatePresence></section></m.div>}</AnimatePresence>}
-
-export function Committee(){useTitle('Committee');const [version,setVersion]=useState(0);const {data,error:loadError,loading}=useLoad(loadTeams,`committee-${version}`);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [teamDraft,setTeamDraft]=useState<TeamDraft|null>(null);const [personDraft,setPersonDraft]=useState<PersonDraft|null>(null);const [confirm,setConfirm]=useState<Confirm|null>(null);const teams=data??[];const site=useSiteRows<SiteTeam>(rows=>!rows||siteBusy(committeePhase(data,rows)),'/live-committee.json');const phase=committeePhase(data,site);const wasBusy=useRef(false);
- useEffect(()=>{if(siteBusy(phase))wasBusy.current=true;else if(wasBusy.current&&phase==='live'){wasBusy.current=false;setNotice('Your change is live on the site.')}},[phase]);
+export function Committee(){useTitle('Committee');const [version,setVersion]=useState(0);const {data,error:loadError,loading}=useLoad(loadTeams,`committee-${version}`);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [teamDraft,setTeamDraft]=useState<TeamDraft|null>(null);const [personDraft,setPersonDraft]=useState<PersonDraft|null>(null);const [confirm,setConfirm]=useState<Confirm|null>(null);const teams=data??[];const site=useSiteRows<SiteTeam>(rows=>!rows||siteBusy(committeePhase(data,rows)),'/live-committee.json');const phase=committeePhase(data,site);useLiveNotice(phase,setNotice);
  // Runs a change, reloads the list and says what happened. Returns whether it worked, so a dialog can stay open on failure.
  async function run(change:()=>Promise<void>,done=phase==='unknown'?SAVED_UNKNOWN:SAVED){setBusy(true);setError('');setNotice('');try{await change();setNotice(done);setVersion(v=>v+1);return true}catch(failure){setError((failure as Error).message);return false}finally{setBusy(false)}}
  async function saveTeam(draft:TeamDraft){if(await run(async()=>{const {id,...fields}=draft;check(id?await supabase.from('committee_teams').update(fields).eq('id',id):await supabase.from('committee_teams').insert({...fields,position:nextPosition(teams)}))}))setTeamDraft(null)}

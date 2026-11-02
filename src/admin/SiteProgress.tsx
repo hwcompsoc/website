@@ -1,9 +1,11 @@
-import {useLayoutEffect,useRef,useState,type Ref} from 'react';
-import {m} from 'motion/react';
+import {useEffect,useLayoutEffect,useRef,useState,type Ref} from 'react';
+import {AnimatePresence,m} from 'motion/react';
 import {Check} from 'lucide-react';
 import {dur,ease} from '../motion';
 import {useMotionLevel} from '../motion/level';
-import {siteBusy,type SitePhase} from '../admin-rules';
+import {useClickBurst} from '../motion/ClickBurst';
+import {Typed} from '../motion/Typed';
+import {SITE_SLOW_AFTER,siteBusy,type SitePhase} from '../admin-rules';
 
 export const busyText={publishing:{title:'Publishing to the site',done:'Live on the site'},updating:{title:'Updating the site',done:'Change is live'},removing:{title:'Taking it off the site',done:'Off the site'}};
 const FINISH={rebuilt:600,done:1600,settle:450};
@@ -21,3 +23,15 @@ export function useFinish(phase:SitePhase){const animate=useMotionLevel()==='ful
 export function SiteSteps({text,stage,slow,finished,lastMark,exitDuration}:{text:{done:string};stage?:Stage;slow:boolean;finished:boolean;lastMark?:Ref<HTMLSpanElement>;exitDuration:number}){return <m.div className="admin-site-fold" exit={{height:0,opacity:0}} transition={{duration:exitDuration,ease:ease.enter}}><ol className="admin-site-steps"><li data-done=""><span className="admin-step-mark" aria-hidden="true"><Check size={15}/></span>Saved</li><li data-done={stage?'':undefined} data-now={stage?undefined:''}><span className="admin-step-mark" data-tick={stage?'':undefined} aria-hidden="true">{stage&&<Check size={15}/>}</span><span>{stage?'Site rebuilt':'Rebuilding the site'}{!stage&&!slow&&<span className="admin-boot-pixels admin-site-pixels" aria-hidden="true"><i/><i/><i/><i/><i/></span>}</span></li><li data-done={finished?'':undefined} data-now={stage==='rebuilt'?'':undefined}><span className="admin-step-mark" ref={lastMark} data-tick={finished?'':undefined} aria-hidden="true">{finished&&<Check size={15}/>}</span>{text.done}</li></ol><p>{slow?'Your change is saved, but the site hasn’t picked it up. Check the latest deployment in Vercel, or try saving again.':stage?' ':'This usually takes a few minutes. It’ll carry on if you leave this page.'}</p></m.div>}
 
 export const foldDuration=(level:string)=>level==='full'?dur.ui:0;
+
+export const SAVED='Saved.';
+export const SAVED_UNKNOWN='Saved. The site usually updates within a few minutes.';
+// Says so when a change that was on its way reaches the site, including with motion reduced, when the panel simply disappears.
+export function useLiveNotice(phase:SitePhase,setNotice:(notice:string)=>void){const wasBusy=useRef(false);useEffect(()=>{if(siteBusy(phase))wasBusy.current=true;else if(wasBusy.current&&phase==='live'){wasBusy.current=false;setNotice('Your change is live on the site.')}},[phase])}
+
+// Follows a change all the way out, as an event's page does. It only says "live" once the public site really has it, then folds away.
+export function SiteProgress({phase}:{phase:SitePhase}){const level=useMotionLevel();const finish=useFinish(phase);const fire=useClickBurst();const lastMark=useRef<HTMLSpanElement>(null);const stage=finish?.stage;const busy=siteBusy(phase);const since=useRef(0);if(busy&&!since.current)since.current=Date.now();if(!busy&&!finish)since.current=0;const [now,setNow]=useState(0);
+ useEffect(()=>{if(!busy)return;const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer)},[busy]);
+ useEffect(()=>{if(stage!=='done')return;const box=lastMark.current?.getBoundingClientRect();if(box)fire(box.left+box.width/2,box.top+box.height/2,{count:6})},[stage]);
+ const slow=busy&&!!since.current&&now-since.current>SITE_SLOW_AFTER;const finished=stage==='done'||stage==='settling';const title=finished?'Live on the site':slow?'This is taking longer than usual':busyText.updating.title;const duration=foldDuration(level);
+ return <AnimatePresence initial={false}>{(busy||finish)&&<m.div key="progress" className="admin-site-fold" exit={{height:0,opacity:0}} transition={{duration,ease:[.2,0,0,1]}}><section className="admin-card admin-site admin-committee-site" data-phase={finished?'live':'busy'} aria-labelledby="site-title"><h2 id="site-title" role="status">{finished&&<span className="admin-step-mark" data-tick={finish?'':undefined} aria-hidden="true"><Check size={15}/></span>}{finished?<Typed key={title} text={title} caret={false} speed={.02} trigger="mount"/>:title}</h2><AnimatePresence initial={false}>{stage!=='settling'&&<SiteSteps key="steps" text={busyText.updating} stage={stage} slow={slow} finished={finished} lastMark={lastMark} exitDuration={duration}/>}</AnimatePresence></section></m.div>}</AnimatePresence>}

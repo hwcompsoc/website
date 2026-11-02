@@ -11,5 +11,6 @@ WEBSITE.md
 src/generated
 public/live-events.json
 public/live-committee.json
+public/live-faqs.json
 public/event-covers
 public/committee-photos

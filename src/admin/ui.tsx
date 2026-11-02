@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
-import {Check,Copy,Eye,EyeOff} from 'lucide-react';
+import {ArrowDown,ArrowUp,Check,Copy,Eye,EyeOff} from 'lucide-react';
 import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
@@ -45,3 +45,5 @@ export type Confirm={title:string;body:string;action:string;run:()=>void;danger?
 export function ConfirmDialog({confirm,onClose}:{confirm:Confirm|null;onClose:()=>void}){return <Dialog open={!!confirm} onOpenChange={open=>{if(!open)onClose()}}><DialogContent className="website-dialog admin-confirm">{confirm&&<><DialogHeader><DialogTitle>{confirm.title}</DialogTitle><DialogDescription>{confirm.body}</DialogDescription></DialogHeader><DialogFooter><Button variant="ghost" onClick={onClose}>Keep as it is</Button><Button className={confirm.danger?'admin-danger':'site-button'} onClick={()=>{onClose();confirm.run()}}>{confirm.action}</Button></DialogFooter></>}</DialogContent></Dialog>}
 
 export function Failure({children}:{children:ReactNode}){return children?<p role="alert" className="admin-error">{children}</p>:null}
+
+export function MoveButtons({label,first,last,busy,onMove}:{label:string;first:boolean;last:boolean;busy:boolean;onMove:(by:-1|1)=>void}){return <span className="admin-move"><Button type="button" variant="ghost" size="icon" disabled={busy||first} aria-label={`Move ${label} up`} onClick={()=>onMove(-1)}><ArrowUp aria-hidden="true"/></Button><Button type="button" variant="ghost" size="icon" disabled={busy||last} aria-label={`Move ${label} down`} onClick={()=>onMove(1)}><ArrowDown aria-hidden="true"/></Button></span>}

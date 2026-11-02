@@ -4,7 +4,7 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee} from '../src/content.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
-import {committeePhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -31,7 +31,7 @@ test('The form explains exactly what stands between an event and going live',()=
 });
 test('Admin routes and the return address after sign-in',()=>{
  const id='3647cf31-c4d8-467e-88a9-cd3b12d256b6';const name=path=>adminRoute(path).name;
- assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
+ assert.equal(name('/admin/faqs'),'faqs');assert.equal(name('/admin/faqs/x'),'notfound');assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
  for(const bad of ['/admin/nope','/admin/events/nope','/admin/events/'+id+'/nope','/admin/events/new/x','/admin/login/x'])assert.equal(name(bad),'notfound',bad);
  assert.equal(safeNext('/admin/events?tab=past'),'/admin/events?tab=past');for(const bad of [null,'','https://evil.example','//evil.example','/events','/administrator','/admin//evil.example','/admin/login','/admin/set-password'])assert.equal(safeNext(bad),'/admin',String(bad));
 });
@@ -135,4 +135,9 @@ test('The committee page only says live once the public site has the change',()=
  const team={id:'1',name:'Treasurer',description:'Keeps the books.',position:1,committee_people:[{id:'2',team_id:'1',name:'Sam',photo_path:null,position:1},{id:'3',team_id:'1',name:'Lee',photo_path:'a.jpg',position:2}]};const site=[{...team,position:9,committee_people:team.committee_people.map(p=>({...p,position:9}))}];
  assert.equal(committeePhase([team],null),'unknown');assert.equal(committeePhase(undefined,[team]),'live');assert.equal(committeePhase([team],site),'live');
  assert.equal(committeePhase([{...team,name:'New'}],site),'updating');assert.equal(committeePhase([{...team,description:'New'}],site),'updating');assert.equal(committeePhase([{...team,committee_people:[...team.committee_people].reverse()}],site),'updating');assert.equal(committeePhase([{...team,committee_people:[team.committee_people[0],{...team.committee_people[1],photo_path:'b.jpg'}]}],site),'updating');assert.equal(committeePhase([],site),'updating');
+});
+
+test('The FAQs page only says live once the public site has the change',()=>{
+ const faqs=[{id:'1',question:'Q1',answer:'A1',position:1},{id:'2',question:'Q2',answer:'A2',position:2}];const site=faqs.map(faq=>({...faq,position:9}));
+ assert.equal(faqPhase(faqs,null),'unknown');assert.equal(faqPhase(undefined,site),'live');assert.equal(faqPhase(faqs,site),'live');assert.equal(faqPhase([],[]),'live');assert.equal(faqPhase([],site),'updating');assert.equal(faqPhase([{...faqs[0],answer:'New'},faqs[1]],site),'updating');assert.equal(faqPhase([faqs[1],faqs[0]],site),'updating');
 });

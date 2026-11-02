@@ -1,5 +1,6 @@
 import live from './generated/events.json' with {type:'json'};
 import teams from './generated/committee.json' with {type:'json'};
+import faqRows from './generated/faqs.json' with {type:'json'};
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
 export const titles={notfound:'File not found',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
@@ -13,6 +14,8 @@ export type Member={name:string;photo?:string};
 export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
 export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee_people.length).map(team=>({role:team.name,text:team.description,members:team.committee_people.map(person=>({name:person.name,...person.photo_path?{photo:`/committee-photos/${person.photo_path}`}:{}})) as Member[]}));
 export const committee=liveCommittee(teams as LiveTeam[]);
+export type Faq={id:string;question:string;answer:string};
+export const faqs=faqRows as Faq[];
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
 export const resources=[
  {id:'git',title:'Git, without the guesswork.',category:'Learning',description:'A short introduction to repositories, commits and a useful first workflow.',type:'Starter guide',minutes:'5 min',icon:'code'},
