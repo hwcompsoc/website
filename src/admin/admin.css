@@ -200,7 +200,7 @@
 .admin-menu button{padding:9px 10px;background:none;border:0;border-radius:4px;text-align:left;font-size:14px;color:var(--ink);cursor:var(--site-pointer,pointer)}
 .admin-menu button:hover,.admin-menu button:focus-visible{background:var(--tint)}
 .admin-menu-danger{color:var(--danger)!important}
-.admin-confirm{max-width:440px}
+.admin-confirm{max-width:440px;overflow-x:hidden;overflow-wrap:anywhere}
 
 .admin-skeleton-row{display:flex;align-items:center;gap:20px;padding:14px 18px;min-height:72px}
 .admin-sk-heading{margin-bottom:14px}
