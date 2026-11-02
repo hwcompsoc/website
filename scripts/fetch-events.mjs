@@ -5,11 +5,12 @@ import {existsSync,mkdirSync,writeFileSync} from 'node:fs';
 import {fetchContent} from './live-content.mjs';
 const file=new URL('../src/generated/events.json',import.meta.url);
 const committeeFile=new URL('../src/generated/committee.json',import.meta.url);
-// The same list, published with the site. The admin compares it with what was saved, to tell when a change has really gone live.
+// The same lists, published with the site. The admin compares it with what was saved, to tell when a change has really gone live.
 const published=new URL('../public/live-events.json',import.meta.url);
+const publishedCommittee=new URL('../public/live-committee.json',import.meta.url);
 mkdirSync(new URL('.',file),{recursive:true});
 const text=rows=>JSON.stringify(rows,null,1)+'\n';
-const save=({events,committee})=>{writeFileSync(file,text(events));writeFileSync(published,text(events));writeFileSync(committeeFile,text(committee))};
+const save=({events,committee})=>{writeFileSync(file,text(events));writeFileSync(published,text(events));writeFileSync(committeeFile,text(committee));writeFileSync(publishedCommittee,text(committee))};
 if(process.argv.includes('--empty')){save({events:[],committee:[]});process.exit(0)}
 try{
  const content=await fetchContent();save(content);console.log(`Copied ${content.events.length} live event${content.events.length===1?'':'s'} and ${content.committee.length} committee roles from Supabase.`);

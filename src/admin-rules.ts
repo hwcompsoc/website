@@ -107,3 +107,8 @@ export const committeeNameProblem=(name:string,message:string)=>name.trim()?null
 export const nextPosition=(rows:{position:number}[])=>Math.max(0,...rows.map(row=>row.position))+1;
 // The two rows with their positions swapped, ready to save together, or null if there's nowhere to go.
 export function moved<T extends {id:string;position:number}>(rows:T[],id:string,by:-1|1){const at=rows.findIndex(row=>row.id===id);const other=rows[at+by];if(at<0||!other)return null;return [{...rows[at],position:other.position},{...other,position:rows[at].position}]}
+
+// Has the public site caught up with the committee? Compared as the About page would show it, in order.
+export type SiteTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
+const shownCommittee=(teams:SiteTeam[])=>JSON.stringify(teams.map(team=>[team.name,team.description,team.committee_people.map(person=>[person.name,person.photo_path??null])]));
+export const committeePhase=(saved:SiteTeam[]|undefined,site:SiteTeam[]|null):SitePhase=>!site?'unknown':!saved||shownCommittee(saved)===shownCommittee(site)?'live':'updating';

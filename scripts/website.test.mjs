@@ -4,7 +4,7 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee} from '../src/content.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
-import {moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {committeePhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -129,4 +129,10 @@ test('The committee comes from the admin, and empty roles stay off the page',()=
  assert.equal(photoProblem(200,200),null);assert.match(photoProblem(150,900),/only 150 × 900/);assert.ok(photoUrl('x.jpg').endsWith('/committee-photos/x.jpg'));assert.equal(committeeNameProblem('  ','Add it.'),'Add it.');assert.equal(committeeNameProblem('Sam','Add it.'),null);
  assert.equal(nextPosition([]),1);assert.equal(nextPosition([{position:2},{position:7}]),8);
  const rows=[{id:'a',position:1},{id:'b',position:2},{id:'c',position:5}];assert.deepEqual(moved(rows,'b',1),[{id:'b',position:5},{id:'c',position:2}]);assert.deepEqual(moved(rows,'b',-1),[{id:'b',position:1},{id:'a',position:2}]);assert.equal(moved(rows,'a',-1),null);assert.equal(moved(rows,'c',1),null);assert.equal(moved(rows,'z',1),null);
+});
+
+test('The committee page only says live once the public site has the change',()=>{
+ const team={id:'1',name:'Treasurer',description:'Keeps the books.',position:1,committee_people:[{id:'2',team_id:'1',name:'Sam',photo_path:null,position:1},{id:'3',team_id:'1',name:'Lee',photo_path:'a.jpg',position:2}]};const site=[{...team,position:9,committee_people:team.committee_people.map(p=>({...p,position:9}))}];
+ assert.equal(committeePhase([team],null),'unknown');assert.equal(committeePhase(undefined,[team]),'live');assert.equal(committeePhase([team],site),'live');
+ assert.equal(committeePhase([{...team,name:'New'}],site),'updating');assert.equal(committeePhase([{...team,description:'New'}],site),'updating');assert.equal(committeePhase([{...team,committee_people:[...team.committee_people].reverse()}],site),'updating');assert.equal(committeePhase([{...team,committee_people:[team.committee_people[0],{...team.committee_people[1],photo_path:'b.jpg'}]}],site),'updating');assert.equal(committeePhase([],site),'updating');
 });

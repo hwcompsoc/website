@@ -10,5 +10,6 @@ MOTION-RULES.md
 WEBSITE.md
 src/generated
 public/live-events.json
+public/live-committee.json
 public/event-covers
 public/committee-photos

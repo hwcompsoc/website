@@ -144,6 +144,7 @@
 .admin-people-intro{margin:-8px 0 24px}
 .admin-teams{list-style:none;margin:0;padding:0;display:grid;gap:16px}
 .admin-team{padding:16px 20px}
+.admin-committee-site{margin-bottom:16px}
 .admin-team-head{display:flex;align-items:center;gap:4px}
 .admin-team-head .admin-row-main{flex:1;min-width:0;margin-right:8px}
 .admin-team-head h2{margin:0 0 2px;font-size:18px;color:var(--ink);overflow-wrap:anywhere}

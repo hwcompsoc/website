@@ -27,8 +27,8 @@ export function useLoad<T>(load:()=>Promise<T>,key:string){const [state,setState
 export function Status({event,rows,phase}:{event:AdminEvent;rows?:SiteRow[]|null;phase?:SitePhase}){const badge=badgeFor(event,phase??(rows===undefined?null:sitePhase(event,rows)));return <span className="admin-status" data-status={badge.state}>{badge.label}</span>}
 
 // What the public site currently has. Checked every 3 seconds only while something is waiting to go live.
-export function useSiteRows(waiting:(rows:SiteRow[]|null)=>boolean){const [rows,setRows]=useState<SiteRow[]|null>(null);const check=useRef(waiting);check.current=waiting;const latest=useRef(rows);latest.current=rows;
- useEffect(()=>{let active=true;const load=async()=>{try{const response=await fetch(`/live-events.json?t=${Date.now()}`,{cache:'no-store'});if(response.ok&&active)setRows(await response.json())}catch{/* Not readable yet: try again next time. */}};load();const timer=setInterval(()=>{if(check.current(latest.current))load()},3000);return()=>{active=false;clearInterval(timer)}},[]);
+export function useSiteRows<T=SiteRow>(waiting:(rows:T[]|null)=>boolean,path='/live-events.json'){const [rows,setRows]=useState<T[]|null>(null);const check=useRef(waiting);check.current=waiting;const latest=useRef(rows);latest.current=rows;
+ useEffect(()=>{let active=true;const load=async()=>{try{const response=await fetch(`${path}?t=${Date.now()}`,{cache:'no-store'});if(response.ok&&active)setRows(await response.json())}catch{/* Not readable yet: try again next time. */}};load();const timer=setInterval(()=>{if(check.current(latest.current))load()},3000);return()=>{active=false;clearInterval(timer)}},[]);
  return rows}
 export function Progress({event}:{event:AdminEvent}){const {done,total}=progress(event);return <span className="admin-progress"><span className="admin-progress-track" aria-hidden="true">{checklist(event).map(step=><i key={step.id} data-done={step.done||undefined}/>)}</span><span>{done} of {total} done</span></span>}
 

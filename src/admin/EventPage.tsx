@@ -1,4 +1,4 @@
-import {useEffect,useLayoutEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
+import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import {AnimatePresence,m} from 'motion/react';
 import {ArrowLeft,ArrowUpRight,Check,ChevronDown,Download,Ellipsis,Pencil} from 'lucide-react';
 import {Button} from '../components/ui/button';
@@ -12,6 +12,7 @@ import {useClickBurst} from '../motion/ClickBurst';
 import {Typed} from '../motion/Typed';
 import {LUMA_CREATE,NATIVE_CREATE,checklist,coverDownload,coverUrl,detailsMissing,eventDetailsText,fullDate,isLink,progress,siteBusy,sitePhase,siteSlow,timeRange,type AdminEvent,type SitePhase,type StepId} from '../admin-rules';
 import {EventSkeleton} from './skeletons';
+import {SiteSteps,busyText,foldDuration,useFinish,type BusyPhase} from './SiteProgress';
 import {ConfirmDialog,CopyButton,Failure,Field,Progress,Status,deleteEvent,fieldProps,loadEvent,saveEvent,useLoad,useSiteRows,useTitle,type Confirm} from './ui';
 
 const External=({href,children}:{href:string;children:ReactNode})=><Button asChild variant="outline"><a href={href} target="_blank" rel="noopener noreferrer">{children}<ArrowUpRight aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>;
@@ -28,18 +29,6 @@ function LinkForm({id,label,value,live,onSave}:{id:string;label:string;value:str
 
 function Step({number,title,done,open,onToggle,children}:{number:number;title:string;done:boolean;open:boolean;onToggle:()=>void;children:ReactNode}){const body=`step-${number}-body`;return <li className="admin-step" data-done={done||undefined} data-open={open||undefined}><h3><button type="button" aria-expanded={open} aria-controls={body} onClick={onToggle}><span className="admin-step-mark" aria-hidden="true">{done?<Check size={15}/>:number}</span><span>{title}<span className="sr-only">{done?' (done)':' (to do)'}</span></span><ChevronDown size={18} aria-hidden="true"/></button></h3>{open&&<div id={body} className="admin-step-body">{children}</div>}</li>}
 
-const busyText={publishing:{title:'Publishing to the site',done:'Live on the site'},updating:{title:'Updating the site',done:'Change is live'},removing:{title:'Taking it off the site',done:'Off the site'}};
-const FINISH={rebuilt:600,done:1600,settle:450};
-type Stage='rebuilt'|'done'|'settling';type BusyPhase=keyof typeof busyText;
-// Plays the finish when the site really catches up while someone is watching: rebuilt, then live with a burst, then the steps fold away.
-// Arriving at a page that's already live plays nothing, and with motion reduced the final state simply appears.
-function useFinish(phase:SitePhase){const animate=useMotionLevel()==='full';const previous=useRef(phase);const [finish,setFinish]=useState<{from:BusyPhase;stage:Stage}|null>(null);
- // Before paint, so the final state never flashes up ahead of the finish.
- useLayoutEffect(()=>{const was=previous.current;previous.current=phase;if(siteBusy(phase)){setFinish(null);return}if(!siteBusy(was)||phase==='unknown'||!animate)return;const from=was as BusyPhase;setFinish({from,stage:'rebuilt'});const timers=[setTimeout(()=>setFinish({from,stage:'done'}),FINISH.rebuilt),setTimeout(()=>setFinish({from,stage:'settling'}),FINISH.rebuilt+FINISH.done),setTimeout(()=>setFinish(null),FINISH.rebuilt+FINISH.done+FINISH.settle)];return()=>timers.forEach(clearTimeout)},[phase,animate]);
- // The site has just caught up, but the effect above hasn't run yet: this render is already the start of the finish.
- const was=previous.current;if(!finish&&animate&&siteBusy(was)&&!siteBusy(phase)&&phase!=='unknown')return {from:was as BusyPhase,stage:'rebuilt' as Stage};
- return finish}
-
 // Follows the change all the way out: it only says "live" once the public site really has it.
 function SitePanel({event,phase,finish}:{event:AdminEvent;phase:SitePhase;finish:ReturnType<typeof useFinish>}){const publicUrl=`/events/${event.slug}`;const level=useMotionLevel();const fire=useClickBurst();const lastMark=useRef<HTMLSpanElement>(null);const stage=finish?.stage;const fold=level==='full'?{duration:dur.ui,ease:ease.enter}:{duration:0};
  useEffect(()=>{if(stage!=='done')return;const box=lastMark.current?.getBoundingClientRect();if(box)fire(box.left+box.width/2,box.top+box.height/2,{count:6})},[stage]);
@@ -49,7 +38,7 @@ function SitePanel({event,phase,finish}:{event:AdminEvent;phase:SitePhase;finish
  const live=!busy&&phase!=='unknown'||finished;const mark=live&&shown!=='removing'&&event.status!=='cancelled';
  return <section className="admin-card admin-site" data-phase={live?'live':busy?'busy':undefined} aria-labelledby="site-title"><h2 id="site-title" role="status">{mark&&<span className="admin-step-mark" data-tick={finish?'':undefined} aria-hidden="true"><Check size={15}/></span>}{finished?<Typed key={title} text={title} caret={false} speed={.02} trigger="mount"/>:title}</h2>
   <AnimatePresence initial={false}>
-   {showSteps&&<m.div key="steps" className="admin-site-fold" exit={{height:0,opacity:0}} transition={fold}><ol className="admin-site-steps"><li data-done=""><span className="admin-step-mark" aria-hidden="true"><Check size={15}/></span>Saved</li><li data-done={stage?'':undefined} data-now={stage?undefined:''}><span className="admin-step-mark" data-tick={stage?'':undefined} aria-hidden="true">{stage&&<Check size={15}/>}</span><span>{stage?'Site rebuilt':'Rebuilding the site'}{!stage&&!slow&&<span className="admin-boot-pixels admin-site-pixels" aria-hidden="true"><i/><i/><i/><i/><i/></span>}</span></li><li data-done={finished?'':undefined} data-now={stage==='rebuilt'?'':undefined}><span className="admin-step-mark" ref={lastMark} data-tick={finished?'':undefined} aria-hidden="true">{finished&&<Check size={15}/>}</span>{text!.done}</li></ol><p>{slow?'Your change is saved, but the site hasn’t picked it up. Check the latest deployment in Vercel, or try saving the event again.':stage?' ':'This usually takes a few minutes. It’ll carry on if you leave this page.'}</p></m.div>}
+   {showSteps&&<SiteSteps key="steps" text={text!} stage={stage} slow={slow} finished={finished} lastMark={lastMark} exitDuration={foldDuration(level)}/>}
    {!showSteps&&phase==='unknown'&&<m.div key="unknown" className="admin-site-fold"><p>We can’t check the public site right now. Changes usually appear within a few minutes.</p></m.div>}
    {!showSteps&&phase!=='unknown'&&!(busy&&!stage)&&shown!=='removing'&&<m.div key="final" className="admin-site-fold" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} transition={fold}><p>{event.status==='cancelled'?'The site shows it as cancelled. Check Native and Luma show the same.':'If you change the date, time or venue, update Native and Luma too, and tell Amanda and Kevin.'}</p><External href={publicUrl}>View on the site</External></m.div>}
   </AnimatePresence></section>}
