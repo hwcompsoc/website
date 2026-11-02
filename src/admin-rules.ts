@@ -16,7 +16,9 @@ export function coverSize(width:number,height:number,longest:number){const scale
 export const coverUrl=(path:string,thumb=false)=>`${SUPABASE_URL}/storage/v1/object/public/${COVER_BUCKET}/${thumb?coverThumb(path):path}`;
 export const coverDownload=(path:string,name:string)=>`${coverUrl(path)}?download=${encodeURIComponent(name)}`;
 
-export const slugify=(title:string)=>title.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60).replace(/-+$/,'');
+// While someone types, a trailing hyphen stays, or they could never type one. `slugify` tidies it up afterwards.
+export const slugTyping=(title:string)=>title.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+/,'').slice(0,60);
+export const slugify=(title:string)=>slugTyping(title).replace(/-+$/,'');
 export const isLink=(value:string|null)=>!!value&&/^https:\/\/\S+$/.test(value);
 
 // What still stands between this event and going live, in the order the organiser does it.
@@ -43,8 +45,8 @@ export function ukInputToIso(value:string){if(!value)return null;const match=val
 export function isoToUkInput(iso:string|null){if(!iso)return '';const ms=new Date(iso).getTime();return new Date(ms+ukOffset(ms)).toISOString().slice(0,16)}
 
 // Everything Amanda and Kevin need in one message.
-export function eventDetailsText(event:AdminEvent){const when=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));
- return [event.title,event.starts_at?`When: ${when(event.starts_at)}`:'',event.venue?`Where: ${event.venue}`:'',event.description,event.luma_url?`Sign up: ${event.luma_url}`:'',event.slug?`Website: /events/${event.slug}`:'',event.square_path?`Square image: ${coverUrl(event.square_path)}`:''].filter(Boolean).join('\n')}
+export function eventDetailsText(event:AdminEvent,site=''){const when=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));
+ return [event.title,event.starts_at?`When: ${when(event.starts_at)}`:'',event.venue?`Where: ${event.venue}`:'',event.description,event.luma_url?`Sign up: ${event.luma_url}`:'',event.slug?`Website: ${site}/events/${event.slug}`:'',event.square_path?`Square image: ${coverUrl(event.square_path)}`:''].filter(Boolean).join('\n')}
 
 export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}

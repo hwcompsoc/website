@@ -3,14 +3,18 @@ import {ArrowDown,ArrowUp,Check,Copy,Eye,EyeOff} from 'lucide-react';
 import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
+import {setLeaveCheck} from '../router';
 import {supabase} from '../supabase';
 import {COVER_BUCKET,coverThumb} from '../supabase-config';
 import {badgeFor,checklist,editableFields,progress,sitePhase,type AdminEvent,type SitePhase,type SiteRow} from '../admin-rules';
 
 export const useTitle=(title:string)=>useEffect(()=>{document.title=`${title} · CompSoc admin`},[title]);
 
+// Warns before unsaved work is lost: the browser's own warning for reloading or closing, and a question for links and Back inside the admin.
+export function useLeaveWarning(dirty:boolean){useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>e.preventDefault();addEventListener('beforeunload',warn);setLeaveCheck(()=>confirm('You have unsaved changes. Leave without saving them?'));return()=>{removeEventListener('beforeunload',warn);setLeaveCheck(null)}},[dirty])}
+
 // Database errors, in words an organiser can act on.
-export const friendly=(error:{code?:string;message:string})=>error.code==='23505'?'Another event already uses that web address. Choose a different one.':error.code==='23514'?'Something’s missing or invalid. Check the times, the links and that a live event still has everything it needs.':/JWT|session/i.test(error.message)?'You’ve been signed out. Refresh the page and sign in again.':error.message;
+export const friendly=(error:{code?:string;message:string})=>/failed to fetch|networkerror|load failed/i.test(error.message)?'Couldn’t reach the server. Check your connection and try again.':error.code==='23505'?'Another event already uses that web address. Choose a different one.':error.code==='23514'?'Something’s missing or invalid. Check the times, the links and that a live event still has everything it needs.':/JWT|session/i.test(error.message)?'You’ve been signed out. Refresh the page and sign in again.':error.message;
 
 export async function loadEvents(){const {data,error}=await supabase.from('events').select('*').order('starts_at',{ascending:false,nullsFirst:true});if(error)throw new Error(friendly(error));return data as AdminEvent[]}
 export async function loadEvent(id:string){const {data,error}=await supabase.from('events').select('*').eq('id',id).maybeSingle();if(error)throw new Error(friendly(error));return data as AdminEvent|null}

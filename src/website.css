@@ -275,3 +275,9 @@ ol.guide-list{list-style:decimal}
 .privacy-content ul{margin:0 0 14px;padding-left:22px;list-style:disc;display:grid;gap:6px}
 .footer-bottom{justify-content:space-between}
 .footer-privacy{font-size:13px;color:var(--on-accent);text-decoration:underline}
+/* Text people type into the admin can be one long word or link, which must wrap rather than widen the page. */
+.faq-q,[data-state][role=region],.resource-card h2,.resource-card p,.resource-type,.window-bar,.role-card h3,.role-card p,.role-label,.role-person-name,.board-text h3,.board-venue,.board-level,.website-dialog h2,.website-dialog p,.detail-category{overflow-wrap:anywhere;min-width:0}
+/* The scroll area's own wrapper grows to fit its widest line, which would widen every paragraph in a guide. Code blocks scroll instead. */
+.guide-reader [data-radix-scroll-area-viewport]>div{display:block!important}
+.guide-content{min-width:0;overflow-wrap:anywhere}
+.guide-content pre{max-width:100%;overflow-x:auto}

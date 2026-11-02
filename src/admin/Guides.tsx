@@ -8,7 +8,7 @@ import {go} from '../router';
 import {supabase} from '../supabase';
 import {GUIDE_CATEGORIES,GUIDE_KINDS,blankGuide,guidePhase,guideProblems,guideEditable,moved,nextPosition,reviewDue,siteBusy,slugAttempt,slugify,todayInUk,type Guide,type GuideStatus,type Problems,type SiteGuide} from '../admin-rules';
 import {readingMinutes} from '../guide-format';
-import {ConfirmDialog,Failure,Field,MoveButtons,fieldProps,friendly,useLoad,useSiteRows,useTitle,type Confirm} from './ui';
+import {ConfirmDialog,Failure,Field,MoveButtons,fieldProps,friendly,useLeaveWarning,useLoad,useSiteRows,useTitle,type Confirm} from './ui';
 import {PeopleSkeleton,EditSkeleton} from './skeletons';
 import {SAVED,SAVED_UNKNOWN,SiteProgress,useLiveNotice} from './SiteProgress';
 
@@ -35,7 +35,7 @@ export function GuideEditor({id}:{id?:string}){const {data,error:loadError,loadi
 
 function EditorForm({initial}:{initial:Guide}){useTitle(initial.id?`Edit ${initial.title}`:'New guide');const [guide,setGuide]=useState(initial);const [problems,setProblems]=useState<Problems>({});const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [dirty,setDirty]=useState(false);const [confirm,setConfirm]=useState<Confirm|null>(null);const form=useRef<HTMLFormElement>(null);const live=guide.status!=='draft';const locked=!!initial.published_at;
  const change=(c:Partial<Guide>)=>{setGuide(old=>({...old,...c}));setDirty(true);setProblems(old=>{const next={...old};for(const key of Object.keys(c))delete next[key];return next})};
- useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>e.preventDefault();addEventListener('beforeunload',warn);return()=>removeEventListener('beforeunload',warn)},[dirty]);
+ useLeaveWarning(dirty);
  const focusProblem=()=>requestAnimationFrame(()=>(form.current?.querySelector('[aria-invalid=true]') as HTMLElement|null)?.focus());
  // Saves, working out a free address for a new guide, then returns to the list, which follows the change out to the site.
  async function save(next:Guide,message:string){setBusy(true);setError('');try{if(next.id)check(await supabase.from('guides').update(guideEditable(next)).eq('id',next.id));else{const {data:rows}=await supabase.from('guides').select('position');const position=nextPosition((rows??[]) as {position:number}[]);const base=next.slug||slugify(next.title)||'guide';for(let attempt=1;;attempt++){try{check(await supabase.from('guides').insert({...guideEditable(next),slug:slugAttempt(base,attempt),position}));break}catch(failure){if((failure as {code?:string}).code!=='23505'||attempt>=20)throw failure}}}setDirty(false);sessionStorage.setItem('guide-notice',message);go('/admin/guides')}catch(failure){setError((failure as Error).message);setBusy(false)}}

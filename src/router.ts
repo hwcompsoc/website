@@ -28,10 +28,14 @@ export const openedInApp=()=>!!entry().inApp;
 export const savedScroll=()=>scrolls[currentKey]??0;
 export function onRouteChange(listener:()=>void){window.addEventListener(CHANGE,listener);return()=>window.removeEventListener(CHANGE,listener)}
 
+// A form with unsaved work can ask before the address changes under it.
+let leaveCheck:(()=>boolean)|null=null;
+export const setLeaveCheck=(check:(()=>boolean)|null)=>{leaveCheck=check};
+
 function clicked(event:MouseEvent){if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
  const link=(event.target as Element|null)?.closest?.('a[href]') as HTMLAnchorElement|null;if(!link||link.target||link.hasAttribute('download'))return;
  const url=new URL(link.href);if(url.origin!==location.origin||(url.hash&&url.pathname===location.pathname))return;
- event.preventDefault();go(url.pathname+url.search)}
+ event.preventDefault();if(leaveCheck&&!leaveCheck())return;go(url.pathname+url.search)}
 
 // Run once before the first render: old #page links become real paths, and each history entry gets a key to file its scroll under.
 export function startRouter(){history.scrollRestoration='manual';loadScrolls();
@@ -41,5 +45,7 @@ export function startRouter(){history.scrollRestoration='manual';loadScrolls();
  document.addEventListener('click',clicked);
  // Pasting an old link while already on that document changes only the hash, with no reload.
  window.addEventListener('hashchange',()=>{const path=legacyPath(location.hash);if(path)go(path,{replace:true})});
- window.addEventListener('popstate',()=>{saveScroll();currentKey=entry().key??newKey();notify()});
+ // Back and Forward have already moved by the time we hear of it, so staying put means going back to where we were.
+ let here=location.pathname+location.search;let hereState=history.state;window.addEventListener(CHANGE,()=>{here=location.pathname+location.search;hereState=history.state});
+ window.addEventListener('popstate',()=>{if(leaveCheck&&here!==location.pathname+location.search&&!leaveCheck()){history.pushState(hereState,'',here);return}saveScroll();currentKey=entry().key??newKey();notify()});
  window.addEventListener('pagehide',()=>{saveScroll();persistScrolls()})}

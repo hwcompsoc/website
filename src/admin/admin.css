@@ -307,3 +307,5 @@
 @media(forced-colors:active){.admin-side nav a[aria-current=page],.admin-tabs a[aria-current=page]{outline:2px solid Highlight}.admin-progress-track i,.admin-steps-bar i{border:1px solid CanvasText}.admin-progress-track i[data-done],.admin-steps-bar i[data-done]{background:Highlight}.admin-step[data-done] .admin-step-mark,.admin-status[data-status=published]{background:Highlight;color:HighlightText}}
 
 @media(max-width:480px){.admin-side nav a svg{display:none}}
+/* As on the public site: typed text wraps rather than widening the page. */
+.admin-crumb,.admin-team h2,.admin-team small,.admin-team-people b,.admin-faq-answer,.admin-row-main small,.admin-details dd,.admin-preview h2,.admin-preview h3,.admin-preview p,.admin-message{overflow-wrap:anywhere;min-width:0}
