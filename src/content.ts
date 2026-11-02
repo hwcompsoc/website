@@ -1,4 +1,5 @@
 import live from './generated/events.json' with {type:'json'};
+import teams from './generated/committee.json' with {type:'json'};
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
 export const titles={notfound:'File not found',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
@@ -7,18 +8,11 @@ export type Page=typeof pages[number]['id'];
 export type View=Page|'notfound';
 export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
 export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string};
-// Committee (About). `photo` is the file id in src/website/committee/; people without one get their initials.
-export type Member={name:string;role:string;photo?:string};
-export const committee:{role:string;text:string;members:Member[]}[]=[
- {role:'President',text:'Helps coordinate the society and its direction.',members:[{name:'Ryan Dawson',role:'President',photo:'rd'}]},
- {role:'Vice President',text:'Supports the president and keeps projects moving.',members:[{name:'Thomas Prowse',role:'Vice President',photo:'tp'}]},
- {role:'Secretary',text:'Helps maintain records and continuity.',members:[{name:'Ella Koleola',role:'Secretary'}]},
- {role:'Treasurer',text:'Helps keep the society’s finances organised.',members:[{name:'Nathan Walker',role:'Treasurer',photo:'nw'}]},
- {role:'Industry Liaison',text:'Helps build conversations with organisations and supporters.',members:[{name:'Lewis Robertson',role:'Industry Liaison',photo:'lmr'}]},
- {role:'Community Manager',text:'Helps people find their place in the community.',members:[{name:'Kevin Paul Job',role:'Community Manager',photo:'kp'}]},
- {role:'Social Media Manager',text:'Shares what’s happening on Instagram and Discord.',members:[{name:'Amanda Zhang',role:'Social Media Manager',photo:'az'}]},
- {role:'Events team',text:'Helps turn activity ideas into welcoming experiences.',members:[{name:'Divine Halim',role:'Events Organiser',photo:'dh'},{name:'Alex Munoz Rueda',role:'Events Organiser',photo:'ar'},{name:'Raymond Shell',role:'Events Organiser',photo:'rs'},{name:'Pierrie Touaro',role:'Events Organiser'}]},
-];
+// Committee (About), from the admin. Roles with nobody in them stay off the page.
+export type Member={name:string;photo?:string};
+export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
+export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee_people.length).map(team=>({role:team.name,text:team.description,members:team.committee_people.map(person=>({name:person.name,...person.photo_path?{photo:`/committee-photos/${person.photo_path}`}:{}})) as Member[]}));
+export const committee=liveCommittee(teams as LiveTeam[]);
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
 export const resources=[
  {id:'git',title:'Git, without the guesswork.',category:'Learning',description:'A short introduction to repositories, commits and a useful first workflow.',type:'Starter guide',minutes:'5 min',icon:'code'},

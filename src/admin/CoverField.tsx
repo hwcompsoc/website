@@ -4,18 +4,16 @@ import {Button} from '../components/ui/button';
 import {Textarea} from '../components/ui/textarea';
 import {supabase} from '../supabase';
 import {COVER_BUCKET,coverThumb} from '../supabase-config';
-import {COVER_FULL,COVER_MAX_FILE,COVER_MIN,COVER_THUMB,coverProblem,coverSize,coverUrl,type AdminEvent,type CoverKind,type Problems} from '../admin-rules';
+import {COVER_FULL,COVER_MIN,COVER_THUMB,coverProblem,coverSize,coverUrl,type AdminEvent,type CoverKind,type Problems} from '../admin-rules';
+import {withImage,toJpeg} from './images';
 import {Failure,Field,fieldProps,friendly,removeImages} from './ui';
 
-const TOO_BIG='That file is over 25 MB. Try a smaller one.';const UNREADABLE='That file couldn’t be read as an image. Try a JPG or PNG.';
 const KINDS={cover:{column:'cover_path',label:'Landscape image',use:'16:9, like 1600 × 900. For this site and Native.'},square:{column:'square_path',label:'Square image',use:'1:1, like 1080 × 1080. For Luma, Instagram and Discord.'}} as const;
 const storage=()=>supabase.storage.from(COVER_BUCKET);
 
-// Drawing onto a canvas shrinks the image, and leaves behind everything else in the file, including a photo's location.
-function toJpeg(image:HTMLImageElement,longest:number,quality:number){const {width,height}=coverSize(image.naturalWidth,image.naturalHeight,longest);const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d')!;context.fillStyle='#fff';context.fillRect(0,0,width,height);context.drawImage(image,0,0,width,height);return new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error(UNREADABLE)),'image/jpeg',quality))}
-
+const scaled=(image:HTMLImageElement,{longest,quality}:{longest:number;quality:number})=>{const {width,height}=coverSize(image.naturalWidth,image.naturalHeight,longest);return toJpeg(image,width,height,quality)};
 // Only the landscape image is shown in lists, so only it needs a small copy.
-async function prepare(file:File,kind:CoverKind){if(file.size>COVER_MAX_FILE)throw new Error(TOO_BIG);const url=URL.createObjectURL(file);try{const image=new Image();image.src=url;try{await image.decode()}catch{throw new Error(UNREADABLE)}const problem=coverProblem(kind,image.naturalWidth,image.naturalHeight);if(problem)throw new Error(problem);return {full:await toJpeg(image,COVER_FULL.longest,COVER_FULL.quality),thumb:kind==='cover'?await toJpeg(image,COVER_THUMB.longest,COVER_THUMB.quality):null}}finally{URL.revokeObjectURL(url)}}
+const prepare=(file:File,kind:CoverKind)=>withImage(file,async image=>{const problem=coverProblem(kind,image.naturalWidth,image.naturalHeight);if(problem)throw new Error(problem);return {full:await scaled(image,COVER_FULL),thumb:kind==='cover'?await scaled(image,COVER_THUMB):null}});
 
 async function upload(name:string,blob:Blob){const {error}=await storage().upload(name,blob,{contentType:'image/jpeg',cacheControl:'31536000'});if(error)throw new Error(friendly(error))}
 async function saveImage(id:string,column:string,path:string|null){const {error}=await supabase.from('events').update({[column]:path}).eq('id',id).select('id').single();if(error)throw new Error(friendly(error))}

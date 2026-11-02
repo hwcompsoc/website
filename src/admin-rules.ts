@@ -1,5 +1,5 @@
 // The publishing rules as the form explains them. The database enforces the same rules, so it has the final say.
-import {COVER_BUCKET,SUPABASE_URL,coverThumb} from './supabase-config.ts';
+import {COMMITTEE_BUCKET,COVER_BUCKET,SUPABASE_URL,coverThumb} from './supabase-config.ts';
 export const NATIVE_CREATE='https://promoters.native.fm/event/event/create';
 export const LUMA_CREATE='https://luma.com/create';
 
@@ -9,7 +9,7 @@ export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',le
 // Event images: 'cover' is the landscape one the site shows and Native needs (Native serves its images at 736 × 412, about 16:9),
 // 'square' is for Luma, Instagram and Discord. Close to the shape is enough, so a few pixels out doesn't mean redoing a poster.
 // These are the sizes saved and what's accepted. Scaling only ever goes down.
-export const COVER_FULL={longest:1600,quality:.88},COVER_THUMB={longest:480,quality:.75},COVER_MIN=800,COVER_MAX_FILE=25*1024*1024;
+export const COVER_FULL={longest:1600,quality:.88},COVER_THUMB={longest:480,quality:.75},COVER_MIN=800;
 export type CoverKind='cover'|'square';
 export function coverProblem(kind:CoverKind,width:number,height:number){if(width<COVER_MIN)return `That image is only ${width} pixels wide. Use one at least ${COVER_MIN} wide, so it stays sharp.`;if(kind==='cover'&&Math.abs(width/height-16/9)>.05*16/9)return `That image is ${width} × ${height}, so it isn’t 16:9 landscape. Use one shaped like 1600 × 900.`;if(kind==='square'&&Math.abs(width-height)>.02*Math.max(width,height))return `That image is ${width} × ${height}, so it isn’t square. Use one shaped like 1080 × 1080.`;return null}
 export function coverSize(width:number,height:number,longest:number){const scale=Math.min(1,longest/Math.max(width,height));return {width:Math.round(width*scale),height:Math.round(height*scale)}}
@@ -50,9 +50,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'))return {name:a};
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
 // Only ever return to somewhere inside the admin area after signing in.
@@ -98,3 +98,12 @@ export const siteBusy=(phase:SitePhase)=>phase==='publishing'||phase==='updating
 export const SITE_SLOW_AFTER=10*60*1000;
 export const siteSlow=(event:AdminEvent,now=Date.now())=>!!event.updated_at&&now-new Date(event.updated_at).getTime()>SITE_SLOW_AFTER;
 export function badgeFor(event:Pick<AdminEvent,'status'>,phase:SitePhase|null){if(phase==='publishing')return {label:'Going live',state:'busy'};if(phase==='updating')return {label:'Updating',state:'busy'};return {label:statusLabel[event.status],state:event.status}}
+
+// The committee page. Photos are square and small, as they only ever show small.
+export const PHOTO_MIN=200,PHOTO_SIZE=384,PHOTO_QUALITY=.85;
+export const photoUrl=(path:string)=>`${SUPABASE_URL}/storage/v1/object/public/${COMMITTEE_BUCKET}/${path}`;
+export const photoProblem=(width:number,height:number)=>Math.min(width,height)<PHOTO_MIN?`That image is only ${width} × ${height}. Use one at least ${PHOTO_MIN} pixels on each side, so it stays sharp.`:null;
+export const committeeNameProblem=(name:string,message:string)=>name.trim()?null:message;
+export const nextPosition=(rows:{position:number}[])=>Math.max(0,...rows.map(row=>row.position))+1;
+// The two rows with their positions swapped, ready to save together, or null if there's nowhere to go.
+export function moved<T extends {id:string;position:number}>(rows:T[],id:string,by:-1|1){const at=rows.findIndex(row=>row.id===id);const other=rows[at+by];if(at<0||!other)return null;return [{...rows[at],position:other.position},{...other,position:rows[at].position}]}

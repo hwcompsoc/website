@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent} from '../src/content.ts';
+import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee} from '../src/content.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
-import {coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -31,7 +31,7 @@ test('The form explains exactly what stands between an event and going live',()=
 });
 test('Admin routes and the return address after sign-in',()=>{
  const id='3647cf31-c4d8-467e-88a9-cd3b12d256b6';const name=path=>adminRoute(path).name;
- assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
+ assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
  for(const bad of ['/admin/nope','/admin/events/nope','/admin/events/'+id+'/nope','/admin/events/new/x','/admin/login/x'])assert.equal(name(bad),'notfound',bad);
  assert.equal(safeNext('/admin/events?tab=past'),'/admin/events?tab=past');for(const bad of [null,'','https://evil.example','//evil.example','/events','/administrator','/admin//evil.example','/admin/login','/admin/set-password'])assert.equal(safeNext(bad),'/admin',String(bad));
 });
@@ -121,4 +121,12 @@ test('Calendar files follow the format, and their links carry the event',()=>{
  const links=eventCalendarLinks(event,site);const google=new URL(links[0].href);assert.equal(google.searchParams.get('dates'),'20270701T173000Z/20270701T190000Z');assert.equal(google.searchParams.get('text'),base.title);assert.ok(google.searchParams.get('details').includes('Sign up: https://luma.com/x'));const outlook=new URL(links[1].href);assert.equal(outlook.host,'outlook.office.com');assert.equal(outlook.searchParams.get('startdt'),'2027-07-01T17:30:00Z');assert.equal(new URL(links[2].href).host,'outlook.live.com');assert.deepEqual([links[3].href,links[3].download],['/events/rust.ics','rust.ics']);
  const subscribe=feedCalendarLinks(site);assert.equal(new URL(subscribe[0].href).searchParams.get('cid'),'webcal://example.com/events.ics');assert.equal(new URL(subscribe[1].href).searchParams.get('url'),'https://example.com/events.ics');assert.equal(subscribe[3].href,'webcal://example.com/events.ics');
  const {headers}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.ok(headers[0].headers.some(h=>h.value.startsWith('text/calendar')));
+});
+
+test('The committee comes from the admin, and empty roles stay off the page',()=>{
+ const shown=liveCommittee([{name:'Treasurer',description:'Keeps the books.',committee_people:[{name:'Sam Lee',photo_path:'00000000-0000-0000-0000-000000000000.jpg'}]},{name:'Empty',description:'Nobody',committee_people:[]},{name:'Events team',description:'',committee_people:[{name:'A',photo_path:null},{name:'B',photo_path:null}]}]);
+ assert.deepEqual(shown.map(team=>team.role),['Treasurer','Events team']);assert.deepEqual(shown[0],{role:'Treasurer',text:'Keeps the books.',members:[{name:'Sam Lee',photo:'/committee-photos/00000000-0000-0000-0000-000000000000.jpg'}]});assert.deepEqual(shown[1].members,[{name:'A'},{name:'B'}]);
+ assert.equal(photoProblem(200,200),null);assert.match(photoProblem(150,900),/only 150 × 900/);assert.ok(photoUrl('x.jpg').endsWith('/committee-photos/x.jpg'));assert.equal(committeeNameProblem('  ','Add it.'),'Add it.');assert.equal(committeeNameProblem('Sam','Add it.'),null);
+ assert.equal(nextPosition([]),1);assert.equal(nextPosition([{position:2},{position:7}]),8);
+ const rows=[{id:'a',position:1},{id:'b',position:2},{id:'c',position:5}];assert.deepEqual(moved(rows,'b',1),[{id:'b',position:5},{id:'c',position:2}]);assert.deepEqual(moved(rows,'b',-1),[{id:'b',position:1},{id:'a',position:2}]);assert.equal(moved(rows,'a',-1),null);assert.equal(moved(rows,'c',1),null);assert.equal(moved(rows,'z',1),null);
 });
