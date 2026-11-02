@@ -6,10 +6,10 @@ import documentRows from './generated/documents.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
-export const titles={notfound:'File not found',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
+export const titles={notfound:'File not found',privacy:'Privacy',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
 export const pages=[{id:'home',name:'Home'},{id:'join',name:'Join'},{id:'events',name:'Events'},{id:'resources',name:'Resources'},{id:'about',name:'About'},{id:'partners',name:'Partners'}] as const;
 export type Page=typeof pages[number]['id'];
-export type View=Page|'notfound';
+export type View=Page|'notfound'|'privacy';
 export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
 export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string};
 // Committee (About), from the admin. Roles with nobody in them stay off the page.
@@ -43,7 +43,7 @@ export function enquiryMail(org:string,email:string,format:string,message:string
 const segments=(path:string)=>path.toLowerCase().split('/').filter(Boolean);
 export const canonicalPath=(path:string)=>'/'+segments(path).join('/');
 export function route(path:string):{view:View;item:string}{const parts=segments(path);if(!parts.length)return {view:'home',item:''};
- const [first,item='',...rest]=parts;const page=pages.find(p=>p.id===first&&p.id!=='home');if(!page||rest.length)return {view:'notfound',item:''};if(!item)return {view:page.id,item:''};
+ const [first,item='',...rest]=parts;if(first==='privacy'&&!item)return {view:'privacy',item:''};const page=pages.find(p=>p.id===first&&p.id!=='home');if(!page||rest.length)return {view:'notfound',item:''};if(!item)return {view:page.id,item:''};
  const found=(page.id==='events'&&events.some(e=>e.id===item))||(page.id==='resources'&&resources.some(r=>r.id===item));return found?{view:page.id,item}:{view:'notfound',item:''}}
 // Links shared before paths existed, such as `#events` or `#resources/support`.
 export function legacyPath(hash:string):string|null{const [id,param]=hash.slice(1).toLowerCase().split('/');const page=pages.find(p=>p.id===id);if(!page)return null;return page.id==='resources'&&param?`/resources?category=${encodeURIComponent(param)}`:pagePath(page.id)}
@@ -54,7 +54,7 @@ function typos(a:string,b:string){const d=Array.from({length:a.length+1},(_,i)=>
 // Allows about one typo per three letters of the part that could be wrong, so a long path doesn't match anything.
 const allowance=(part:string)=>Math.max(1,Math.floor(part.length/3));
 function closest(value:string,options:string[],limit:number){let best:string|null=null,score=limit+1;for(const option of options){const t=typos(value,option);if(t<score){best=option;score=t}}return best}
-const pagePaths=()=>pages.filter(p=>p.id!=='home').map(p=>pagePath(p.id));
+const pagePaths=()=>[...pages.filter(p=>p.id!=='home').map(p=>pagePath(p.id)),'/privacy'];
 // The real address closest to a wrong one, or null if nothing is close: first the whole path, then just its first part.
 export function suggestPath(path:string):string|null{const parts=segments(path);if(!parts.length)return null;if(parts.length===1&&['home','index','index.html'].includes(parts[0]))return '/';
  const whole=closest('/'+parts.join('/'),[...pagePaths(),...events.map(e=>`/events/${e.id}`),...resources.map(r=>`/resources/${r.id}`)],allowance(parts[parts.length-1]));return whole??closest('/'+parts[0],pagePaths(),allowance(parts[0]))}

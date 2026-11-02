@@ -103,6 +103,11 @@ test('Event images: both shapes and a description are required to go live, and t
  const live={...complete,status:'published'};const site={...row,cover_path:path,cover_alt:complete.cover_alt};assert.equal(sitePhase(live,[site]),'live');assert.equal(sitePhase(live,[row]),'updating');assert.equal(sitePhase({...live,cover_alt:'New'},[site]),'updating');assert.equal(sitePhase({...live,square_path:'other'},[site]),'live');
 });
 
+test('Privacy has its own address, and nothing the note denies has crept in',()=>{
+ assert.deepEqual(route('/privacy'),{view:'privacy',item:''});assert.equal(route('/privacy/x').view,'notfound');assert.ok(sharePages().some(s=>s.path==='/privacy'));assert.equal(suggestPath('/privcy'),'/privacy');
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(!/googletagmanager|gtag|plausible|posthog|analytics/i.test(html));assert.ok(!/https?:\/\//.test(html),'index.html loads nothing from another address');
+ const headers=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8')).headers.find(h=>h.source==='/(.*)').headers;assert.ok(headers.some(h=>h.key==='X-Frame-Options'&&h.value==='DENY'));assert.ok(headers.some(h=>h.key==='X-Content-Type-Options'));
+});
 test('Every address has its own share details, and they are written safely into the page',()=>{
  const base={title:'Rust & "friends"',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'x '.repeat(200),signup_required:false,luma_url:null,status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust'};
  const event=liveEvent({...base,cover_path:'00000000-0000-0000-0000-000000000000.jpg',cover_alt:'A crab <holding> a laptop'},Date.parse('2027-01-01'));const list=sharePages([event,liveEvent({...base,slug:'off',status:'cancelled'},Date.parse('2027-01-01'))]);
@@ -122,7 +127,7 @@ test('Calendar files follow the format, and their links carry the event',()=>{
  const one=calendar(event,'',now);assert.equal(one.split('BEGIN:VEVENT').length,2);assert.ok(!one.includes('X-WR-CALNAME'));assert.ok(!one.includes('URL:'));assert.equal(eventFilePath(event),'/events/rust.ics');
  const links=eventCalendarLinks(event,site);const google=new URL(links[0].href);assert.equal(google.searchParams.get('dates'),'20270701T173000Z/20270701T190000Z');assert.equal(google.searchParams.get('text'),base.title);assert.ok(google.searchParams.get('details').includes('Sign up: https://luma.com/x'));const outlook=new URL(links[1].href);assert.equal(outlook.host,'outlook.office.com');assert.equal(outlook.searchParams.get('startdt'),'2027-07-01T17:30:00Z');assert.equal(new URL(links[2].href).host,'outlook.live.com');assert.deepEqual([links[3].href,links[3].download],['/events/rust.ics','rust.ics']);
  const subscribe=feedCalendarLinks(site);assert.equal(new URL(subscribe[0].href).searchParams.get('cid'),'webcal://example.com/events.ics');assert.equal(new URL(subscribe[1].href).searchParams.get('url'),'https://example.com/events.ics');assert.equal(subscribe[3].href,'webcal://example.com/events.ics');
- const {headers}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.ok(headers[0].headers.some(h=>h.value.startsWith('text/calendar')));
+ const {headers}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.ok(headers.find(h=>h.source.includes('ics')).headers.some(h=>h.value.startsWith('text/calendar')));
 });
 
 test('The committee comes from the admin, and empty roles stay off the page',()=>{

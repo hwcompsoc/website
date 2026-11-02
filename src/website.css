@@ -266,3 +266,12 @@ ol.guide-list{list-style:decimal}
 .guide-link{color:var(--accent-text);font-weight:600;text-decoration:underline}
 .guide-reviewed{margin:0 0 12px;font-size:13px;color:var(--text-quiet)}
 .resource-sample{margin-left:8px}
+
+/* Privacy note, and its link in the footer */
+.privacy-content{max-width:720px;font-size:16px;line-height:1.7}
+.privacy-content h2{margin:32px 0 10px;font-size:24px}
+.privacy-content h2:first-child{margin-top:0}
+.privacy-content p{margin:0 0 14px}
+.privacy-content ul{margin:0 0 14px;padding-left:22px;list-style:disc;display:grid;gap:6px}
+.footer-bottom{justify-content:space-between}
+.footer-privacy{font-size:13px;color:var(--on-accent);text-decoration:underline}

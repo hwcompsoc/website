@@ -7,11 +7,13 @@ export const DEFAULT_IMAGE='/website-assets/share.png';
 const DEFAULT_ALT='HW CompSoc: find your people.';
 const LENGTH=200;
 const descriptions={home:'Find your people at HW CompSoc. Join the Discord, explore events and learn together at Heriot-Watt.',join:'Chat with us on Discord, follow us on Instagram, and become a member through the Heriot-Watt Union when you’re ready.',events:'Workshops, socials and talks with people from industry. Pick whatever sounds interesting.',resources:'Beginner guides, notes from workshops and pointers to the right support.',about:'CompSoc is Heriot-Watt’s computer science society, run by a student committee.',partners:'We connect organisations with Heriot-Watt students who are interested in computing, through talks, workshops and project support.'};
+const PRIVACY='What the HW CompSoc website stores and who it shares it with. If you’re just visiting, almost nothing.';
 const shorten=(text:string)=>{const flat=text.replace(/\s+/g,' ').trim();if(flat.length<=LENGTH)return flat;return flat.slice(0,LENGTH-1).replace(/\s+\S*$/,'')+'…'};
 const fullTitle=(title:string)=>`${title} · ${SITE_NAME}`;
 
 export function sharePages(list=events):Share[]{return [
  ...pages.map(page=>({path:pagePath(page.id),title:fullTitle(titles[page.id]),description:descriptions[page.id],image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT})),
+ {path:'/privacy',title:fullTitle(titles.privacy),description:PRIVACY,image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT},
  ...list.map(event=>({path:`/events/${event.id}`,title:fullTitle(event.title),description:shorten(`${event.cancelled?'Cancelled. ':''}${event.date}, ${event.time}, ${event.venue}. ${event.description}`),image:event.cover??DEFAULT_IMAGE,imageAlt:event.cover?event.coverAlt??'':DEFAULT_ALT})),
  ...resources.map(resource=>({path:`/resources/${resource.id}`,title:fullTitle(resource.title),description:shorten(resource.description),image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT})),
 ]}

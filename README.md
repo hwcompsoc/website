@@ -22,6 +22,7 @@ npm test
 - `src/router.ts`: real paths, back and forward, and scroll restore. `route()` in `src/content.ts` decides what each address shows, and `vercel.json` sends every address to the app.
 - `src/website.css`: styles, with the colour tokens and the dark theme. `src/motion.css`: motion component styles.
 - `src/share.ts`, `scripts/write-pages.mjs`: what a link to each address previews as. The build writes a real page per address, because link previews don't run the app. It uses Vercel's production address, or `SITE_URL` if that's set.
+- `src/pages/Privacy.tsx`: the privacy note. It states what the site stores and contacts, so if that changes, such as by adding analytics, change the note too.
 - `src/calendar.ts`: the calendar feed at `/events.ics`, one file per event and the links that add them. The build writes the files, so they don't exist under `npm run dev`.
 - `src/theme.ts`: light and dark themes. A short script in `index.html` applies the theme before first paint, so keep the two in step.
 

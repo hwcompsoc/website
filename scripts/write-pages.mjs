@@ -14,4 +14,7 @@ const template=readFileSync(new URL('index.html',dist),'utf8');const list=shareP
 for(const share of list){const folder=new URL(`.${share.path}/`.replace('//','/'),dist);mkdirSync(folder,{recursive:true});writeFileSync(new URL('index.html',folder),sharePage(template,share,site))}
 // Calendar files sit beside the pages, and include cancelled and past events so that subscribers' copies stay right.
 writeFileSync(new URL(`.${FEED_PATH}`,dist),calendarFeed(events,site));for(const event of events)writeFileSync(new URL(`.${eventFilePath(event)}`,dist),calendar(event,site));
+// Tell search engines what's here, and to leave the admin alone.
+writeFileSync(new URL('robots.txt',dist),`User-agent: *\nDisallow: /admin\n${site?`\nSitemap: ${site}/sitemap.xml\n`:''}`);
+if(site)writeFileSync(new URL('sitemap.xml',dist),`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${list.map(share=>`<url><loc>${site}${share.path==='/'?'/':share.path}</loc></url>`).join('\n')}\n</urlset>\n`);
 console.log(`Wrote ${list.length} pages and ${events.length+1} calendar files for ${site||'no site address'}.`);
