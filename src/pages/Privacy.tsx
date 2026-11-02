@@ -13,7 +13,7 @@ function Out({href,children}:{href:string;children:ReactNode}){return <External 
 
 export function Privacy(){return <><Intro path="privacy" title={titles.privacy}>What this website stores and who it shares it with. The short version: if you’re just visiting, almost nothing.</Intro><div className="wrap"><section className="site-section privacy-content">
  <p className="privacy-updated">Last updated {UPDATED}</p>
- <nav className="privacy-contents" aria-label="On this page"><ul>{SECTIONS.map(([id,name])=><li key={id}><a href={`#${id}`}>{name}</a></li>)}</ul></nav>
+ <nav className="privacy-contents" aria-labelledby="privacy-contents-label"><p className="privacy-contents-label" id="privacy-contents-label">On this page</p><ul>{SECTIONS.map(([id,name])=><li key={id}><a href={`#${id}`}>{name}</a></li>)}</ul></nav>
 
  <Heading id="who-we-are"/>
  <p>This website is run by the Heriot-Watt Computer Science Society (HW CompSoc), a student society affiliated to the Heriot-Watt University Student Union. We’re responsible for the personal data described on this page, and you can reach us at <Email/>.</p>

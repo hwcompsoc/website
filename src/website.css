@@ -252,6 +252,7 @@ ol.guide-list{list-style:decimal}
 .privacy-content :is(p,li) .text-link svg{display:inline;margin-left:4px;vertical-align:-3px}
 .privacy-updated{font-size:14px;color:var(--text-quiet)}
 .privacy-contents{margin:0 0 8px;padding:20px 24px;background:var(--tint);border:1px solid var(--line);border-radius:4px}
+.privacy-content .privacy-contents-label{margin:0 0 8px;font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text)}
 .privacy-content .privacy-contents ul{margin:0;padding:0;list-style:none;gap:0}
 .privacy-contents a{display:flex;align-items:center;min-height:32px;font-weight:600;color:var(--ink)}
 .privacy-contents a:hover{text-decoration:underline}
