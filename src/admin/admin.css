@@ -14,7 +14,7 @@
 .admin-main{min-width:0;outline:none}
 .admin-page{max-width:1120px;padding:40px 40px 72px}
 .admin-narrow{max-width:680px}
-.admin-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+.admin-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;min-height:44px;margin-bottom:28px}
 .admin-page h1,.admin-focus h1,.admin-login h1{margin:0;font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-.8px;color:var(--ink);outline:none}
 .admin-page h2,.admin-card h2{margin:0;font-size:18px;font-weight:700;line-height:1.3;letter-spacing:-.1px;color:var(--ink)}
 .admin-event-head{flex-wrap:nowrap;align-items:flex-start}
@@ -56,15 +56,15 @@
 .admin-tabs a:focus-visible{outline-offset:0}
 .admin-tabs a span{font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text)}
 .admin-tabs a[aria-current=page]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-strong)}
-.admin-search{position:relative;width:240px;max-width:100%}
+.admin-search{position:relative;width:200px;max-width:100%}
 .admin-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-quiet)}
-.admin-search input{padding-left:32px;background:var(--surface);border-color:var(--line-strong)}
+.admin-search input{height:44px;padding-left:32px;background:var(--surface);border-color:var(--line-strong)}
 
 .admin-field{display:flex;flex-direction:column;gap:7px;margin-bottom:20px;width:100%;min-width:0}
 .admin-field>label,.admin-choice legend{font-size:14px;font-weight:600;color:var(--ink)}
 .admin-field small{font-size:13px;line-height:1.45;color:var(--text-quiet)}
 .admin-field input,.admin-field textarea,.admin-select{border:1px solid var(--dots);border-radius:4px;background:var(--surface);color:var(--ink)}
-.admin-field input,.admin-select{height:42px;font-size:15px}
+.admin-field input,.admin-select{height:44px;font-size:15px}
 .admin-field textarea{font-size:15px;line-height:1.5}
 .admin-select{width:100%;padding:0 10px}
 .admin-field[data-invalid] input,.admin-field[data-invalid] textarea{border-color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger)}
@@ -222,7 +222,7 @@
 .admin-copy{font-size:12px}
 .admin-link-form{display:flex;align-items:flex-start;gap:10px;width:100%}
 .admin-link-form .admin-field{flex:1;margin:0}
-.admin-link-form button{margin-top:28px;height:42px}
+.admin-link-form button{margin-top:28px;height:44px}
 .admin-message{width:100%;margin:0;padding:12px 14px;background:var(--tint-soft);border:1px solid var(--line);font-family:inherit;font-size:14px;line-height:1.5;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
 .admin-publish{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:22px}
 .admin-publish small{font-size:13px;color:var(--text-quiet)}
@@ -268,17 +268,17 @@
 .admin-sk-date{flex:none;height:14px;width:48px}
 .admin-sk-side{flex:none;height:14px;width:110px}
 .admin-sk-tabs{height:44px;width:min(380px,100%)}
-.admin-sk-search{height:36px;width:240px;max-width:100%}
+.admin-sk-search{height:44px;width:200px;max-width:100%}
 .admin-sk-label{height:14px;width:110px;margin-bottom:8px}
-.admin-sk-input{height:42px;width:100%}
+.admin-sk-input{height:44px;width:100%}
 .admin-sk-textarea{height:120px;width:100%}
 .admin-sk-step{display:flex;align-items:center;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line)}
 .admin-sk-mark{flex:none;width:24px;height:24px}
-.admin-sk-button{height:42px;width:140px;margin-top:22px}
+.admin-sk-button{height:44px;width:140px;margin-top:22px}
 .admin-sk-detail{margin-top:18px}
 .admin-sk-detail .admin-sk-line{width:80%}
 
-@media(max-width:1000px){.admin-event-grid{grid-template-columns:minmax(0,1fr)}.admin-details{order:-1}.admin-focus-body[data-wide]{grid-template-columns:minmax(0,1fr);max-width:600px}}
+@media(max-width:1000px){.admin-event-grid{grid-template-columns:minmax(0,1fr)}.admin-focus-body[data-wide]{grid-template-columns:minmax(0,1fr);max-width:600px}}
 @media(max-width:800px){
 .admin-shell{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
 .admin-side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);overflow:visible}
@@ -310,6 +310,13 @@
 /* As on the public site: typed text wraps rather than widening the page. */
 .admin-crumb,.admin-team h2,.admin-team small,.admin-team-people b,.admin-faq-answer,.admin-row-main small,.admin-details dd,.admin-preview h2,.admin-preview h3,.admin-preview p,.admin-message{overflow-wrap:anywhere;min-width:0}
 @media(max-width:800px){
-.admin-field input,.admin-select{height:44px}
 .admin-password button{right:0;width:44px;height:44px}
+}
+/* Buttons that sit together share one height, and match the fields beside them. */
+:is(.admin-shell,.admin-focus,.admin-centre,.admin-confirm) .site-button{min-height:44px}
+:is(.admin-step-actions,.admin-actions:not(.admin-cover-actions),.dialog-footer) :is(button,a){height:44px}
+/* Lists with several icon buttons: on a phone the buttons go under the text, or the text has no room. */
+@media(max-width:520px){
+.admin-person:has(.admin-move){flex-wrap:wrap}
+.admin-person:has(.admin-move) .admin-row-main{flex-basis:100%}
 }

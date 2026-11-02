@@ -30,7 +30,7 @@ p,h1,h2,h3,h4,h5,h6,li,pre,code,blockquote,input:not([type=checkbox]):not([type=
 .value-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 .value-list>li{display:grid;grid-template-columns:4rem minmax(0,1fr) minmax(0,1.1fr);gap:24px;align-items:baseline;padding:28px 0;border-bottom:1px solid var(--line)}
 .value-num{font-family:var(--font-pixel);font-size:var(--pixel-lg);color:var(--accent-text)}
-.value-list h3{margin:0;font-size:clamp(26px,3vw,40px);line-height:1.1;letter-spacing:-1px}
+.value-list h3{margin:0;font-size:clamp(26px,2.4vw,30px);line-height:1.1;letter-spacing:-1px}
 .value-list p{margin:0;max-width:460px;font-size:16px}
 @media(max-width:800px){
 .value-list>li{grid-template-columns:3rem minmax(0,1fr);row-gap:10px;padding:22px 0}
@@ -51,6 +51,11 @@ p,h1,h2,h3,h4,h5,h6,li,pre,code,blockquote,input:not([type=checkbox]):not([type=
 .value-list>li:last-child{border-bottom:0}
 /* Multi-line headings share their words evenly instead of stranding one word on the last line */
 h1,h2,h3{text-wrap:balance}
+/* Paragraphs avoid ending on a single stranded word. */
+p,li{text-wrap:pretty}
+/* Short pages keep the footer at the bottom of the screen. */
+div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
+.site-header~main{flex:1 0 auto;min-width:0}
 /* Footer rows: logo and links, then contact and legal */
 .footer-main,.footer-bottom,.footer-contact,.footer-legal{display:flex;align-items:center;flex-wrap:wrap}
 .footer-main,.footer-bottom{justify-content:space-between}
