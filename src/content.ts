@@ -1,6 +1,8 @@
 import live from './generated/events.json' with {type:'json'};
 import teams from './generated/committee.json' with {type:'json'};
 import faqRows from './generated/faqs.json' with {type:'json'};
+import guides from './generated/guides.json' with {type:'json'};
+import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
 export const titles={notfound:'File not found',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
@@ -17,13 +19,11 @@ export const committee=liveCommittee(teams as LiveTeam[]);
 export type Faq={id:string;question:string;answer:string};
 export const faqs=faqRows as Faq[];
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
-export const resources=[
- {id:'git',title:'Git, without the guesswork.',category:'Learning',description:'A short introduction to repositories, commits and a useful first workflow.',type:'Starter guide',minutes:'5 min',icon:'code'},
- {id:'web',title:'Make your first web page.',category:'Learning',description:'Meet HTML, CSS and the small steps that turn an idea into something you can open.',type:'Workshop notes',minutes:'6 min',icon:'web'},
- {id:'contribute',title:'Make a small contribution.',category:'Community',description:'Find a manageable task, explain your change and ask someone to review it.',type:'Contribution guide',minutes:'4 min',icon:'branch'},
- {id:'support',title:'You don’t have to figure it out alone.',category:'Support',description:'A proposed home for official academic and wellbeing support destinations.',type:'Support directory',minutes:'Preview',icon:'heart'},
-] as const;
-export type Resource=typeof resources[number];
+// Guides (Resources), from the admin. Anything still a draft never reaches the site.
+export type LiveGuide={slug:string;title:string;category:string;kind:string;description:string;body:string;status:string;reviewed_on:string|null};
+export const liveGuide=(row:LiveGuide)=>({id:row.slug,title:row.title,category:row.category,description:row.description,type:row.kind,minutes:`${readingMinutes(row.body)} min`,body:row.body,sample:row.status==='sample',reviewed:row.reviewed_on?new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',month:'long',year:'numeric'}).format(new Date(`${row.reviewed_on}T00:00:00Z`)):''});
+export type Resource=ReturnType<typeof liveGuide>;
+export const resources=(guides as LiveGuide[]).map(liveGuide);
 // Events are copied in from Supabase when the site builds.
 export type LiveEvent={slug:string;title:string;category:string;level:string;starts_at:string;ends_at:string;venue:string;description:string;signup_required:boolean;luma_url:string|null;status:string;cover_path?:string|null;cover_alt?:string};
 const icsTime=(ms:number|string)=>new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g,'');

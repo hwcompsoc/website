@@ -258,3 +258,11 @@ h1,h2,h3{text-wrap:balance}
 .calendar-copy label{font-size:13px;color:var(--text)}
 .calendar-copy input{width:100%;min-width:0;height:36px;padding:0 10px;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:4px}
 .calendar-copy button{justify-self:start}
+
+/* Guides: what the committee writes, and the Sample tag on a card */
+.guide-list{margin:0 0 16px;padding-left:22px;display:grid;gap:6px;font-size:14px;line-height:1.6}
+ul.guide-list{list-style:disc}
+ol.guide-list{list-style:decimal}
+.guide-link{color:var(--accent-text);font-weight:600;text-decoration:underline}
+.guide-reviewed{margin:0 0 12px;font-size:13px;color:var(--text-quiet)}
+.resource-sample{margin-left:8px}

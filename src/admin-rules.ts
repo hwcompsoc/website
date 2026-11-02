@@ -50,9 +50,10 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
  if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'))return {name:a};
+ if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
 // Only ever return to somewhere inside the admin area after signing in.
@@ -116,3 +117,20 @@ export const committeePhase=(saved:SiteTeam[]|undefined,site:SiteTeam[]|null):Si
 export type SiteFaq={question:string;answer:string};
 const shownFaqs=(faqs:SiteFaq[])=>JSON.stringify(faqs.map(faq=>[faq.question,faq.answer]));
 export const faqPhase=(saved:SiteFaq[]|undefined,site:SiteFaq[]|null):SitePhase=>phaseFrom(saved?shownFaqs(saved):null,site&&shownFaqs(site));
+
+// Guides. A draft only needs a title. Anything on the site must be complete, and a confirmed guide needs someone looking after it.
+export const GUIDE_CATEGORIES=['Learning','Community','Support'] as const;
+export const GUIDE_KINDS=['Starter guide','Workshop notes','Contribution guide','Support directory'];
+export type GuideStatus='draft'|'sample'|'confirmed';
+export type Guide={id?:string;slug:string;title:string;category:typeof GUIDE_CATEGORIES[number];kind:string;description:string;body:string;status:GuideStatus;maintainer:string;reviewed_on:string|null;position?:number;published_at?:string|null};
+export const blankGuide=():Guide=>({slug:'',title:'',category:'Learning',kind:'Starter guide',description:'',body:'',status:'draft',maintainer:'',reviewed_on:null});
+// The only fields a form may send: never the id or published time.
+export function guideEditable(guide:Guide){const {slug,title,category,kind,description,body,status,maintainer,reviewed_on}=guide;return {slug,title,category,kind,description,body,status,maintainer,reviewed_on}}
+export function guideProblems(guide:Guide):Problems{const found:Problems={};if(!guide.title.trim())found.title='Give the guide a title.';if(guide.status==='draft')return found;if(!guide.kind.trim())found.kind='Say what type of guide it is.';if(!guide.description.trim())found.description='Add a short description for the card.';if(!guide.body.trim())found.body='Write the guide first.';if(guide.status==='confirmed'&&!guide.maintainer.trim())found.maintainer='Name who looks after this guide.';return found}
+// Today in the UK, as a plain date.
+export const todayInUk=(now=Date.now())=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
+// A guide is due another look a year after its last review.
+export function reviewDue(reviewed:string|null|undefined,now=Date.now()){if(!reviewed)return false;const due=new Date(`${reviewed}T00:00:00Z`);due.setUTCFullYear(due.getUTCFullYear()+1);return now>=due.getTime()}
+export type SiteGuide=Pick<Guide,'slug'|'title'|'category'|'kind'|'description'|'body'|'status'|'reviewed_on'>;
+const shownGuides=(guides:SiteGuide[])=>JSON.stringify(guides.filter(guide=>guide.status!=='draft').map(guide=>[guide.slug,guide.title,guide.category,guide.kind,guide.description,guide.body,guide.status,guide.reviewed_on??null]));
+export const guidePhase=(saved:SiteGuide[]|undefined,site:SiteGuide[]|null):SitePhase=>phaseFrom(saved?shownGuides(saved):null,site&&shownGuides(site));

@@ -146,6 +146,26 @@
 .admin-team{padding:16px 20px}
 .admin-committee-site{margin-bottom:16px}
 .admin-faq-head{align-items:flex-start}
+.admin-rows .admin-guide-link{flex:1;min-width:0;min-height:0;padding:0;gap:0;color:inherit;text-decoration:none;display:block;text-align:left;overflow-wrap:anywhere}
+.admin-rows .admin-guide-link:hover{background:none}
+.admin-rows .admin-guide-link:hover b{text-decoration:underline}
+.admin-guide-link b{display:block}
+.admin-guide-link small{display:block;margin-top:2px}
+.admin-rows .admin-guide-open{display:inline-flex;flex:none;min-height:0;padding:0;gap:0;color:var(--ink)}
+.admin-rows .admin-guide-open:hover{background:none}
+.admin-guide-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start}
+.admin-guide-body{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.55}
+.admin-guide-actions{flex-wrap:wrap;margin-top:8px}
+.admin-guide-preview{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto}
+.admin-guide-preview h2{margin:0 0 14px;font-size:24px;color:var(--ink);overflow-wrap:anywhere}
+.admin-guide-preview .guide-content{overflow-wrap:anywhere}
+.admin-cheatsheet{margin:-8px 0 20px;font-size:14px;color:var(--text)}
+.admin-cheatsheet summary{font-weight:600;color:var(--ink);cursor:var(--site-pointer,pointer)}
+.admin-cheatsheet dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:10px 0}
+.admin-cheatsheet dd{margin:0}
+.admin-cheatsheet p{margin:0}
+@media(max-width:1000px){.admin-guide-grid{grid-template-columns:minmax(0,1fr)}.admin-guide-preview{position:static;max-height:none}}
+@media(max-width:520px){.admin-person:has(.admin-guide-link){flex-wrap:wrap}.admin-rows .admin-guide-link{flex-basis:100%}}
 .admin-faq-answer{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--text);overflow-wrap:anywhere;white-space:pre-line}
 .admin-team-head{display:flex;align-items:center;gap:4px}
 .admin-team-head .admin-row-main{flex:1;min-width:0;margin-right:8px}
