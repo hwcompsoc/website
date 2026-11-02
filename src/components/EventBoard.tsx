@@ -24,7 +24,7 @@ function EventRow({event:e,entering,replay,onOpen}:{event:Event;entering:boolean
   <span className="board-time"><FlipText value={start} replay={replay}/></span>
   <span className="board-cat">{e.category}</span>
   <div className="board-main"><h3><button type="button" className="board-open" onClick={()=>onOpen(e,date.current!.getBoundingClientRect())}>{e.title}<span className="sr-only">, view details</span></button></h3><span className="board-venue">{e.venue}</span></div>
-  <span className="board-level">{e.level}<span className="board-sample">Sample event</span></span>
+  <span className="board-level">{e.level}{e.cancelled&&<span className="board-sample">Cancelled</span>}</span>
   <ArrowRight className="board-arrow" aria-hidden="true"/>
  </PixelBuild>;
 }

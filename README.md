@@ -23,4 +23,10 @@ npm test
 - `src/website.css`: styles, with the colour tokens and the dark theme. `src/motion.css`: motion component styles.
 - `src/theme.ts`: light and dark themes. A short script in `index.html` applies the theme before first paint, so keep the two in step.
 
+## Events
+
+The committee manages events at `/admin`, a separate site in `src/admin` that loads only for people who open it. They sign in with a password. Events live in Supabase, and the rules for who can do what, and for what an event needs before it can go live, are in `supabase/migrations`. The site copies live events in when it builds (`scripts/fetch-events.mjs`), and publishing triggers a rebuild.
+
+To change who has access, edit the `committee_members` table in Supabase, then run `node scripts/committee-accounts.mjs`. It creates missing accounts and prints temporary passwords, which people must change when they first sign in. `--reset <email>` replaces a forgotten password, and `--remove-old` deletes accounts for people no longer on the list. It needs the Supabase secret key, so run it in your own terminal. The addresses aren't kept in this repository, because it's public.
+
 `scripts/qa`, `qa` and the planning notes are local and ignored by git.

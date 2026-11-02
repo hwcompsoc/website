@@ -1,15 +1,10 @@
+import live from './generated/events.json' with {type:'json'};
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
 export const pages=[{id:'home',name:'Home'},{id:'join',name:'Join'},{id:'events',name:'Events'},{id:'resources',name:'Resources'},{id:'about',name:'About'},{id:'partners',name:'Partners'}] as const;
 export type Page=typeof pages[number]['id'];
 export type View=Page|'notfound';
 export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
-export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean};
-export const events:Event[]=[
- {id:'web',title:'Your first web app',category:'Workshop',day:'12',month:'NOV',date:'Thursday 12 November 2026',time:'17:30–19:00 GMT',venue:'Campus venue · placeholder',description:'Bring a laptop and a little curiosity. Explore the building blocks of a simple web page, together.',level:'Beginner friendly',start:'20261112T173000Z',end:'20261112T190000Z'},
- {id:'social',title:'Meet your computing people',category:'Community',day:'19',month:'NOV',date:'Thursday 19 November 2026',time:'18:00–20:00 GMT',venue:'Campus social space · placeholder',description:'An easy way to meet people across courses and years. No coding experience or preparation needed.',level:'Everyone welcome',start:'20261119T180000Z',end:'20261119T200000Z'},
- {id:'industry',title:'A conversation with industry',category:'Industry',day:'26',month:'NOV',date:'Thursday 26 November 2026',time:'17:30–18:30 GMT',venue:'Speaker and venue · placeholders',description:'A proposed informal conversation about working in tech, with time for questions and connections.',level:'Open discussion',start:'20261126T173000Z',end:'20261126T183000Z'},
- {id:'git',title:'Getting started with Git',category:'Workshop',day:'22',month:'OCT',date:'Thursday 22 October 2026',time:'17:30–19:00 BST',venue:'Example campus space',description:'An archive example showing how past activities and their learning material could be presented.',level:'Past example',start:'20261022T163000Z',end:'20261022T180000Z',past:true},
-];
+export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string};
 // Committee (About). `photo` is the file id in src/website/committee/; people without one get their initials.
 export type Member={name:string;role:string;photo?:string};
 export const committee:{role:string;text:string;members:Member[]}[]=[
@@ -30,8 +25,15 @@ export const resources=[
  {id:'support',title:'You don’t have to figure it out alone.',category:'Support',description:'A proposed home for official academic and wellbeing support destinations.',type:'Support directory',minutes:'Preview',icon:'heart'},
 ] as const;
 export type Resource=typeof resources[number];
-export function filterEvents(category:string,query:string,past:boolean){return events.filter(e=>!!e.past===past&&(category==='All'||e.category===category)&&`${e.title} ${e.description} ${e.category}`.toLowerCase().includes(query.trim().toLowerCase()))}
-export function calendar(event:Event){const escape=(s:string)=>s.replaceAll('\\','\\\\').replaceAll('\n','\\n').replaceAll(',','\\,').replaceAll(';','\\;');return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HW CompSoc//Local Prototype Examples//EN','BEGIN:VEVENT',`UID:prototype-${event.id}@example.invalid`,'DTSTAMP:20261030T120000Z',`DTSTART:${event.start}`,`DTEND:${event.end}`,`SUMMARY:${escape('[PROTOTYPE EXAMPLE] '+event.title)}`,`DESCRIPTION:${escape('Illustrative event only. This is not a confirmed HW activity. '+event.description)}`,`LOCATION:${escape(event.venue)}`,'END:VEVENT','END:VCALENDAR',''].join('\r\n')}
+// Events are copied in from Supabase when the site builds.
+export type LiveEvent={slug:string;title:string;category:string;level:string;starts_at:string;ends_at:string;venue:string;description:string;signup_required:boolean;luma_url:string|null;status:string};
+const icsTime=(ms:number|string)=>new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g,'');
+export function liveEvent(row:LiveEvent,now=Date.now()):Event{const part=(iso:string,options:Intl.DateTimeFormatOptions,type:Intl.DateTimeFormatPartTypes)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',...options}).formatToParts(new Date(iso)).find(p=>p.type===type)?.value??'';const at=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));const s=row.starts_at;
+ return {id:row.slug,title:row.title,category:row.category as Event['category'],level:row.level,venue:row.venue,description:row.description,day:part(s,{day:'2-digit'},'day'),month:part(s,{month:'short'},'month').slice(0,3).toUpperCase(),date:`${part(s,{weekday:'long'},'weekday')} ${part(s,{day:'numeric'},'day')} ${part(s,{month:'long'},'month')} ${part(s,{year:'numeric'},'year')}`,time:`${at(s)}–${at(row.ends_at)} ${part(s,{timeZoneName:'short'},'timeZoneName')}`,start:icsTime(s),end:icsTime(row.ends_at),past:new Date(row.ends_at).getTime()<now,cancelled:row.status==='cancelled',luma:row.signup_required&&row.luma_url?row.luma_url:undefined}}
+const inOrder=(list:Event[])=>[...list.filter(e=>!e.past).sort((a,b)=>a.start.localeCompare(b.start)),...list.filter(e=>e.past).sort((a,b)=>b.start.localeCompare(a.start))];
+export const events:Event[]=inOrder((live as LiveEvent[]).map(row=>liveEvent(row)));
+export function filterEvents(category:string,query:string,past:boolean,list:Event[]=events){return list.filter(e=>!!e.past===past&&(category==='All'||e.category===category)&&`${e.title} ${e.description} ${e.category}`.toLowerCase().includes(query.trim().toLowerCase()))}
+export function calendar(event:Event){const escape=(s:string)=>s.replaceAll('\\','\\\\').replaceAll('\n','\\n').replaceAll(',','\\,').replaceAll(';','\\;');return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HW CompSoc//Events//EN','BEGIN:VEVENT',`UID:${event.id}@hwcompsoc`,`DTSTAMP:${icsTime(Date.now())}`,`DTSTART:${event.start}`,`DTEND:${event.end}`,`SUMMARY:${escape(event.title)}`,`DESCRIPTION:${escape(event.description+(event.luma?`\nSign up: ${event.luma}`:''))}`,`LOCATION:${escape(event.venue)}`,...(event.cancelled?['STATUS:CANCELLED']:[]),'END:VEVENT','END:VCALENDAR',''].join('\r\n')}
 export function enquiryMail(org:string,email:string,format:string,message:string){return `mailto:${links.email}?subject=${encodeURIComponent('Partnership enquiry: '+org)}&body=${encodeURIComponent(`Organisation: ${org}\nReply email: ${email}\nInterested in: ${format}\n\n${message}`)}`}
 // Routes. `/events/web` and `/resources/git` open one item; a Resources filter is a query (`/resources?category=support`), because "support" is also a guide.
 const segments=(path:string)=>path.toLowerCase().split('/').filter(Boolean);

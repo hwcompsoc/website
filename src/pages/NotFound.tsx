@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import {m,animate as run,useMotionValue,useMotionValueEvent} from 'motion/react';
 import {ArrowRight} from 'lucide-react';
 import {Button} from '../components/ui/button';
-import {asset,RouteLink} from '../components/shared';
+import {asset,RouteLink,useNoindex} from '../components/shared';
 import {canonicalPath,suggestPath} from '../content';
 import {useMotionLevel} from '../motion/level';
 import {usePointerLean} from '../motion/usePointerLean';
@@ -34,7 +34,7 @@ export function NotFound(){const level=useMotionLevel();const fire=useClickBurst
  useMotionValueEvent(progress,'change',value=>{dragX.set(value*dragWidth.current);clip.set(`inset(0px ${(1-value)*100}% 0px 0px)`)});
 
  // A wrong address shouldn't be indexed, even though the host answers it with the app.
- useEffect(()=>{const meta=document.createElement('meta');meta.name='robots';meta.content='noindex';document.head.append(meta);return()=>meta.remove()},[]);
+ useNoindex();
 
  useEffect(()=>{if(!animate)return;
   // In viewport pixels. The cursor's outline disappears on the dark "Go home" button, so there it clicks the bottom edge from below and rests underneath.
