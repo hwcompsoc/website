@@ -25,7 +25,7 @@ export function NotOnCommittee({email}:{email:string}){useTitle('No access');ret
 // Not being able to check is different from not being on the list, so it mustn't say the same thing.
 export function CheckFailed(){useTitle('Couldn’t check your access');return <section className="admin-card admin-login"><Logo tone="blue" className="site-logo"/><h1>We couldn’t check your access</h1><p>This is usually a connection problem or an expired sign-in. Try reloading. If that doesn’t work, sign out and back in.</p><div className="admin-actions"><Button className="site-button" onClick={()=>location.reload()}>Reload</Button><Button variant="ghost" onClick={signOut}>Sign out</Button></div></section>}
 
-export function NotFoundPage(){useTitle('Page not found');return <section className="admin-page admin-narrow"><h1>Page not found</h1><p>There’s nothing at this address in the admin area.</p><a className="text-link" href="/admin">Back to the overview<ArrowRight size={16} aria-hidden="true"/></a></section>}
+export function NotFoundPage(){useTitle('Page not found');return <section className="admin-page admin-narrow"><header className="admin-head"><h1>Page not found</h1></header><p className="admin-quiet admin-people-intro">There’s nothing at this address in the admin area.</p><a className="text-link" href="/admin">Back to the overview<ArrowRight size={16} aria-hidden="true"/></a></section>}
 
 const NewButton=()=><Button asChild className="site-button"><a href="/admin/events/new"><Plus aria-hidden="true"/>New event</a></Button>;
 

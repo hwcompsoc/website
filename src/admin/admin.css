@@ -25,6 +25,8 @@
 .admin-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:var(--space-24)}
 .admin-block{margin-bottom:var(--space-32)}
 .admin-block>h2{margin-bottom:var(--space-16)}
+/* The same height as a header row with a link in it, so section headings sit the same distance from their lists. */
+.admin-block:has(+.admin-block>.admin-block-head)>h2{display:flex;align-items:center;min-height:44px}
 .admin-block-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-12);min-height:44px;margin-bottom:var(--space-16)}
 .admin-empty{margin:0;padding:var(--space-24);border:1px dashed var(--line-strong);border-radius:var(--radius);color:var(--text);background:var(--surface)}
 .admin-quiet{color:var(--text-quiet);font-size:var(--fs-body)}
@@ -89,7 +91,7 @@
 .admin-error{margin:0 0 var(--space-16);padding:var(--space-12) var(--space-16);border-left:4px solid var(--danger);background:var(--tint-soft);color:var(--ink);font-size:var(--fs-body)}
 .admin-notice{margin:0 0 var(--space-16);font-size:var(--fs-body);font-weight:600;color:var(--ink)}
 .admin-notice:empty{display:none}
-.admin-callout{margin:0 0 var(--space-24);padding:var(--space-12) var(--space-16);background:var(--tint);border-left:4px solid var(--select-strong);font-size:var(--fs-body);line-height:1.6;color:var(--ink)}
+.admin-callout{max-width:600px;margin:0 0 var(--space-24);padding:var(--space-12) var(--space-16);background:var(--tint);border-left:4px solid var(--select-strong);font-size:var(--fs-body);line-height:1.6;color:var(--ink)}
 .admin-form-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:var(--space-24);margin-bottom:var(--space-16)}
 .admin-form-block>h2{margin-bottom:var(--space-16)}
 .admin-danger{background:var(--danger);color:var(--surface)}
