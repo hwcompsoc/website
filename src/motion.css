@@ -84,7 +84,9 @@
 .board-date{font-size:16px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
 .board-time{font-size:14px}
 .board-cat{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent-text)}
-.board-main{min-width:0}
+.board-main{min-width:0;display:flex;align-items:center;gap:16px}
+.board-text{min-width:0}
+.board-cover{flex:none;display:block;width:96px;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
 .board-main h3{font-size:19px;line-height:1.3;margin:0 0 4px}
 .board-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left}
 .board-open::after{content:'';position:absolute;inset:0;z-index:2}
@@ -101,6 +103,9 @@
 .dialog-date span{font-weight:700;letter-spacing:1.2px}
 /* The event body is wrapped for its pixel build; keep the dialog's own spacing and paragraph style inside the wrapper. */
 .dialog-build{display:grid;gap:20px}
+.detail-cover{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
+/* The cover makes the dialog taller than most laptop screens, so its actions stay in view. Phones stack them, which would cover too much. */
+@media(min-width:801px){.dialog-build>.dialog-actions{position:sticky;bottom:-32px;z-index:1;padding-block:14px;background:var(--surface);border-top:1px solid var(--line)}}
 .dialog-build>p{font-size:13px;margin:0}
 
 /* Hero panel words: each rises out of its own mask; padding keeps descenders (y, g) unclipped */
