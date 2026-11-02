@@ -53,7 +53,7 @@
 .admin-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
 .admin-tabs{display:flex;flex-wrap:wrap;gap:2px;background:var(--tint);padding:4px;border-radius:4px}
 .admin-tabs a{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:4px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none}
-.admin-tabs a span{font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text-quiet)}
+.admin-tabs a span{font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text)}
 .admin-tabs a[aria-current=page]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-strong)}
 .admin-search{position:relative;width:240px;max-width:100%}
 .admin-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-quiet)}
@@ -91,8 +91,8 @@
 .admin-callout{margin:0 0 24px;padding:12px 16px;background:var(--tint);border-left:4px solid var(--select-strong);font-size:14px;line-height:1.5;color:var(--ink)}
 .admin-form-block{background:var(--surface);border:1px solid var(--line);padding:24px;margin-bottom:20px}
 .admin-form-block>h2{margin-bottom:18px}
-.admin-danger{background:var(--danger);color:#fff}
-.admin-danger:hover{background:var(--danger);opacity:.9}
+.admin-danger{background:var(--danger);color:var(--surface)}
+.admin-danger:hover{background:var(--danger);color:var(--surface);opacity:.9}
 
 .admin-centre{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--tint-soft);outline:none}
 .admin-login{width:100%;max-width:420px;padding:32px}
@@ -128,13 +128,13 @@
 .admin-preview-cover{margin:6px 0 14px}
 .admin-details-cover{max-width:240px}
 .admin-cover-frame{position:relative;display:grid;place-items:center;width:100%;padding:0;aspect-ratio:16/9;overflow:hidden;background:var(--tint);border:1px dashed var(--line-strong);color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:var(--site-pointer,pointer);transition:border-color var(--dur-hover) ease,background-color var(--dur-hover) ease}
-.admin-cover-frame:is(:hover,:focus-visible,[data-drag]):not(:disabled){border-color:var(--select-strong);border-style:solid}
+.admin-cover-frame:is(:hover,:focus-visible,[data-drag]):not(:disabled){border-color:var(--accent-text);border-style:solid}
 .admin-cover-frame:is(:hover,[data-drag]):not(:disabled,:has(img)){background:var(--surface)}
-.admin-cover-frame:focus-visible{outline:2px solid var(--select-strong);outline-offset:2px}
+.admin-cover-frame:focus-visible{outline:2px solid var(--accent-text);outline-offset:2px}
 .admin-cover-frame:disabled{cursor:progress}
 .admin-cover-frame svg{flex:none}
 .admin-cover-prompt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px;text-align:center}
-.admin-cover-prompt svg{width:28px;height:28px;color:var(--select-strong)}
+.admin-cover-prompt svg{width:28px;height:28px;color:var(--accent-text)}
 .admin-cover-badge{position:absolute;right:8px;bottom:8px;display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:13px;background:var(--surface);border:1px solid var(--line-strong);transition:background-color var(--dur-hover) ease,color var(--dur-hover) ease}
 .admin-cover-badge svg{width:15px;height:15px}
 .admin-cover-frame:is(:hover,:focus-visible,[data-drag]):not(:disabled) .admin-cover-badge{background:var(--select-strong);border-color:var(--select-strong);color:var(--on-accent)}
