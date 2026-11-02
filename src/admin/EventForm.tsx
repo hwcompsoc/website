@@ -7,7 +7,8 @@ import {Checkbox} from '../components/ui/checkbox';
 import {Logo} from '../components/Logo';
 import {go,onRouteChange} from '../router';
 import {blankEvent,descriptionProblems,fullDate,isoToWhen,shortDate,slugAttempt,slugify,timeRange,titleProblems,whenProblems,whenToIso,type AdminEvent,type Problems,type When} from '../admin-rules';
-import {Failure,Field,Loading,fieldProps,loadEvent,saveEvent,useLoad,useTitle} from './ui';
+import {Failure,Field,fieldProps,loadEvent,saveEvent,useLoad,useTitle} from './ui';
+import {EditSkeleton,StepSkeleton} from './skeletons';
 
 const LEVELS=['Everyone welcome','Beginner friendly','Open discussion'];
 const LAST_STEP=3;
@@ -42,14 +43,14 @@ export function NewEvent(){const step=useSyncExternalStore(onRouteChange,()=>Mat
  async function exit(){if(!event.id&&!event.title.trim()){go('/admin/events');return}if(!titleProblems(event).title){setBusy(true);try{const saved=await persist();setBusy(false);go(`/admin/events/${saved.id}`);return}catch(failure){setError((failure as Error).message);setBusy(false);return}}go('/admin/events')}
  return <><header className="admin-focus-top"><Logo tone="blue" className="site-logo"/><span className="admin-focus-title">New event</span><Button variant="ghost" size="sm" disabled={busy} onClick={exit}><X aria-hidden="true"/>{event.id||event.title.trim()?'Save and exit':'Close'}</Button></header>
   <div className="admin-steps"><div className="admin-steps-bar" role="progressbar" aria-label="Progress" aria-valuemin={1} aria-valuemax={LAST_STEP} aria-valuenow={step} aria-valuetext={`Step ${step} of ${LAST_STEP}: ${titles[step-1]}`}>{titles.map((title,i)=><i key={title} data-done={i<step||undefined}/>)}</div></div>
-  {loading?<Loading/>:<div className="admin-focus-body" data-wide={step===LAST_STEP||undefined}><form ref={form} onSubmit={submit} noValidate><span className="admin-label">Step {step} of {LAST_STEP}</span><h1 ref={heading} tabIndex={-1}>{titles[step-1]}</h1>
+  {loading?<StepSkeleton/>:<div className="admin-focus-body" data-wide={step===LAST_STEP||undefined}><form ref={form} onSubmit={submit} noValidate><span className="admin-label">Step {step} of {LAST_STEP}</span><h1 ref={heading} tabIndex={-1}>{titles[step-1]}</h1>
    {step===1&&<BasicsFields event={event} change={change} problems={problems}/>}{step===2&&<WhenFields when={when} setWhen={setWhen} venue={event.venue} setVenue={venue=>change({venue})} problems={problems}/>}{step===3&&<DescriptionField event={event} change={change} problems={problems}/>}
    <Failure>{error}</Failure><div className="admin-step-actions">{step>1?<Button type="button" variant="ghost" disabled={busy} onClick={()=>go(`/admin/events/new?draft=${event.id}&step=${step-1}`)}><ArrowLeft aria-hidden="true"/>Back</Button>:<span/>}<Button type="submit" className="site-button" disabled={busy}>{busy?'Saving…':step===LAST_STEP?'Finish':'Continue'}{!busy&&<ArrowRight aria-hidden="true"/>}</Button></div></form>{step===LAST_STEP&&<Preview event={withWhen()}/>}</div>}</>}
 
 function Section({title,children}:{title:string;children:ReactNode}){return <section className="admin-block admin-form-block"><h2>{title}</h2>{children}</section>}
 
 // Every field on one page, because fixing a venue shouldn't mean walking back through the steps.
-export function EditEvent({id}:{id:string}){const {data,error:loadError,loading}=useLoad(()=>loadEvent(id),id);if(loading)return <Loading/>;if(!data)return <section className="admin-page"><Failure>{loadError??'That event doesn’t exist.'}</Failure><a className="text-link" href="/admin/events">Back to events</a></section>;return <EditForm initial={data}/>}
+export function EditEvent({id}:{id:string}){const {data,error:loadError,loading}=useLoad(()=>loadEvent(id),id);if(loading)return <EditSkeleton/>;if(!data)return <section className="admin-page"><Failure>{loadError??'That event doesn’t exist.'}</Failure><a className="text-link" href="/admin/events">Back to events</a></section>;return <EditForm initial={data}/>}
 function EditForm({initial}:{initial:AdminEvent}){useTitle(`Edit ${initial.title}`);const [event,setEvent]=useState(initial);const [when,setWhen]=useState(()=>isoToWhen(initial.starts_at,initial.ends_at));const [problems,setProblems]=useState<Problems>({});const [error,setError]=useState('');const [busy,setBusy]=useState(false);const form=useRef<HTMLFormElement>(null);const [dirty,setDirty]=useState(false);
  const change=(c:Partial<AdminEvent>)=>{setEvent(old=>({...old,...c}));setDirty(true)};const back=`/admin/events/${initial.id}`;const locked=!!initial.published_at;
  useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>e.preventDefault();addEventListener('beforeunload',warn);return()=>removeEventListener('beforeunload',warn)},[dirty]);

@@ -6,7 +6,8 @@ import {Logo} from '../components/Logo';
 import {onRouteChange} from '../router';
 import {supabase} from '../supabase';
 import {PASSWORD_MIN,eventTab,fullDate,nextStep,passwordProblem,shortDate,timeRange,type AdminEvent,type EventTab} from '../admin-rules';
-import {Failure,Field,Loading,PasswordInput,Progress,Status,fieldProps,loadEvents,useLoad,useTitle} from './ui';
+import {Failure,Field,PasswordInput,Progress,Status,fieldProps,loadEvents,useLoad,useTitle} from './ui';
+import {EventsSkeleton,OverviewSkeleton} from './skeletons';
 import {signOut} from './App';
 
 export function Login(){useTitle('Sign in');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');
@@ -30,7 +31,7 @@ const NewButton=()=><Button asChild className="site-button"><a href="/admin/even
 
 export function Overview(){useTitle('Overview');const {data,error,loading}=useLoad(loadEvents,'overview');const now=Date.now();
  const drafts=(data??[]).filter(e=>e.status==='draft');const coming=(data??[]).filter(e=>eventTab(e,now)==='upcoming').sort((a,b)=>(a.starts_at??'').localeCompare(b.starts_at??'')).slice(0,3);
- return <section className="admin-page"><header className="admin-head"><h1>Overview</h1><NewButton/></header><Failure>{error}</Failure>{loading&&!data?<Loading/>:data&&<>
+ return <section className="admin-page"><header className="admin-head"><h1>Overview</h1><NewButton/></header><Failure>{error}</Failure>{loading&&!data?<OverviewSkeleton/>:data&&<>
   <section className="admin-block" aria-labelledby="needs"><h2 id="needs">Needs finishing</h2>{drafts.length?<ul className="admin-rows">{drafts.map(event=><li key={event.id}><a href={`/admin/events/${event.id}`}><span className="admin-row-main"><b>{event.title}</b><small>{nextStep(event)?`Next: ${nextStep(event)}`:'Ready to publish'}</small></span><Progress event={event}/><ArrowRight size={18} aria-hidden="true"/></a></li>)}</ul>:<p className="admin-empty">No drafts. Everything you’ve started is finished.</p>}</section>
   <section className="admin-block" aria-labelledby="coming"><div className="admin-block-head"><h2 id="coming">Coming up</h2><a className="text-link" href="/admin/events?tab=upcoming">All upcoming<ArrowRight size={17} aria-hidden="true"/></a></div>{coming.length?<ul className="admin-rows">{coming.map(event=><li key={event.id}><a href={`/admin/events/${event.id}`}><span className="admin-row-date">{shortDate(event.starts_at)}</span><span className="admin-row-main"><b>{event.title}</b><small>{event.venue}</small></span><ArrowRight size={18} aria-hidden="true"/></a></li>)}</ul>:<p className="admin-empty">Nothing live yet. Start with “New event”.</p>}</section></>}</section>}
 
@@ -39,7 +40,7 @@ export function EventsList(){useTitle('Events');useSyncExternalStore(onRouteChan
  const grouped=useMemo(()=>Object.fromEntries(tabs.map(({id})=>[id,(data??[]).filter(e=>eventTab(e,now)===id)])) as Record<EventTab,AdminEvent[]>,[data]);
  const asked=new URLSearchParams(location.search).get('tab') as EventTab|null;const tab=tabs.some(t=>t.id===asked)?asked!:tabs.find(t=>grouped[t.id].length)?.id??'drafts';
  const list=grouped[tab].filter(e=>`${e.title} ${e.venue}`.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>tab==='past'?(b.starts_at??'').localeCompare(a.starts_at??''):(a.starts_at??'').localeCompare(b.starts_at??''));
- return <section className="admin-page"><header className="admin-head"><h1>Events</h1><NewButton/></header><Failure>{error}</Failure>{loading&&!data?<Loading/>:data&&<>
+ return <section className="admin-page"><header className="admin-head"><h1>Events</h1><NewButton/></header><Failure>{error}</Failure>{loading&&!data?<EventsSkeleton/>:data&&<>
   <div className="admin-tools"><nav aria-label="Event status" className="admin-tabs">{tabs.map(({id,label})=><a key={id} href={`/admin/events?tab=${id}`} aria-current={tab===id?'page':undefined}>{label}<span>{grouped[id].length}</span></a>)}</nav><div className="admin-search"><Search size={16} aria-hidden="true"/><Input aria-label="Search events" placeholder="Search" value={query} onChange={e=>setQuery(e.target.value)}/></div></div>
   {list.length?<ul className="admin-rows">{list.map(event=><li key={event.id}><a href={`/admin/events/${event.id}`}><span className="admin-row-date">{shortDate(event.starts_at)}</span><span className="admin-row-main"><b>{event.title}</b><small>{event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'No date yet'}</small></span>{event.status==='draft'?<Progress event={event}/>:<Status event={event}/>}<ArrowRight size={18} aria-hidden="true"/></a></li>)}</ul>:<p className="admin-empty">{query?'No events match that search.':`No ${tabs.find(t=>t.id===tab)!.label.toLowerCase()} events.`}</p>}</>}</section>}
 

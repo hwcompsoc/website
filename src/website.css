@@ -228,3 +228,20 @@ h1,h2,h3{text-wrap:balance}
 .nf-home-label{display:inline-flex;align-items:center;gap:8px}
 @media(max-width:1050px){.nf-code{font-size:132px}.nf-body{gap:32px}}
 @media(max-width:800px){.nf-body{grid-template-columns:1fr;gap:16px}.nf-code{font-size:88px}.not-found{padding-bottom:64px}}
+/* Shared loading parts. They live here because they show before the admin's own styles arrive. */
+.skeleton{background:var(--tint);animation:skeleton-pulse 1.6s ease-in-out infinite}
+@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.admin-boot{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--tint-soft);text-align:center}
+.admin-boot .site-logo{display:block;margin:0 auto}
+.admin-boot-pixels{display:flex;justify-content:center;gap:6px;margin-top:20px}
+.admin-boot-pixels i{width:8px;height:8px;background:var(--select-strong);opacity:.2;animation:boot-pixel 1.2s linear infinite;animation-delay:var(--boot-offset,0ms)}
+.admin-boot-pixels i:nth-child(2){animation-delay:calc(var(--boot-offset,0ms) + .15s)}
+.admin-boot-pixels i:nth-child(3){animation-delay:calc(var(--boot-offset,0ms) + .3s)}
+.admin-boot-pixels i:nth-child(4){animation-delay:calc(var(--boot-offset,0ms) + .45s)}
+.admin-boot-pixels i:nth-child(5){animation-delay:calc(var(--boot-offset,0ms) + .6s)}
+@keyframes boot-pixel{0%,30%{opacity:1}31%,100%{opacity:.2}}
+.admin-boot-stalled{margin-top:20px;color:var(--ink);font-size:14px}
+.admin-boot-stalled p{margin:0 0 6px}
+.admin-boot-reload{margin-top:10px;padding:10px 18px;border-radius:4px;background:var(--panel);color:var(--on-accent);font-weight:600}
+@media(prefers-reduced-motion:reduce){.skeleton{animation:none}.admin-boot-pixels i{animation:none;opacity:.6}}
+@media(forced-colors:active){.skeleton{background:CanvasText;opacity:.3;animation:none}.admin-boot-pixels i{background:CanvasText;animation:none;opacity:1}}

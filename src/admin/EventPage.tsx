@@ -6,7 +6,8 @@ import {Checkbox} from '../components/ui/checkbox';
 import {Popover,PopoverContent,PopoverTrigger} from '../components/ui/popover';
 import {go} from '../router';
 import {LUMA_CREATE,NATIVE_CREATE,checklist,detailsMissing,eventDetailsText,fullDate,isLink,progress,timeRange,type AdminEvent,type StepId} from '../admin-rules';
-import {ConfirmDialog,CopyButton,Failure,Field,Loading,Progress,Status,deleteEvent,fieldProps,loadEvent,saveEvent,useLoad,useTitle,type Confirm} from './ui';
+import {EventSkeleton} from './skeletons';
+import {ConfirmDialog,CopyButton,Failure,Field,Progress,Status,deleteEvent,fieldProps,loadEvent,saveEvent,useLoad,useTitle,type Confirm} from './ui';
 
 const External=({href,children}:{href:string;children:ReactNode})=><Button asChild variant="outline"><a href={href} target="_blank" rel="noopener noreferrer">{children}<ArrowUpRight aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>;
 
@@ -22,7 +23,7 @@ function Step({number,title,done,open,onToggle,children}:{number:number;title:st
 export function EventPage({id}:{id:string}){const {data,error:loadError,loading,set}=useLoad(()=>loadEvent(id),id);const [open,setOpen]=useState<StepId|null|undefined>(undefined);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);const [confirm,setConfirm]=useState<Confirm|null>(null);const [menu,setMenu]=useState(false);
  useTitle(data?.title??'Event');const firstOpen=(event:AdminEvent)=>checklist(event).find(step=>!step.done)?.id??null;
  useEffect(()=>{if(data&&open===undefined)setOpen(data.status==='draft'?firstOpen(data):null)},[data]);
- if(loading&&!data)return <Loading/>;if(!data)return <section className="admin-page"><h1>Event not found</h1><Failure>{loadError}</Failure><p>It may have been deleted.</p><a className="text-link" href="/admin/events">Back to events</a></section>;
+ if(loading&&!data)return <EventSkeleton/>;if(!data)return <section className="admin-page"><h1>Event not found</h1><Failure>{loadError}</Failure><p>It may have been deleted.</p><a className="text-link" href="/admin/events">Back to events</a></section>;
  const event=data;const isDraft=event.status==='draft';const steps=checklist(event);const {done,total}=progress(event);const ready=done===total;const missing=detailsMissing(event);const number=(step:StepId)=>steps.findIndex(s=>s.id===step)+1;const stepDone=(step:StepId)=>steps.find(s=>s.id===step)?.done??false;
  async function patch(change:Partial<AdminEvent>,message='Saved.'){setBusy(true);setError('');setNotice('');try{const saved=await saveEvent({...event,...change});set(saved);setNotice(message);if(saved.status==='draft')setOpen(firstOpen(saved));else if(change.status)setOpen(null)}catch(failure){setError((failure as Error).message)}setBusy(false)}
  const toggle=(step:StepId)=>setOpen(old=>old===step?null:step);const publicUrl=`/events/${event.slug}`;
