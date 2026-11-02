@@ -50,9 +50,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'))return {name:a};
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
 // Only ever return to somewhere inside the admin area after signing in.

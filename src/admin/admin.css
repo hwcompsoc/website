@@ -141,6 +141,12 @@
 .admin-cover-frame:has(img){border-style:solid;border-color:var(--line)}
 .admin-cover-frame[aria-busy=true] img{opacity:.6}
 .admin-cover-actions{margin:0}
+.admin-people-intro{margin:-8px 0 24px}
+.admin-add-person{margin-bottom:24px}
+.admin-person{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 12px 10px 16px;border-bottom:1px solid var(--line)}
+.admin-person:last-child{border-bottom:0}
+.admin-person .admin-row-main{flex:1;min-width:0;overflow-wrap:anywhere}
+.admin-password-once{display:block;padding:16px;font-size:20px;text-align:center;background:var(--tint);color:var(--ink);user-select:all;overflow-wrap:anywhere}
 
 .admin-event-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start}
 .admin-checklist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
