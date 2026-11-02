@@ -4,6 +4,7 @@ import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
 import {supabase} from '../supabase';
+import {removeFiles} from './files';
 import {DOCUMENT_BUCKET} from '../supabase-config';
 import {documentPhase,documentProblem,documentUrl,moved,nextPosition,readableSize,siteBusy,type Problems,type SiteDocument} from '../admin-rules';
 import {ConfirmDialog,Failure,Field,MoveButtons,fieldProps,friendly,useLoad,useSiteRows,useTitle,type Confirm} from './ui';
@@ -15,7 +16,7 @@ async function loadDocuments(){const {data,error}=await supabase.from('documents
 const check=({error}:{error:{code?:string;message:string}|null})=>{if(error)throw new Error(friendly(error))};
 const readableDate=(date:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(`${date}T00:00:00Z`));
 // A file's address stays public until it's gone, so a replaced or deleted document goes straight away.
-async function removeFile(path:string){const {error}=await supabase.storage.from(DOCUMENT_BUCKET).remove([path]);if(error)console.warn(`Could not remove document ${path}: ${error.message}`)}
+async function removeFile(path:string){await removeFiles(DOCUMENT_BUCKET,[path])}
 async function uploadFile(file:File){const path=`${crypto.randomUUID()}.pdf`;const {error}=await supabase.storage.from(DOCUMENT_BUCKET).upload(path,file,{contentType:'application/pdf',cacheControl:'31536000'});if(error)throw new Error(friendly(error));return path}
 // Checks what's in the file, not only its name.
 const startsAsPdf=async(file:File)=>new TextDecoder().decode(await file.slice(0,5).arrayBuffer())==='%PDF-';

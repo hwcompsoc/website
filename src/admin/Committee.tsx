@@ -6,6 +6,7 @@ import {Textarea} from '../components/ui/textarea';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
 import {initials} from '../content';
 import {supabase} from '../supabase';
+import {removeFiles} from './files';
 import {COMMITTEE_BUCKET,COMMITTEE_SELECT} from '../supabase-config';
 import {PHOTO_MIN,PHOTO_QUALITY,PHOTO_SIZE,committeeNameProblem,committeePhase,moved,nextPosition,photoProblem,photoUrl,siteBusy,type SiteTeam} from '../admin-rules';
 import {SAVED,SAVED_UNKNOWN,SiteProgress,useLiveNotice} from './SiteProgress';
@@ -19,7 +20,7 @@ type Team={id:string;name:string;description:string;position:number;committee_pe
 async function loadTeams(){const {data,error}=await supabase.from('committee_teams').select(COMMITTEE_SELECT).order('position').order('position',{referencedTable:'committee_people'});if(error)throw new Error(friendly(error));return data as unknown as Team[]}
 const check=({error}:{error:{code?:string;message:string}|null})=>{if(error)throw new Error(friendly(error))};
 // An image's address stays public until the file is gone, so a replaced or removed photo goes straight away.
-async function removePhotos(paths:(string|null)[]){const names=paths.filter((path):path is string=>!!path);if(!names.length)return;const {error}=await supabase.storage.from(COMMITTEE_BUCKET).remove(names);if(error)console.warn(`Could not remove photos ${names.join(', ')}: ${error.message}`)}
+async function removePhotos(paths:(string|null)[]){await removeFiles(COMMITTEE_BUCKET,paths.filter((path):path is string=>!!path))}
 async function uploadPhoto(blob:Blob){const path=`${crypto.randomUUID()}.jpg`;const {error}=await supabase.storage.from(COMMITTEE_BUCKET).upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'});if(error)throw new Error(friendly(error));return path}
 
 type TeamDraft={id?:string;name:string;description:string};
