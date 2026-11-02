@@ -73,38 +73,38 @@
 /* Departures board. The whole row is the title button's hit area; hover and keyboard focus share the sweep. */
 .event-board{list-style:none;margin:0;padding:0;border-top:2px solid var(--rule)}
 .board-item{overflow:hidden;border-bottom:1px solid var(--line)}
-.board-row{display:grid;grid-template-columns:5.5rem 4rem 7.5rem minmax(0,1fr) auto 1.25rem;gap:24px;align-items:center;padding:20px 16px;isolation:isolate;color:var(--ink)}
+.board-row{display:grid;grid-template-columns:5.5rem 4rem 7.5rem minmax(0,1fr) auto 1.25rem;gap:var(--space-24);align-items:center;padding:var(--space-20) var(--space-16);isolation:isolate;color:var(--ink)}
 .board-row::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--select-strong);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-ui) var(--ease-enter)}
 .board-row:is(:hover,:has(.board-open:focus-visible))::before{transform:scaleX(1)}
 /* Text turns white just behind the sweep's leading edge. */
 .board-row:is(:hover,:has(.board-open:focus-visible)) :is(span,h3,button,svg){color:var(--on-accent);transition:color var(--dur-hover) ease .08s}
 .board-date,.board-time,.board-cat,.board-sample,.dialog-date{font-family:var(--font-pixel,ui-monospace,monospace)}
-.board-date{font-size:16px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
-.board-time{font-size:14px}
-.board-cat{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent-text)}
-.board-main{min-width:0;display:flex;align-items:center;gap:16px}
+.board-date{font-size:var(--fs-body);font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.board-time{font-size:var(--fs-body)}
+.board-cat{font-size:var(--pixel-sm);letter-spacing:1px;text-transform:uppercase;color:var(--accent-text)}
+.board-main{min-width:0;display:flex;align-items:center;gap:var(--space-16)}
 .board-text{min-width:0}
 .board-cover{flex:none;display:block;width:96px;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
-.board-main h3{font-size:19px;line-height:1.3;margin:0 0 4px}
+.board-main h3{font-size:var(--fs-h3);line-height:1.3;margin:0 0 var(--space-4)}
 .board-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left}
 .board-open::after{content:'';position:absolute;inset:0;z-index:2}
-.board-venue{display:block;font-size:12px;color:var(--text-quiet)}
-.board-level{font-size:11px;color:var(--text);text-align:right}
-.board-sample{display:block;margin-top:4px;font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--text-quiet)}
-.board-arrow{width:18px;transition:transform var(--dur-hover) var(--ease-enter)}
+.board-venue{display:block;font-size:var(--fs-sm);color:var(--text-quiet)}
+.board-level{font-size:var(--pixel-sm);color:var(--text);text-align:right}
+.board-sample{display:block;margin-top:var(--space-4);font-size:var(--pixel-sm);letter-spacing:.8px;text-transform:uppercase;color:var(--text-quiet)}
+.board-arrow{width:16px;transition:transform var(--dur-hover) var(--ease-enter)}
 /* Restates the transform transition, which the white-text rule above would otherwise replace. */
 .board-row:is(:hover,:has(.board-open:focus-visible)) .board-arrow{transform:translateX(4px);transition:transform var(--dur-hover) var(--ease-enter),color var(--dur-hover) ease .08s}
-@media(max-width:800px){.board-row{grid-template-columns:auto auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time cat arrow" "main main main main" "level level level level";gap:8px 14px;padding:18px 4px}.board-date{grid-area:date}.board-time{grid-area:time}.board-cat{grid-area:cat}.board-main{grid-area:main}.board-level{grid-area:level;text-align:left}.board-arrow{grid-area:arrow}.board-sample{display:inline;margin:0 0 0 8px}}
+@media(max-width:800px){.board-row{grid-template-columns:auto auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time cat arrow" "main main main main" "level level level level";gap:var(--space-8) var(--space-16);padding:var(--space-16) var(--space-4)}.board-date{grid-area:date}.board-time{grid-area:time}.board-cat{grid-area:cat}.board-main{grid-area:main}.board-level{grid-area:level;text-align:left}.board-arrow{grid-area:arrow}.board-sample{display:inline;margin:0 0 0 var(--space-8)}}
 .dialog-date-ghost{position:fixed;z-index:60;margin:0;pointer-events:none}
-.dialog-date{display:inline-flex;align-self:flex-start;flex-direction:column;align-items:center;min-width:56px;padding:8px;margin-bottom:12px;background:var(--tint);border:1px solid var(--line);border-radius:4px;transform-origin:0 0}
-.dialog-date b{line-height:1.1}
+.dialog-date{display:inline-flex;align-self:flex-start;flex-direction:column;align-items:center;min-width:56px;padding:var(--space-8);margin-bottom:var(--space-12);background:var(--tint);border:1px solid var(--line);border-radius:4px;transform-origin:0 0}
+.dialog-date b{line-height:1.15}
 .dialog-date span{font-weight:700;letter-spacing:1.2px}
 /* The event body is wrapped for its pixel build; keep the dialog's own spacing and paragraph style inside the wrapper. */
-.dialog-build{display:grid;gap:20px}
+.dialog-build{display:grid;gap:var(--space-20)}
 .detail-cover{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
 /* The cover makes the dialog taller than most laptop screens, so its actions stay in view. Phones stack them, which would cover too much. */
-@media(min-width:801px){.dialog-build>.dialog-actions{position:sticky;bottom:-32px;z-index:1;padding-block:14px;background:var(--surface);border-top:1px solid var(--line)}}
-.dialog-build>p{font-size:13px;margin:0}
+@media(min-width:801px){.dialog-build>.dialog-actions{position:sticky;bottom:-32px;z-index:1;padding-block:var(--space-16);background:var(--surface);border-top:1px solid var(--line)}}
+.dialog-build>p{font-size:var(--fs-sm);margin:0}
 
 /* Hero panel words: each rises out of its own mask; padding keeps descenders (y, g) unclipped */
 .art-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
@@ -127,12 +127,12 @@
 .journey-strip>a:is(:hover,:focus-visible)>svg{transform:translateX(4px)}
 
 /* Home resource rows as small windows: title bar with three pixels; lift with a hard shadow */
-.resource-stack>a{position:relative;padding-top:34px;transition:transform var(--dur-hover) var(--ease-enter),box-shadow var(--dur-hover) var(--ease-enter);padding:0}
+.resource-stack>a{position:relative;padding-top:var(--space-32);transition:transform var(--dur-hover) var(--ease-enter),box-shadow var(--dur-hover) var(--ease-enter);padding:0}
 .resource-stack>a::before{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--line);background:linear-gradient(var(--dots),var(--dots)) 10px 5px/4px 4px no-repeat,linear-gradient(var(--dots),var(--dots)) 18px 5px/4px 4px no-repeat,linear-gradient(var(--dots),var(--dots)) 26px 5px/4px 4px no-repeat;content:none}
 .resource-stack>a:is(:hover,:focus-visible){transform:translate(-2px,-2px);box-shadow:var(--shadow-hard)}
 
 /* Join FAQ: the open question is highlighted; answers open and close smoothly (Radix sets the content height variable) */
-.faq-q{padding:2px 4px;margin:-2px -4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
+.faq-q{padding:2px var(--space-4);margin:-2px -4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
 [data-state=open]>.faq-q{background-size:100% 100%;color:var(--on-accent)}
 .two-column [role=region]{overflow:hidden}
 .two-column [role=region][data-state=open]{animation:faq-open var(--dur-ui) var(--ease-enter)}
@@ -150,7 +150,7 @@
 .avatar-build{width:max-content}
 
 /* Partners form: the focused field's label is selected, fields use a block caret, the radio dot slides between options */
-.enquiry-form-shell [data-slot=field-label]{width:max-content;padding:1px 4px;margin-inline:-4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
+.enquiry-form-shell [data-slot=field-label]{width:max-content;padding:1px var(--space-4);margin-inline:-4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
 .enquiry-form-shell [data-slot=field]:focus-within [data-slot=field-label]{background-size:100% 100%;color:var(--on-accent)}
 .enquiry-form-shell :is(input,textarea){caret-shape:block}
 .enquiry-radios label{position:relative}
@@ -183,9 +183,7 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 .header-inner{height:64px}}
 .resource-card .resource-bottom>.resource-type{font-family:var(--font-pixel);font-size:var(--pixel-sm)}
 .resource-stack>a:nth-child(2){background:var(--surface)}
-.resource-card .suggest-title{font-size:29px;letter-spacing:-.8px}
-@media(max-width:540px){
-.resource-card .suggest-title{font-size:28px}}
+.resource-card .suggest-title{font-size:var(--fs-h3);letter-spacing:-.4px}
 @media(forced-colors:active){
 .select-fill,.nav-select,.scroll-progress,.format-dot,.caret{background:Highlight;color:HighlightText}
 .header-inner nav>a[aria-current=page]{color:HighlightText}

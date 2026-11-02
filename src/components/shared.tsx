@@ -9,8 +9,8 @@ import {Select} from '../motion/Select';
 export const asset=(name:string)=>`/website-assets/${name}`;
 export const external={target:'_blank',rel:'noopener noreferrer'} as const;
 export {titles} from '../content';
-export function External({href,children,className=''}:{href:string;children:ReactNode;className?:string}){return <a href={href} {...external} className={className}>{children}<ArrowUpRight size={17} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a>}
-export function LinkButton({href,children,secondary=false}:{href:string;children:ReactNode;secondary?:boolean}){return <Button asChild className={secondary?'site-button secondary':'site-button'}><a href={href} {...external}>{children}<ArrowUpRight size={17} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>}
+export function External({href,children,className=''}:{href:string;children:ReactNode;className?:string}){return <a href={href} {...external} className={className}>{children}<ArrowUpRight size={16} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a>}
+export function LinkButton({href,children,secondary=false}:{href:string;children:ReactNode;secondary?:boolean}){return <Button asChild className={secondary?'site-button secondary':'site-button'}><a href={href} {...external}>{children}<ArrowUpRight size={16} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>}
 // Page intro as a window: the title bar types the page's path as the wipe uncovers. `sub` retypes only the end of the path.
 // The bar is decoration, so screen readers skip it.
 export function Intro({path,sub='',status,title,heading,children}:{path:string;sub?:string;status?:ReactNode;title:string;heading?:ReactNode;children:ReactNode}){return <section className="page-intro"><div className="wrap"><div className="intro-window"><div className="window-bar" aria-hidden="true"><span className="window-name"><Typed text={`~/compsoc/${path}`} caret={!sub} speed={.02} delay={.15} trigger="mount"/>{sub&&<Typed key={sub} text={`/${sub}`} speed={.02} trigger="mount"/>}</span>{status&&<span className="window-meta">{status}</span>}</div><div className="intro-body"><Reveal as="h1" trigger="mount" delay={.15} lines={[heading??title]}/><p>{children}</p></div></div></div></section>}
@@ -19,7 +19,7 @@ export function WindowBar({name,meta,selected}:{name:string;meta?:ReactNode;sele
 export function SectionHeading({label,title,action}:{label?:string;title:string;action?:ReactNode}){return <div className="section-heading"><div>{label&&<span className="eyebrow">{label}</span>}<Reveal as="h2" lines={[title]}/></div>{action}</div>}
 // A heading that rises out of its mask as it scrolls in.
 export function RevealHeading({children,id,as='h2'}:{children:string;id?:string;as?:'h2'|'h3'}){return <Reveal as={as} id={id} lines={[children]}/>}
-export function RouteLink({page,children,className=''}:{page:Page;children:ReactNode;className?:string}){return <a href={pagePath(page)} className={`text-link ${className}`}>{children}<ArrowRight size={17} aria-hidden="true"/></a>}
+export function RouteLink({page,children,className=''}:{page:Page;children:ReactNode;className?:string}){return <a href={pagePath(page)} className={`text-link ${className}`}>{children}<ArrowRight size={16} aria-hidden="true"/></a>}
 // Pages that shouldn't appear in search results.
 export function useNoindex(){useEffect(()=>{const meta=document.createElement('meta');meta.name='robots';meta.content='noindex';document.head.append(meta);return()=>meta.remove()},[])}
 // Sample-content marker: a mono tag inline with the note, not a banner.
