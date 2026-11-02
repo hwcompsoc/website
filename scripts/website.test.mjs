@@ -173,6 +173,12 @@ test('Documents: only real PDFs under the limit, and live once the site has them
 test('The public site no longer calls itself a prototype',()=>{
  for(const file of ['components/Footer.tsx','pages/About.tsx','pages/Partners.tsx','components/DetailDialog.tsx'])assert.ok(!/prototype/i.test(readFileSync(new URL('../src/'+file,import.meta.url),'utf8')),file);
 });
+test('The footer stays compact: contact and legal links only, with invitations to join left to the pages',()=>{
+ const read=path=>readFileSync(new URL('../src/'+path,import.meta.url),'utf8');const footer=read('components/Footer.tsx');const site=read('Website.tsx');
+ for(const required of ['mailto:${links.email}','href="/privacy"','links.membership','Affiliated to HW Union','Footer navigation'])assert.ok(footer.includes(required),required);
+ for(const removed of ['links.discord','links.instagram','Come and say hello','RevealHeading','Accordion'])assert.ok(!footer.includes(removed),removed);
+ assert.ok(site.indexOf('</main><Footer/>')>0);assert.ok(!site.includes('SayHello'));for(const page of ['pages/Join.tsx','pages/Events.tsx','pages/Resources.tsx','components/Hero.tsx'])assert.ok(read(page).includes('links.discord'),page);
+});
 test('A missing build file is a real 404, and the page retries instead of staying blank',()=>{
  const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));const sends=new RegExp(`^${rewrites[0].source}$`);
  for(const path of ['/','/about','/admin/documents','/events/some-talk','/assetsfolder'])assert.ok(sends.test(path),path);assert.ok(!sends.test('/assets/index-abc.js'));

@@ -166,7 +166,6 @@
    wordmark, and presses while held. Lengths are SVG user units: 20 units is about 2px at header size. */
 /* overflow: the logo artwork ends exactly at the viewBox edge, so the nudged cursor would otherwise be clipped */
 .site-logo,.footer-logo{display:block;overflow:visible}
-.footer-logo-lean{display:inline-block;vertical-align:top}/* top: matches the old <img> line box exactly */
 .logo-cursor{transform-box:fill-box;transform-origin:0 0;transition:transform var(--dur-hover) var(--ease-enter)}
 .logo-link:is(:hover,:focus-visible) .logo-cursor{transform:translate(20px,20px)}
 .logo-link:active .logo-cursor{transform:translate(20px,20px) scale(.9)}

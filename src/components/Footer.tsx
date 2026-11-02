@@ -1,23 +1,20 @@
-import {useRef,useState} from 'react';
-import {Camera,Check,Copy,MessageCircle} from 'lucide-react';
+import {useEffect,useRef,useState} from 'react';
+import {Check,Copy} from 'lucide-react';
 import {Button} from './ui/button';
-import {links,pagePath,pages,type View} from '../content';
-import {LinkButton,RevealHeading,RouteLink} from './shared';
-import {m} from 'motion/react';
-import {usePointerLean} from '../motion/usePointerLean';
+import {links,pagePath,pages} from '../content';
+import {External} from './shared';
 import {Typed} from '../motion/Typed';
 import {Logo} from './Logo';
 
-// The page's last screen: a clear closing action, contact in one line, then a quiet row of logo, tagline and links
-// (the full nav already lives in the header). The logo leans toward the mouse; "Email copied" types out.
-// Join hides the closing section: that page has just asked the same thing in its steps.
-// The closing section is .footer-hello, not .footer-cta: ad blockers' annoyance lists hide .footer-cta outright.
-// The copy button is icon-only until used (its label stays for screen readers and as a tooltip).
+const COPIED_MS=3000;
+// Compact and the same on every page, so contact and legal links stay where people expect them. Two rows only: where to go, then who we are and how to reach us.
+// Nothing here collapses, and every standalone link is a 44px target. Page content, such as invitations to join, belongs on the pages themselves.
+// "Email copied" types out.
+// The copy button is icon-only until used (its label stays for screen readers and as a tooltip), and returns to that a few seconds after a copy.
 // The tick and button label confirm a copy on screen; the status line repeats it for screen readers only, and is shown only on failure.
-export function Footer({page}:{page:View}){const logo=useRef<HTMLSpanElement>(null);const lean=usePointerLean(logo,true,{distance:4,angle:2});const [copied,setCopied]=useState(false);const [copyError,setCopyError]=useState(false);async function copy(){try{await navigator.clipboard.writeText(links.email);setCopied(true);setCopyError(false)}catch{setCopyError(true)}}
+export function Footer(){const [copied,setCopied]=useState(false);const [copyError,setCopyError]=useState(false);const timer=useRef<number|undefined>(undefined);useEffect(()=>()=>window.clearTimeout(timer.current),[]);async function copy(){window.clearTimeout(timer.current);try{await navigator.clipboard.writeText(links.email);setCopied(true);setCopyError(false);timer.current=window.setTimeout(()=>setCopied(false),COPIED_MS)}catch{setCopied(false);setCopyError(true)}}
  return <footer className="site-footer"><div className="wrap">
-  {page!=='join'&&<section className="footer-hello" aria-labelledby="footer-hello-title"><div><RevealHeading id="footer-hello-title">Come and say hello.</RevealHeading><p>The quickest way in is the Discord.</p></div><div className="footer-actions"><LinkButton href={links.discord}><MessageCircle aria-hidden="true"/>Join the Discord</LinkButton><LinkButton href={links.instagram} secondary><Camera aria-hidden="true"/>Follow @hwcompsoc</LinkButton></div></section>}
-  <div className="footer-contact"><a className="email-link" href={`mailto:${links.email}`}>{links.email}</a><Button variant="ghost" onClick={copy} className="footer-copy" title={copied?undefined:'Copy email address'}>{copied?<><Check aria-hidden="true"/><Typed text="Email copied" caret={false} trigger="mount"/></>:<><Copy aria-hidden="true"/><span className="sr-only">Copy email address</span></>}</Button><p role="status" className={copyError?'footer-status':'footer-status sr-only'}>{copyError?'Copy is unavailable here. Select the address or open your email app.':copied?'Email copied.':''}</p><p className="footer-partners">Thinking about supporting the society? <RouteLink page="partners">Let’s talk partnerships</RouteLink></p></div>
-  <div className="footer-meta"><a href="/" aria-label="HW CompSoc home" className="logo-link"><m.span ref={logo} style={lean.style} className="footer-logo-lean"><Logo tone="white" align="left" className="footer-logo"/></m.span></a><p className="footer-tagline">Computing. Community.<br/>A place to find your people.</p><nav className="footer-nav" aria-label="Footer navigation">{pages.filter(p=>p.id!=='home').map(p=><a key={p.id} href={pagePath(p.id)}>{p.name}</a>)}</nav></div>
-  <div className="footer-bottom"><span className="footer-legal"><span>Heriot-Watt Computer Science Society</span></span><a className="footer-privacy" href="/privacy">Privacy</a></div>
+  <div className="footer-main"><a href="/" aria-label="HW CompSoc home" className="logo-link"><Logo tone="white" align="left" className="footer-logo"/></a><nav className="footer-nav" aria-label="Footer navigation">{pages.filter(p=>p.id!=='home').map(p=><a key={p.id} href={pagePath(p.id)}>{p.name}</a>)}</nav></div>
+  <div className="footer-bottom"><div className="footer-contact"><a className="email-link" href={`mailto:${links.email}`}>{links.email}</a><Button variant="ghost" onClick={copy} className="footer-copy" title={copied?undefined:'Copy email address'}>{copied?<><Check aria-hidden="true"/><Typed text="Email copied" caret={false} trigger="mount"/></>:<><Copy aria-hidden="true"/><span className="sr-only">Copy email address</span></>}</Button><p role="status" className={copyError?'footer-status':'footer-status sr-only'}>{copyError?'Copy is unavailable here. Select the address or open your email app.':copied?'Email copied.':''}</p></div>
+   <div className="footer-legal"><span className="footer-copyright">© {new Date().getFullYear()} Heriot-Watt Computer Science Society</span><External href={links.membership}>Affiliated to HW Union</External><a href="/privacy">Privacy</a></div></div>
  </div></footer>}
