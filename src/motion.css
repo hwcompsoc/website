@@ -104,7 +104,7 @@
 .detail-cover{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
 /* The cover makes the dialog taller than most laptop screens, so its actions stay in view. Phones stack them, which would cover too much. */
 @media(min-width:801px){.dialog-build>.dialog-actions{position:sticky;bottom:-32px;z-index:1;padding-block:var(--space-16);background:var(--surface);border-top:1px solid var(--line)}}
-.dialog-build>p{font-size:var(--fs-sm);margin:0}
+.dialog-build>p{font-size:var(--fs-body);margin:0}
 
 /* Hero panel words: each rises out of its own mask; padding keeps descenders (y, g) unclipped */
 .art-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
