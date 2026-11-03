@@ -1,5 +1,4 @@
-import {createContext,useCallback,useContext,useEffect,useRef,useState,type CSSProperties,type ReactNode,type PointerEvent} from 'react';
-import {Slot} from '@radix-ui/react-slot';
+import {createContext,useCallback,useContext,useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {selectColor} from '../motion';
 import {useMotionLevel} from './level';
 
@@ -28,10 +27,4 @@ export function GlobalBursts(){
   if(target.closest(interactive))fire(event.clientX,event.clientY,{count:5});else if(event.pointerType==='mouse')fire(event.clientX,event.clientY,{count:4})};
   addEventListener('pointerdown',down,{passive:true});return()=>removeEventListener('pointerdown',down)},[fire]);
  return null;
-}
-
-// Adds the press response and a burst at the pointer to its single child (a Button, link, etc.).
-export function BurstButton({children,count,className='',onPointerDown,...props}:{children:ReactNode;count?:number;className?:string;onPointerDown?:(event:PointerEvent<HTMLElement>)=>void}&Record<string,unknown>){
- const fire=useClickBurst();
- return <Slot {...props} className={`burst-press ${className}`} onPointerDown={(event:PointerEvent<HTMLElement>)=>{onPointerDown?.(event);if(event.button===0)fire(event.clientX,event.clientY,{count})}}>{children}</Slot>;
 }

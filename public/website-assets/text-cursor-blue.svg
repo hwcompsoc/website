@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="108" height="207" viewBox="0 0 108 207" role="img" aria-labelledby="title desc" shape-rendering="geometricPrecision">
-  <title id="title">HW CompSoc text cursor</title>
-  <desc id="desc">A pixel-style I-beam text-selection cursor with stepped serifs, a deep blue stem, and one cyan accent pixel on a transparent background.</desc>
-  <!-- Match the cursor family's 13-unit steps and 207-unit canvas height.
-       The central stem provides a text-selection hotspot at (53.5, 103.5). -->
-  <path fill="#004066" d="M8 2H34V15H73V2H99V15H86V28H60V179H86V192H99V205H73V192H34V205H8V192H21V179H47V28H21V15H8Z"/>
-  <path fill="#00A1CC" d="M86 192H99V205H86Z"/>
-</svg>

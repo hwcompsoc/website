@@ -12,7 +12,7 @@ npm run preview
 npm test
 ```
 
-`npm run dev` serves the site with live reload, and `motion-lab.html` is a development workbench for the motion components. `npm run build` writes the deployable site to `dist`. Vercel runs it using `vercel.json`.
+`npm run dev` serves the site with live reload. `npm run build` writes the deployable site to `dist`. Vercel runs it using `vercel.json`.
 
 ## Layout
 
