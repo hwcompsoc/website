@@ -172,7 +172,7 @@
 body[data-motion=off] .logo-cursor{transform:none!important}
 @media(prefers-reduced-motion:reduce){.logo-cursor{transform:none!important}}
 /* Pixel accents: labels, numbers and captions */
-.eyebrow,.art-caption,.art-bottom,.journey-strip>a>span,.step-number,.example-tag,.board-cat,.board-sample{font-family:var(--font-pixel);font-size:var(--pixel-sm);font-weight:400;letter-spacing:.04em}
+.eyebrow,.art-caption,.art-bottom,.journey-strip>a>span,.step-number,.board-cat,.board-sample{font-family:var(--font-pixel);font-size:var(--pixel-sm);font-weight:400;letter-spacing:.04em}
 .board-date,.board-time{font-size:var(--pixel-lg);font-weight:400;letter-spacing:0}
 @media(min-width:801px){
 .board-row{grid-template-columns:6.5rem 5rem 7.5rem minmax(0,1fr) auto 1.25rem}}

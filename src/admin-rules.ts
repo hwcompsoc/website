@@ -123,7 +123,7 @@ export const faqPhase=(saved:SiteFaq[]|undefined,site:SiteFaq[]|null):SitePhase=
 // Guides. A draft only needs a title. Anything on the site must be complete, and a confirmed guide needs someone looking after it.
 export const GUIDE_CATEGORIES=['Learning','Community','Support'] as const;
 export const GUIDE_KINDS=['Starter guide','Workshop notes','Contribution guide','Support directory'];
-export type GuideStatus='draft'|'sample'|'confirmed';
+export type GuideStatus='draft'|'confirmed';
 export type Guide={id?:string;slug:string;title:string;category:typeof GUIDE_CATEGORIES[number];kind:string;description:string;body:string;status:GuideStatus;maintainer:string;reviewed_on:string|null;position?:number;published_at?:string|null};
 export const blankGuide=():Guide=>({slug:'',title:'',category:'Learning',kind:'Starter guide',description:'',body:'',status:'draft',maintainer:'',reviewed_on:null});
 // The only fields a form may send: never the id or published time.

@@ -22,8 +22,6 @@ export function RevealHeading({children,id,as='h2'}:{children:string;id?:string;
 export function RouteLink({page,children,className=''}:{page:Page;children:ReactNode;className?:string}){return <a href={pagePath(page)} className={`text-link ${className}`}>{children}<ArrowRight size={16} aria-hidden="true"/></a>}
 // Pages that shouldn't appear in search results.
 export function useNoindex(){useEffect(()=>{const meta=document.createElement('meta');meta.name='robots';meta.content='noindex';document.head.append(meta);return()=>meta.remove()},[])}
-// Sample-content marker: a mono tag inline with the note, not a banner.
-export function SampleNote({children}:{children:ReactNode}){return <p className="sample-note"><span className="sample-tag">Sample</span>{children}</p>}
 // Our dialogs and the mobile menu are opened from code, not Radix triggers, and Radix doesn't hand focus back on its own here:
 // remember what had focus when one opened (a row, card or button) and return to it on close, so keyboard users carry on from there.
 // Skipped when something else already took focus (picking a page in the menu moves focus to the new page's main).

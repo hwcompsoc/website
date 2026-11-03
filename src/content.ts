@@ -27,7 +27,7 @@ export const documents=(documentRows as LiveDocument[]).map(liveDocument);
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
 // Guides (Resources), from the admin. Anything still a draft never reaches the site.
 export type LiveGuide={slug:string;title:string;category:string;kind:string;description:string;body:string;status:string;reviewed_on:string|null};
-export const liveGuide=(row:LiveGuide)=>({id:row.slug,title:row.title,category:row.category,description:row.description,type:row.kind,minutes:`${readingMinutes(row.body)} min`,body:row.body,sample:row.status==='sample',reviewed:row.reviewed_on?new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',month:'long',year:'numeric'}).format(new Date(`${row.reviewed_on}T00:00:00Z`)):''});
+export const liveGuide=(row:LiveGuide)=>({id:row.slug,title:row.title,category:row.category,description:row.description,type:row.kind,minutes:`${readingMinutes(row.body)} min`,body:row.body,reviewed:row.reviewed_on?new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',month:'long',year:'numeric'}).format(new Date(`${row.reviewed_on}T00:00:00Z`)):''});
 export type Resource=ReturnType<typeof liveGuide>;
 export const resources=(guides as LiveGuide[]).map(liveGuide);
 // Events are copied in from Supabase when the site builds.
