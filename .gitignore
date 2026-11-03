@@ -4,10 +4,8 @@ node_modules
 qa
 *.tsbuildinfo
 scripts/qa
-COPY-DRAFT.md
-MOTION-PLAN.md
+LAUNCH-INFO.md
 MOTION-RULES.md
-WEBSITE.md
 src/generated
 public/live-events.json
 public/live-committee.json
