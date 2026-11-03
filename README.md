@@ -32,4 +32,8 @@ The committee manages events at `/admin`, a separate site in `src/admin` that lo
 
 Owners change who has access at `/admin/people`, which creates accounts and shows temporary passwords that people must change when they first sign in. It uses the `committee-access` edge function in `supabase/functions`, because creating accounts needs the secret key. There must always be an Owner, and nobody can change their own access, so to hand over, make the new person an Owner and let them remove you. If nobody can get in, set `role` to `owner` in the `committee_members` table in Supabase, then use `node scripts/committee-accounts.mjs`: it creates missing accounts, `--reset <email>` replaces a password, and `--remove-old` deletes accounts for people no longer on the list. It needs the Supabase secret key, so run it in your own terminal. The addresses aren't kept in this repository, because it's public.
 
+### Test database
+
+The site uses the production Supabase project unless `.env.local` names another. Copy `.env.example` to `.env.local` and fill in the test project's address and publishable key, then restart `npm run dev`. The site, the admin, `npm run build` and `scripts/committee-accounts.mjs` all follow it, and the test project has no deploy hook, so saving there can't rebuild the live site. Delete the file and restart to go back. The local content copies refresh themselves. Vercel has no `.env.local`, and a production build stops if `VITE_SUPABASE_URL` is set there. A new migration has to be applied to both projects.
+
 `scripts/qa`, `qa` and the planning notes are local and ignored by git.

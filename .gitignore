@@ -15,3 +15,5 @@ public/live-documents.json
 public/documents
 public/event-covers
 public/committee-photos
+.env*
+!.env.example
