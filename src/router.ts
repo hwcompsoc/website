@@ -17,9 +17,9 @@ const saveScroll=()=>{if(currentKey)scrolls[currentKey]=window.scrollY};
 const notify=()=>window.dispatchEvent(new Event(CHANGE));
 
 // `?motion=` is a preference that lasts for the whole visit, so it follows every navigation.
-function withMotion(href:string){const motion=new URLSearchParams(location.search).get('motion');if(!motion)return href;const url=new URL(href,location.origin);url.searchParams.set('motion',motion);return url.pathname+url.search}
+function withMotion(href:string){const motion=new URLSearchParams(location.search).get('motion');if(!motion)return href;const url=new URL(href,location.origin);url.searchParams.set('motion',motion);return url.pathname+url.search+url.hash}
 
-export function go(href:string,{replace=false,under,inApp}:{replace?:boolean;under?:Page;inApp?:boolean}={}){const target=withMotion(href);if(target===location.pathname+location.search)return;
+export function go(href:string,{replace=false,under,inApp}:{replace?:boolean;under?:Page;inApp?:boolean}={}){const target=withMotion(href);if(target===location.pathname+location.search+location.hash)return;
  const next:Entry={key:replace?currentKey:newKey(),under,inApp};if(!replace)saveScroll();history[replace?'replaceState':'pushState'](next,'',target);currentKey=next.key!;notify()}
 
 // What the page underneath should be: a dialog opened from Home keeps Home behind it, though the address is the event's own.
@@ -35,7 +35,7 @@ export const setLeaveCheck=(check:(()=>boolean)|null)=>{leaveCheck=check};
 function clicked(event:MouseEvent){if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
  const link=(event.target as Element|null)?.closest?.('a[href]') as HTMLAnchorElement|null;if(!link||link.target||link.hasAttribute('download'))return;
  const url=new URL(link.href);if(url.origin!==location.origin||(url.hash&&url.pathname===location.pathname))return;
- event.preventDefault();if(leaveCheck&&!leaveCheck())return;go(url.pathname+url.search)}
+ event.preventDefault();if(leaveCheck&&!leaveCheck())return;go(url.pathname+url.search+url.hash)}
 
 // Run once before the first render: old #page links become real paths, and each history entry gets a key to file its scroll under.
 export function startRouter(){history.scrollRestoration='manual';loadScrolls();
