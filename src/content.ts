@@ -6,6 +6,11 @@ import documentRows from './generated/documents.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
+// What a browser tab or shared link calls each page: the page and then the society, with the home page the other way round. A single event or guide names its section too. The headings on the pages themselves are in `titles`.
+const tabTitle=(name:string)=>`${name} | HW CompSoc`;
+export const eventTabTitle=(name:string)=>`${tabTitle(name)} Events`;
+export const guideTabTitle=(name:string)=>`${tabTitle(name)} Resources`;
+export const tabTitles={notfound:tabTitle('File not found'),privacy:tabTitle('Privacy'),home:'HW CompSoc | Heriot-Watt Computer Science Society',join:tabTitle('Join'),events:tabTitle('Events'),resources:tabTitle('Resources'),about:tabTitle('About'),partners:tabTitle('Partners')};
 export const titles={notfound:'File not found',privacy:'Privacy',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
 export const pages=[{id:'home',name:'Home'},{id:'join',name:'Join'},{id:'events',name:'Events'},{id:'resources',name:'Resources'},{id:'about',name:'About'},{id:'partners',name:'Partners'}] as const;
 export type Page=typeof pages[number]['id'];

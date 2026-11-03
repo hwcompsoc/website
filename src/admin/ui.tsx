@@ -9,7 +9,7 @@ import {removeFiles} from './files';
 import {COVER_BUCKET,coverThumb} from '../supabase-config';
 import {badgeFor,checklist,editableFields,progress,sitePhase,type AdminEvent,type SitePhase,type SiteRow} from '../admin-rules';
 
-export const useTitle=(title:string)=>useEffect(()=>{document.title=`${title} · CompSoc admin`},[title]);
+export const useTitle=(title:string)=>useEffect(()=>{document.title=`${title} | CompSoc admin`},[title]);
 
 // Warns before unsaved work is lost: the browser's own warning for reloading or closing, and a question for links and Back inside the admin.
 export function useLeaveWarning(dirty:boolean){useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>e.preventDefault();addEventListener('beforeunload',warn);setLeaveCheck(()=>confirm('You have unsaved changes. Leave without saving them?'));return()=>{removeEventListener('beforeunload',warn);setLeaveCheck(null)}},[dirty])}
