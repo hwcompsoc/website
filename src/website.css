@@ -341,3 +341,8 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 }
 
 .quiet-callout p{font-size:var(--fs-body)}
+
+/* A shorter intro for pages people come to use rather than read. */
+.intro-compact .intro-body{padding-block:var(--space-24)}
+.intro-compact h1{margin-bottom:var(--space-8)}
+.intro-compact .intro-body p{margin-bottom:0}
