@@ -106,14 +106,22 @@ export function badgeFor(event:Pick<AdminEvent,'status'>,phase:SitePhase|null){i
 export const PHOTO_MIN=200,PHOTO_SIZE=384,PHOTO_QUALITY=.85;
 export const photoUrl=(path:string)=>`${SUPABASE_URL}/storage/v1/object/public/${COMMITTEE_BUCKET}/${path}`;
 export const photoProblem=(width:number,height:number)=>Math.min(width,height)<PHOTO_MIN?`That image is only ${width} × ${height}. Use one at least ${PHOTO_MIN} pixels on each side, so it stays sharp.`:null;
+// People paste whole addresses, so these keep just the username, which is all that's stored.
+export const discordHandle=(value:string)=>value.trim().replace(/^@/,'').toLowerCase();
+export const githubHandle=(value:string)=>value.trim().replace(/^(https?:\/\/)?(www\.)?github\.com\//i,'').replace(/^@/,'').replace(/[/?#].*$/,'');
+export const linkedinHandle=(value:string)=>value.trim().replace(/^(https?:\/\/)?([a-z]+\.)?linkedin\.com\/in\//i,'').replace(/[/?#].*$/,'');
+export type Profile={bio:string|null;studies:string|null;ask_me_about:string|null;discord:string|null;github:string|null;linkedin:string|null};
+export const blankProfile=():Profile=>({bio:null,studies:null,ask_me_about:null,discord:null,github:null,linkedin:null});
+export const profileFields=(profile:Profile):Profile=>({bio:profile.bio?.trim()||null,studies:profile.studies?.trim()||null,ask_me_about:profile.ask_me_about?.trim()||null,discord:discordHandle(profile.discord??'')||null,github:githubHandle(profile.github??'')||null,linkedin:linkedinHandle(profile.linkedin??'')||null});
+export function profileProblems(profile:Profile):Problems{const {discord,github,linkedin}=profileFields(profile);const found:Problems={};if(discord&&!/^[a-z0-9_.]{2,32}$/.test(discord))found.discord='Use their Discord username, like sam_lee.';if(github&&!/^[A-Za-z0-9-]{1,39}$/.test(github))found.github='Use their GitHub username, like samlee.';if(linkedin&&!/^[A-Za-z0-9_%-]{3,100}$/.test(linkedin))found.linkedin='Use the end of their LinkedIn address, like sam-lee-123.';return found}
 export const committeeNameProblem=(name:string,message:string)=>name.trim()?null:message;
 export const nextPosition=(rows:{position:number}[])=>Math.max(0,...rows.map(row=>row.position))+1;
 // The two rows with their positions swapped, ready to save together, or null if there's nowhere to go.
 export function moved<T extends {id:string;position:number}>(rows:T[],id:string,by:-1|1){const at=rows.findIndex(row=>row.id===id);const other=rows[at+by];if(at<0||!other)return null;return [{...rows[at],position:other.position},{...other,position:rows[at].position}]}
 
 // Has the public site caught up with the committee? Compared as the About page would show it, in order.
-export type SiteTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
-const shownCommittee=(teams:SiteTeam[])=>JSON.stringify(teams.map(team=>[team.name,team.description,team.committee_people.map(person=>[person.name,person.photo_path??null])]));
+export type SiteTeam={name:string;description:string;committee_people:({name:string;photo_path:string|null}&Partial<Profile>)[]};
+const shownCommittee=(teams:SiteTeam[])=>JSON.stringify(teams.map(team=>[team.name,team.description,team.committee_people.map(person=>[person.name,person.photo_path??null,person.bio??null,person.studies??null,person.ask_me_about??null,person.discord??null,person.github??null,person.linkedin??null])]));
 const phaseFrom=(saved:string|null,site:string|null):SitePhase=>site===null?'unknown':saved===null||saved===site?'live':'updating';
 export const committeePhase=(saved:SiteTeam[]|undefined,site:SiteTeam[]|null):SitePhase=>phaseFrom(saved?shownCommittee(saved):null,site&&shownCommittee(site));
 export type SiteFaq={question:string;answer:string};

@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {roleAnchor,links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
+import {anchor,peopleOf,links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
 import {parseAnswer,parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -109,8 +109,18 @@ test('FAQ answers link email addresses by themselves and keep links safe',()=>{
  assert.deepEqual(parseAnswer('No links here.'),[{kind:'text',text:'No links here.'}]);
 });
 
-test('Committee roles have stable addresses on the About page',()=>{
- assert.equal(roleAnchor('Community Manager'),'community-manager');assert.equal(roleAnchor('Events team'),'events-team');assert.equal(roleAnchor(' Vice-President & Co. '),'vice-president-co');
+test('Committee people and roles have stable addresses on the About page',()=>{
+ assert.equal(anchor('Community Manager'),'community-manager');assert.equal(anchor('Events team'),'events-team');assert.equal(anchor(' Vice-President & Co. '),'vice-president-co');assert.equal(anchor('Kevin Paul Job'),'kevin-paul-job');
+ const people=peopleOf(liveCommittee([{name:'Treasurer',description:'Books.',committee_people:[{name:'Sam Lee',photo_path:null}]},{name:'Events team',description:'Events.',committee_people:[{name:'Ann',photo_path:null},{name:'Sam Lee',photo_path:null}]}]));
+ assert.deepEqual(people.map(person=>person.slug),['sam-lee','ann','sam-lee-events-team']);assert.deepEqual(people.map(person=>person.file),['sam-lee.md','events-team/ann.md','events-team/sam-lee-events-team.md']);assert.equal(people[0].team,false);assert.equal(people[1].team,true);assert.equal(people[1].text,'Events.');assert.equal(people[0].title,'Treasurer');assert.equal(people[1].title,'Event Organiser');assert.equal(peopleOf(liveCommittee([{name:'Crew',description:'',committee_people:[{name:'A',photo_path:null},{name:'B',photo_path:null}]}]))[0].title,'Crew');
+});
+
+test('A committee profile keeps only what is filled in, and only usernames',()=>{
+ const person={name:'Sam',photo_path:null,bio:'Hi',studies:null,ask_me_about:'',discord:'sam_lee',github:null,linkedin:'sam-lee'};const [member]=liveCommittee([{name:'T',description:'',committee_people:[person]}])[0].members;assert.deepEqual(member,{name:'Sam',bio:'Hi',discord:'sam_lee',linkedin:'sam-lee'});
+ assert.equal(githubHandle('https://github.com/SamLee/'),'SamLee');assert.equal(githubHandle('@samlee'),'samlee');assert.equal(githubHandle('www.github.com/samlee?tab=repositories'),'samlee');assert.equal(linkedinHandle('https://www.linkedin.com/in/sam-lee-123/?trk=x'),'sam-lee-123');assert.equal(linkedinHandle('uk.linkedin.com/in/sam-lee'),'sam-lee');assert.equal(discordHandle(' @Sam_Lee '),'sam_lee');
+ assert.deepEqual(profileFields({bio:'  ',studies:' CS ',ask_me_about:'',discord:'@Sam',github:'https://github.com/sam',linkedin:null}),{bio:null,studies:'CS',ask_me_about:null,discord:'sam',github:'sam',linkedin:null});
+ assert.deepEqual(profileProblems(blankProfile()),{});assert.ok(profileProblems({...blankProfile(),discord:'has space'}).discord);assert.ok(profileProblems({...blankProfile(),github:'javascript:alert(1)'}).github);assert.ok(profileProblems({...blankProfile(),linkedin:'a/b c'}).linkedin);assert.deepEqual(profileProblems({...blankProfile(),discord:'sam.lee',github:'sam-lee',linkedin:'sam-lee-1'}),{});
+ const team={name:'T',description:'',committee_people:[{name:'Sam',photo_path:null,bio:'Hi'}]};assert.equal(committeePhase([team],[{...team,committee_people:[{name:'Sam',photo_path:null,bio:'Hi'}]}]),'live');assert.equal(committeePhase([team],[{...team,committee_people:[{name:'Sam',photo_path:null,bio:'Old'}]}]),'updating');assert.equal(committeePhase([{...team,committee_people:[{name:'Sam',photo_path:null}]}],[{...team,committee_people:[{name:'Sam',photo_path:null,github:null}]}]),'live');
 });
 
 test('Every font size comes from the shared scale',()=>{

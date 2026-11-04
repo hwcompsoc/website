@@ -18,10 +18,18 @@ export type View=Page|'notfound'|'privacy';
 export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
 export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';weekday:string;day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string;cost?:string;openTo?:string};
 // Committee (About), from the admin. Roles with nobody in them stay off the page.
-export type Member={name:string;photo?:string};
-export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
-export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee_people.length).map(team=>({role:team.name,text:team.description,members:team.committee_people.map(person=>({name:person.name,...person.photo_path?{photo:`/committee-photos/${person.photo_path}`}:{}})) as Member[]}));
+export type Member={name:string;photo?:string;bio?:string;studies?:string;askMeAbout?:string;discord?:string;github?:string;linkedin?:string};
+export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null;bio?:string|null;studies?:string|null;ask_me_about?:string|null;discord?:string|null;github?:string|null;linkedin?:string|null}[]};
+export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee_people.length).map(team=>({role:team.name,text:team.description,members:team.committee_people.map(person=>({name:person.name,...person.photo_path?{photo:`/committee-photos/${person.photo_path}`}:{},...person.bio?{bio:person.bio}:{},...person.studies?{studies:person.studies}:{},...person.ask_me_about?{askMeAbout:person.ask_me_about}:{},...person.discord?{discord:person.discord}:{},...person.github?{github:person.github}:{},...person.linkedin?{linkedin:person.linkedin}:{}})) as Member[]}));
+// The address of a role or person on the About page, so other pages can link straight to them.
+export const anchor=(text:string)=>text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export const committee=liveCommittee(teams as LiveTeam[]);
+export type Person=Member&{role:string;title:string;text:string;team:boolean;slug:string;file:string};
+// What one person in a team is called. A team not listed here uses its own name.
+const memberTitles:Record<string,string>={'Events team':'Event Organiser'};
+// Everyone in order, each with their own address. Someone holding two roles gets a second address that names the role.
+export const peopleOf=(teams:ReturnType<typeof liveCommittee>):Person[]=>{const taken=new Set<string>();return teams.flatMap(({role,text,members})=>members.map(member=>{const base=anchor(member.name);const slug=taken.has(base)?`${base}-${anchor(role)}`:base;taken.add(slug);const team=members.length>1;return {...member,role,title:team?memberTitles[role]??role:role,text,team,slug,file:`${team?anchor(role)+'/':''}${slug}.md`}}))};
+export const committeePeople=peopleOf(committee);
 export type Faq={id:string;question:string;answer:string};
 export const faqs=faqRows as Faq[];
 // Approved documents (About), from the admin.
@@ -29,8 +37,6 @@ export type LiveDocument={id:string;title:string;approved_on:string;file_path:st
 const fileSize=(bytes:number)=>bytes<1024*1024?`${Math.max(1,Math.round(bytes/1024))} KB`:`${(bytes/1024/1024).toFixed(1)} MB`;
 export const liveDocument=(row:LiveDocument)=>({id:row.id,title:row.title,approved:new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(`${row.approved_on}T00:00:00Z`)),href:`/documents/${row.file_path}`,size:fileSize(row.size_bytes)});
 export const documents=(documentRows as LiveDocument[]).map(liveDocument);
-// Where each role sits on the About page, so other pages can link straight to it.
-export const roleAnchor=(role:string)=>role.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
 // Guides (Resources), from the admin. Anything still a draft never reaches the site.
 export type LiveGuide={slug:string;title:string;category:string;kind:string;description:string;body:string;status:string;reviewed_on:string|null};
