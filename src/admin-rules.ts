@@ -3,8 +3,8 @@ import {COMMITTEE_BUCKET,COVER_BUCKET,DOCUMENT_BUCKET,SUPABASE_URL,coverThumb} f
 export const NATIVE_CREATE='https://promoters.native.fm/event/event/create';
 export const LUMA_CREATE='https://luma.com/create';
 
-export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';cover_path?:string|null;square_path?:string|null;cover_alt?:string;published_at?:string|null;updated_at?:string};
-export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,luma_url:null,socials_sent:false,status:'draft',cover_path:null,square_path:null,cover_alt:''});
+export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';cover_path?:string|null;square_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null;published_at?:string|null;updated_at?:string};
+export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,luma_url:null,socials_sent:false,status:'draft',cover_path:null,square_path:null,cover_alt:'',cost:null,open_to:null});
 
 // Event images: 'cover' is the landscape one the site shows and Native needs (Native serves its images at 736 × 412, about 16:9),
 // 'square' is for Luma, Instagram and Discord. Close to the shape is enough, so a few pixels out doesn't mean redoing a poster.
@@ -83,7 +83,7 @@ export const descriptionProblems=(event:AdminEvent):Problems=>event.description.
 export function whenProblems(when:When,venue:string,required=true){const found:Problems={};if(required){if(!when.date)found.date='Choose a date.';if(!when.start)found.start='Add a start time.';if(!when.end)found.end='Add an end time.';if(!venue.trim())found.venue='Say where it is.'}const {starts_at,ends_at}=whenToIso(when);if(starts_at&&ends_at&&new Date(ends_at)<=new Date(starts_at))found.end='The end must be after the start. If it finishes after midnight, tick the box below.';return found}
 export const slugAttempt=(base:string,attempt:number)=>attempt<=1?base:`${base.slice(0,56).replace(/-+$/,'')}-${attempt}`;
 // The only fields a form may send: never the id or published time, or the images, which CoverField saves itself.
-export function editableFields(event:AdminEvent){const {slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status,cover_alt}=event;return {cover_alt,slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status}}
+export function editableFields(event:AdminEvent){const {slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status,cover_alt,cost,open_to}=event;return {cover_alt,cost:cost?.trim()||null,open_to:open_to?.trim()||null,slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status}}
 
 const uk=(iso:string,options:Intl.DateTimeFormatOptions)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',...options}).format(new Date(iso));
 export const shortDate=(iso:string|null)=>iso?`${uk(iso,{day:'2-digit'})} ${uk(iso,{month:'short'}).slice(0,3).toUpperCase()}`:'';
@@ -91,9 +91,9 @@ export const fullDate=(iso:string)=>`${uk(iso,{weekday:'long'})} ${uk(iso,{day:'
 export const timeRange=(start:string,end:string|null)=>{const at=(iso:string)=>uk(iso,{hour:'2-digit',minute:'2-digit',hourCycle:'h23'});return end?`${at(start)}–${at(end)}`:at(start)};
 
 // Has the public site caught up? The site's published list is compared with the saved event, field by field.
-export type SiteRow=Pick<AdminEvent,'slug'|'title'|'category'|'level'|'starts_at'|'ends_at'|'venue'|'description'|'signup_required'|'luma_url'|'status'|'cover_path'|'cover_alt'>;
+export type SiteRow=Pick<AdminEvent,'slug'|'title'|'category'|'level'|'starts_at'|'ends_at'|'venue'|'description'|'signup_required'|'luma_url'|'status'|'cover_path'|'cover_alt'|'cost'|'open_to'>;
 const time=(iso:string|null)=>iso?new Date(iso).getTime():null;
-export function matchesSite(event:AdminEvent,row:SiteRow){return row.title===event.title&&row.category===event.category&&row.level===event.level&&time(row.starts_at)===time(event.starts_at)&&time(row.ends_at)===time(event.ends_at)&&row.venue===event.venue&&row.description===event.description&&row.signup_required===event.signup_required&&(row.luma_url??null)===(event.luma_url??null)&&row.status===event.status&&(row.cover_path??null)===(event.cover_path??null)&&(row.cover_alt??'')===(event.cover_alt??'')}
+export function matchesSite(event:AdminEvent,row:SiteRow){return row.title===event.title&&row.category===event.category&&row.level===event.level&&time(row.starts_at)===time(event.starts_at)&&time(row.ends_at)===time(event.ends_at)&&row.venue===event.venue&&row.description===event.description&&row.signup_required===event.signup_required&&(row.luma_url??null)===(event.luma_url??null)&&row.status===event.status&&(row.cover_path??null)===(event.cover_path??null)&&(row.cover_alt??'')===(event.cover_alt??'')&&(row.cost??null)===(event.cost??null)&&(row.open_to??null)===(event.open_to??null)}
 export type SitePhase='hidden'|'live'|'publishing'|'updating'|'removing'|'unknown';
 export function sitePhase(event:AdminEvent,rows:SiteRow[]|null):SitePhase{const row=rows?.find(r=>r.slug===event.slug);if(event.status==='draft'){if(!rows)return event.published_at?'unknown':'hidden';return row?'removing':'hidden'}if(!rows)return 'unknown';if(!row)return 'publishing';return matchesSite(event,row)?'live':'updating'}
 export const siteBusy=(phase:SitePhase)=>phase==='publishing'||phase==='updating'||phase==='removing';

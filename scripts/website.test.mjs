@@ -90,6 +90,14 @@ test('Visitor branding uses byte-identical official SVG assets',()=>{
  const root=new URL('../',import.meta.url);for(const name of ['compsoc-blue.svg','compsoc-white.svg','cursor-blue.svg','cursor-white.svg']){const type=name.startsWith('cursor')?'icons':'logos';assert.deepEqual(readFileSync(new URL('public/website-assets/'+name,root)),readFileSync(new URL(`../asset-library/${type}/svg/${name}`,root)));}
 });
 
+test('An event can say what it costs and who can come',()=>{
+ const row={slug:'t',title:'T',category:'Workshop',level:'Everyone welcome',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',venue:'V',description:'D',signup_required:false,luma_url:null,status:'published'};
+ const both=liveEvent({...row,cost:'Free',open_to:'All students'});assert.equal(both.cost,'Free');assert.equal(both.openTo,'All students');
+ for(const blank of [{},{cost:null,open_to:null},{cost:'',open_to:''}]){const shown=liveEvent({...row,...blank});assert.equal('cost' in shown,false);assert.equal('openTo' in shown,false)}
+ const sent=editableFields({...blankEvent(),cost:'  Free ',open_to:'   '});assert.equal(sent.cost,'Free');assert.equal(sent.open_to,null);
+ const saved={...blankEvent(),...row,cost:'Free',open_to:null};assert.equal(sitePhase(saved,[{...row,cost:'Free',open_to:null}]),'live');assert.equal(sitePhase(saved,[{...row,cost:null,open_to:null}]),'updating');assert.equal(sitePhase({...saved,cost:null},[row]),'live');
+});
+
 test('Every font size comes from the shared scale',()=>{
  const scale=['fs-display','fs-page','fs-section','fs-card','fs-subhead','fs-body','fs-sm','pixel-lg','pixel-sm'];const allowed=new RegExp(`^(inherit|var[(]--(${scale.join('|')})[)])$`);const root=new URL('../src/',import.meta.url);
  const css=['website.css','motion.css','admin/admin.css'].map(name=>[name,readFileSync(new URL(name,root),'utf8').replace(/\/\*[\s\S]*?\*\//g,'')]);
