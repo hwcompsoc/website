@@ -1,7 +1,7 @@
 import {Fragment,useEffect,useRef,useState} from 'react';
 import {m,animate,useMotionValue,useMotionValueEvent,type Transition} from 'motion/react';
-import {MessageCircle,Users} from 'lucide-react';
-import {links} from '../content';
+import {ArrowRight,MessageCircle,Users} from 'lucide-react';
+import {events,links,type Event} from '../content';
 import {asset,External,LinkButton} from './shared';
 import {dur,ease} from '../motion';
 import {useMotionLevel} from '../motion/level';
@@ -67,7 +67,13 @@ function RiseWord({children,order,play,skip,className=''}:{children:string;order
  return <span className={`art-mask ${className}`}><m.span className="art-rise" initial={skip?false:{transform:'translateY(110%)'}} animate={{transform:play?'translateY(0%)':'translateY(110%)'}} transition={{duration:dur.reveal,ease:ease.enter,delay:skip?0:order*WORD_GAP}}>{children}</m.span></span>;
 }
 
-export function Hero(){
+// The slogan always shows, and a small card under it points to the next event when something's on. A real link, so it can still open in a new tab.
+function NextUp({event:e,onOpen,show,skip}:{event:Event;onOpen:(event:Event,origin:DOMRect)=>void;show:boolean;skip:boolean}){const [weekday='',day='',month='']=e.date.split(' ');
+ return <m.a className="art-next" href={`/events/${e.id}`} onClick={click=>{if(click.metaKey||click.ctrlKey||click.shiftKey||click.altKey)return;click.preventDefault();onOpen(e,click.currentTarget.getBoundingClientRect())}} initial={skip?false:{opacity:0}} animate={{opacity:show?1:0}} transition={{duration:dur.reveal,ease:ease.enter}}><span className="art-next-label">Next up</span><b>{e.title}</b><span className="art-next-when">{weekday.slice(0,3)} {day} {month.slice(0,3)}, {e.time.split('–')[0]} · {e.venue}</span><ArrowRight aria-hidden="true"/></m.a>;
+}
+const nextEvent=events.find(e=>!e.past&&!e.cancelled);
+
+export function Hero({onEvent}:{onEvent:(event:Event,origin:DOMRect)=>void}){
  const level=useMotionLevel();const fire=useClickBurst();
  const [skip]=useState(()=>level!=='full'||alreadyPlayed());
  const [reached,setReached]=useState(skip?steps.length:0);const at=(step:Step)=>reached>steps.indexOf(step);
@@ -101,14 +107,14 @@ export function Hero(){
 
  return <section className="home-hero wrap"><div className="hero-copy">
   <Reveal as="h1" trigger="manual" play={at('headline')} stagger={.08} lines={['Find your people.',<span className="hero-accent" ref={accent}><Select mode="persist" trigger="manual" play={at('drag')} from="right" instant={skip} driven={skip?undefined:clip}>Build what’s next.</Select></span>]}/>
-  <p>Whether you code every day or you’ve never opened a terminal, CompSoc is where Heriot-Watt students meet to learn, build things and hang out.</p><div className="hero-actions"><LinkButton href={links.discord}><MessageCircle aria-hidden="true"/>Join the Discord</LinkButton><External href={links.instagram} className="text-link">Follow our story</External></div><div className="hero-note"><Users size={16} aria-hidden="true"/><span>You don’t need any experience to join in.</span></div></div>
+  <p>Whether you code every day or you’ve never opened a terminal, CompSoc is where Heriot-Watt students meet to learn, build things and hang out.</p><div className="hero-actions"><LinkButton href={links.discord}><MessageCircle aria-hidden="true"/>Join the Discord</LinkButton><External href={links.instagram} className="text-link">Follow us on Instagram</External></div><div className="hero-note"><Users size={16} aria-hidden="true"/><span>You don’t need any experience to join in.</span></div></div>
   <div className="hero-art" ref={panel} role="group" aria-label="A community for learning, making and connecting">
    {skip?<div className="art-grid" aria-hidden="true"/>:<PixelBuild className="art-grid" style={{position:'absolute'}} cover="var(--panel)" cols={12} rows={10} trigger="manual" play={at('grid')}>{null}</PixelBuild>}
    <div className="art-caption"><span className="small-dot"/><Typed text="Hello, HW." trigger="manual" play={at('caption')} instant={skip}/></div>
    <m.span className="hero-cursor" ref={rest} style={lean.style} data-bob={lean.bob||undefined}><m.span className="hero-cursor-travel" style={{x,y,...(path&&{transformOrigin:`${path.tipX}px ${path.tipY}px`})}} initial={startPose} animate={pose} transition={transition}>
     <img ref={white} src={asset('cursor-white.svg')} alt="" data-shown=""/><img ref={blue} src={asset('cursor-blue.svg')} alt=""/>
    </m.span></m.span>
-   <div className="art-word">{words.map((line,l)=><span className="art-line" key={l}>{line.map((word,w)=>{const order=words.slice(0,l).flat().length+w;return <Fragment key={word}>{w?' ':''}<RiseWord order={order} play={at('words')} skip={skip}>{word}</RiseWord></Fragment>})}{l===words.length-1&&<RiseWord className="art-dot" order={words.flat().length} play={at('words')} skip={skip}>.</RiseWord>}</span>)}</div>
+   <div className="art-word">{words.map((line,l)=><span className="art-line" key={l}>{line.map((word,w)=>{const order=words.slice(0,l).flat().length+w;return <Fragment key={word}>{w?' ':''}<RiseWord order={order} play={at('words')} skip={skip}>{word}</RiseWord></Fragment>})}{l===words.length-1&&<RiseWord className="art-dot" order={words.flat().length} play={at('words')} skip={skip}>.</RiseWord>}</span>)}</div>{nextEvent&&<NextUp event={nextEvent} onOpen={onEvent} show={at('return')} skip={skip}/>}
    <div className="art-bottom"><span>01 / MEET</span><span>02 / MAKE</span><span>03 / BELONG</span></div>
   </div></section>;
 }

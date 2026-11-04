@@ -3,8 +3,8 @@ import {COMMITTEE_BUCKET,COVER_BUCKET,DOCUMENT_BUCKET,SUPABASE_URL,coverThumb} f
 export const NATIVE_CREATE='https://promoters.native.fm/event/event/create';
 export const LUMA_CREATE='https://luma.com/create';
 
-export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';cover_path?:string|null;square_path?:string|null;cover_alt?:string;published_at?:string|null;updated_at?:string};
-export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,luma_url:null,socials_sent:false,status:'draft',cover_path:null,square_path:null,cover_alt:''});
+export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';cover_path?:string|null;square_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null;published_at?:string|null;updated_at?:string};
+export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,luma_url:null,socials_sent:false,status:'draft',cover_path:null,square_path:null,cover_alt:'',cost:null,open_to:null});
 
 // Event images: 'cover' is the landscape one the site shows and Native needs (Native serves its images at 736 × 412, about 16:9),
 // 'square' is for Luma, Instagram and Discord. Close to the shape is enough, so a few pixels out doesn't mean redoing a poster.
@@ -83,7 +83,7 @@ export const descriptionProblems=(event:AdminEvent):Problems=>event.description.
 export function whenProblems(when:When,venue:string,required=true){const found:Problems={};if(required){if(!when.date)found.date='Choose a date.';if(!when.start)found.start='Add a start time.';if(!when.end)found.end='Add an end time.';if(!venue.trim())found.venue='Say where it is.'}const {starts_at,ends_at}=whenToIso(when);if(starts_at&&ends_at&&new Date(ends_at)<=new Date(starts_at))found.end='The end must be after the start. If it finishes after midnight, tick the box below.';return found}
 export const slugAttempt=(base:string,attempt:number)=>attempt<=1?base:`${base.slice(0,56).replace(/-+$/,'')}-${attempt}`;
 // The only fields a form may send: never the id or published time, or the images, which CoverField saves itself.
-export function editableFields(event:AdminEvent){const {slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status,cover_alt}=event;return {cover_alt,slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status}}
+export function editableFields(event:AdminEvent){const {slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status,cover_alt,cost,open_to}=event;return {cover_alt,cost:cost?.trim()||null,open_to:open_to?.trim()||null,slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status}}
 
 const uk=(iso:string,options:Intl.DateTimeFormatOptions)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',...options}).format(new Date(iso));
 export const shortDate=(iso:string|null)=>iso?`${uk(iso,{day:'2-digit'})} ${uk(iso,{month:'short'}).slice(0,3).toUpperCase()}`:'';
@@ -91,9 +91,9 @@ export const fullDate=(iso:string)=>`${uk(iso,{weekday:'long'})} ${uk(iso,{day:'
 export const timeRange=(start:string,end:string|null)=>{const at=(iso:string)=>uk(iso,{hour:'2-digit',minute:'2-digit',hourCycle:'h23'});return end?`${at(start)}–${at(end)}`:at(start)};
 
 // Has the public site caught up? The site's published list is compared with the saved event, field by field.
-export type SiteRow=Pick<AdminEvent,'slug'|'title'|'category'|'level'|'starts_at'|'ends_at'|'venue'|'description'|'signup_required'|'luma_url'|'status'|'cover_path'|'cover_alt'>;
+export type SiteRow=Pick<AdminEvent,'slug'|'title'|'category'|'level'|'starts_at'|'ends_at'|'venue'|'description'|'signup_required'|'luma_url'|'status'|'cover_path'|'cover_alt'|'cost'|'open_to'>;
 const time=(iso:string|null)=>iso?new Date(iso).getTime():null;
-export function matchesSite(event:AdminEvent,row:SiteRow){return row.title===event.title&&row.category===event.category&&row.level===event.level&&time(row.starts_at)===time(event.starts_at)&&time(row.ends_at)===time(event.ends_at)&&row.venue===event.venue&&row.description===event.description&&row.signup_required===event.signup_required&&(row.luma_url??null)===(event.luma_url??null)&&row.status===event.status&&(row.cover_path??null)===(event.cover_path??null)&&(row.cover_alt??'')===(event.cover_alt??'')}
+export function matchesSite(event:AdminEvent,row:SiteRow){return row.title===event.title&&row.category===event.category&&row.level===event.level&&time(row.starts_at)===time(event.starts_at)&&time(row.ends_at)===time(event.ends_at)&&row.venue===event.venue&&row.description===event.description&&row.signup_required===event.signup_required&&(row.luma_url??null)===(event.luma_url??null)&&row.status===event.status&&(row.cover_path??null)===(event.cover_path??null)&&(row.cover_alt??'')===(event.cover_alt??'')&&(row.cost??null)===(event.cost??null)&&(row.open_to??null)===(event.open_to??null)}
 export type SitePhase='hidden'|'live'|'publishing'|'updating'|'removing'|'unknown';
 export function sitePhase(event:AdminEvent,rows:SiteRow[]|null):SitePhase{const row=rows?.find(r=>r.slug===event.slug);if(event.status==='draft'){if(!rows)return event.published_at?'unknown':'hidden';return row?'removing':'hidden'}if(!rows)return 'unknown';if(!row)return 'publishing';return matchesSite(event,row)?'live':'updating'}
 export const siteBusy=(phase:SitePhase)=>phase==='publishing'||phase==='updating'||phase==='removing';
@@ -106,14 +106,22 @@ export function badgeFor(event:Pick<AdminEvent,'status'>,phase:SitePhase|null){i
 export const PHOTO_MIN=200,PHOTO_SIZE=384,PHOTO_QUALITY=.85;
 export const photoUrl=(path:string)=>`${SUPABASE_URL}/storage/v1/object/public/${COMMITTEE_BUCKET}/${path}`;
 export const photoProblem=(width:number,height:number)=>Math.min(width,height)<PHOTO_MIN?`That image is only ${width} × ${height}. Use one at least ${PHOTO_MIN} pixels on each side, so it stays sharp.`:null;
+// People paste whole addresses, so these keep just the username, which is all that's stored.
+export const discordHandle=(value:string)=>value.trim().replace(/^@/,'').toLowerCase();
+export const githubHandle=(value:string)=>value.trim().replace(/^(https?:\/\/)?(www\.)?github\.com\//i,'').replace(/^@/,'').replace(/[/?#].*$/,'');
+export const linkedinHandle=(value:string)=>value.trim().replace(/^(https?:\/\/)?([a-z]+\.)?linkedin\.com\/in\//i,'').replace(/[/?#].*$/,'');
+export type Profile={bio:string|null;studies:string|null;ask_me_about:string|null;discord:string|null;github:string|null;linkedin:string|null};
+export const blankProfile=():Profile=>({bio:null,studies:null,ask_me_about:null,discord:null,github:null,linkedin:null});
+export const profileFields=(profile:Profile):Profile=>({bio:profile.bio?.trim()||null,studies:profile.studies?.trim()||null,ask_me_about:profile.ask_me_about?.trim()||null,discord:discordHandle(profile.discord??'')||null,github:githubHandle(profile.github??'')||null,linkedin:linkedinHandle(profile.linkedin??'')||null});
+export function profileProblems(profile:Profile):Problems{const {discord,github,linkedin}=profileFields(profile);const found:Problems={};if(discord&&!/^[a-z0-9_.]{2,32}$/.test(discord))found.discord='Use their Discord username, like sam_lee.';if(github&&!/^[A-Za-z0-9-]{1,39}$/.test(github))found.github='Use their GitHub username, like samlee.';if(linkedin&&!/^[A-Za-z0-9_%-]{3,100}$/.test(linkedin))found.linkedin='Use the end of their LinkedIn address, like sam-lee-123.';return found}
 export const committeeNameProblem=(name:string,message:string)=>name.trim()?null:message;
 export const nextPosition=(rows:{position:number}[])=>Math.max(0,...rows.map(row=>row.position))+1;
 // The two rows with their positions swapped, ready to save together, or null if there's nowhere to go.
 export function moved<T extends {id:string;position:number}>(rows:T[],id:string,by:-1|1){const at=rows.findIndex(row=>row.id===id);const other=rows[at+by];if(at<0||!other)return null;return [{...rows[at],position:other.position},{...other,position:rows[at].position}]}
 
 // Has the public site caught up with the committee? Compared as the About page would show it, in order.
-export type SiteTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
-const shownCommittee=(teams:SiteTeam[])=>JSON.stringify(teams.map(team=>[team.name,team.description,team.committee_people.map(person=>[person.name,person.photo_path??null])]));
+export type SiteTeam={name:string;description:string;committee_people:({name:string;photo_path:string|null}&Partial<Profile>)[]};
+const shownCommittee=(teams:SiteTeam[])=>JSON.stringify(teams.map(team=>[team.name,team.description,team.committee_people.map(person=>[person.name,person.photo_path??null,person.bio??null,person.studies??null,person.ask_me_about??null,person.discord??null,person.github??null,person.linkedin??null])]));
 const phaseFrom=(saved:string|null,site:string|null):SitePhase=>site===null?'unknown':saved===null||saved===site?'live':'updating';
 export const committeePhase=(saved:SiteTeam[]|undefined,site:SiteTeam[]|null):SitePhase=>phaseFrom(saved?shownCommittee(saved):null,site&&shownCommittee(site));
 export type SiteFaq={question:string;answer:string};

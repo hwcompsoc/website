@@ -85,7 +85,7 @@
 .board-main{min-width:0;display:flex;align-items:center;gap:var(--space-16)}
 .board-text{min-width:0}
 .board-cover{flex:none;display:block;width:96px;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
-.board-main h3{font-size:var(--fs-h3);line-height:1.3;margin:0 0 var(--space-4)}
+.board-main h3{font-size:var(--fs-card);line-height:1.3;margin:0 0 var(--space-4)}
 .board-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left}
 .board-open::after{content:'';position:absolute;inset:0;z-index:2}
 .board-venue{display:block;font-size:var(--fs-sm);color:var(--text-quiet)}
@@ -94,7 +94,8 @@
 .board-arrow{width:16px;transition:transform var(--dur-hover) var(--ease-enter)}
 /* Restates the transform transition, which the white-text rule above would otherwise replace. */
 .board-row:is(:hover,:has(.board-open:focus-visible)) .board-arrow{transform:translateX(4px);transition:transform var(--dur-hover) var(--ease-enter),color var(--dur-hover) ease .08s}
-@media(max-width:800px){.board-row{grid-template-columns:auto auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time cat arrow" "main main main main" "level level level level";gap:var(--space-8) var(--space-16);padding:var(--space-16) var(--space-4)}.board-date{grid-area:date}.board-time{grid-area:time}.board-cat{grid-area:cat}.board-main{grid-area:main}.board-level{grid-area:level;text-align:left}.board-arrow{grid-area:arrow}.board-sample{display:inline;margin:0 0 0 var(--space-8)}}
+/* Below this width a row can't fit its columns and still leave the title room, so it stacks: the date and time, then the event, then its type and who it's for. */
+@media(max-width:1050px){.board-row{grid-template-columns:max-content max-content minmax(0,1fr) 1.25rem;grid-template-areas:"date date time arrow" "main main main main" "cat level level level";gap:var(--space-8) var(--space-12);padding:var(--space-12) var(--space-4)}.board-date{grid-area:date}.board-time{grid-area:time}.board-cat{grid-area:cat}.board-main{grid-area:main}.board-level{grid-area:level;text-align:left}.board-arrow{grid-area:arrow}.board-sample{display:inline;margin:0 0 0 var(--space-8)}}
 .dialog-date-ghost{position:fixed;z-index:60;margin:0;pointer-events:none}
 .dialog-date{display:inline-flex;align-self:flex-start;flex-direction:column;align-items:center;min-width:56px;padding:var(--space-8);margin-bottom:var(--space-12);background:var(--tint);border:1px solid var(--line);border-radius:4px;transform-origin:0 0}
 .dialog-date b{line-height:1.15}
@@ -104,7 +105,7 @@
 .detail-cover{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
 /* The cover makes the dialog taller than most laptop screens, so its actions stay in view. Phones stack them, which would cover too much. */
 @media(min-width:801px){.dialog-build>.dialog-actions{position:sticky;bottom:-32px;z-index:1;padding-block:var(--space-16);background:var(--surface);border-top:1px solid var(--line)}}
-.dialog-build>p{font-size:var(--fs-sm);margin:0}
+.dialog-build>p{font-size:var(--fs-body);margin:0}
 
 /* Hero panel words: each rises out of its own mask; padding keeps descenders (y, g) unclipped */
 .art-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
@@ -144,7 +145,7 @@
 .resource-card>div{position:relative;transition:transform var(--dur-hover) var(--ease-enter),box-shadow var(--dur-hover) var(--ease-enter)}
 .resource-card:is(:hover,:has(:focus-visible))>div{transform:translate(-2px,-2px);box-shadow:var(--shadow-hard)}
 .resource-open::after{content:'';position:absolute;inset:0}
-.resource-card .eyebrow{font-size:var(--pixel-sm,11px);letter-spacing:.04em}
+.resource-card .eyebrow{font-size:var(--pixel-sm);letter-spacing:.04em}
 
 /* About avatars build in at their own size */
 .avatar-build{width:max-content}
@@ -174,22 +175,18 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 /* Pixel accents: labels, numbers and captions */
 .eyebrow,.art-caption,.art-bottom,.journey-strip>a>span,.step-number,.board-cat,.board-sample{font-family:var(--font-pixel);font-size:var(--pixel-sm);font-weight:400;letter-spacing:.04em}
 .board-date,.board-time{font-size:var(--pixel-lg);font-weight:400;letter-spacing:0}
-@media(min-width:801px){
-.board-row{grid-template-columns:6.5rem 5rem 7.5rem minmax(0,1fr) auto 1.25rem}}
+@media(min-width:1051px){
+.board-row{grid-template-columns:9.25rem 5rem 7.5rem minmax(0,1fr) auto 1.25rem}}
 .dialog-date b{font-size:var(--pixel-lg);font-weight:400}
 .dialog-date span{font-size:var(--pixel-sm);font-weight:400}
 .header-inner{height:72px}
 @media(max-width:800px){
 .header-inner{height:64px}}
-.resource-card .resource-bottom>.resource-type{font-family:var(--font-pixel);font-size:var(--pixel-sm)}
 .resource-stack>a:nth-child(2){background:var(--surface)}
-.resource-card .suggest-title{font-size:var(--fs-h3);letter-spacing:-.4px}
 @media(forced-colors:active){
 .select-fill,.nav-select,.scroll-progress,.format-dot,.caret{background:Highlight;color:HighlightText}
 .header-inner nav>a[aria-current=page]{color:HighlightText}
 .header-inner nav>a:not([aria-current])::after{background:LinkText}}
-@media(max-width:400px){
-.board-row{grid-template-columns:auto minmax(0,1fr) 1.25rem;grid-template-areas:"date time arrow" "cat cat cat" "main main main" "level level level"}}
 /* 404 cursor: placed from the window's top-right corner; its tip is the image's top left. It flies in from off to the side, so the page clips sideways. */
 .not-found{overflow-x:clip}
 .nf-cursor{position:absolute;top:0;left:100%;z-index:2;width:17px;height:26px;pointer-events:none;transform-origin:0 0}
@@ -201,3 +198,11 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 :root[data-theme=dark] .nf-cursor-dark{display:block}
 .nf-actions a[data-pressed]{transform:scale(.97)}
 @media(forced-colors:active){.nf-cursor{display:none}}
+
+/* A row with no image keeps the titles lined up. */
+.board-cover-empty{display:block;background:var(--tint)}
+@media(max-width:1050px){
+.board-cover{width:72px}
+.board-cover-empty{display:none}
+.board-main{gap:var(--space-12)}
+.board-main h3{font-size:var(--fs-subhead);margin-bottom:2px}}

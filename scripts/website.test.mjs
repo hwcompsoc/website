@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
-import {parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
+import {anchor,peopleOf,links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
+import {parseAnswer,parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -19,7 +19,7 @@ test('Paths resolve to pages and items, and anything else is not found',()=>{
 });
 test('Live events become site events in UK time, and real calendar files carry no prototype labels',()=>{
  const row={slug:'real-talk',title:'Real, talk',category:'Industry',level:'Everyone welcome',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',venue:'EM1.82',description:'A talk',signup_required:true,luma_url:'https://luma.com/x',status:'published'};
- const summer=liveEvent(row,Date.parse('2027-01-01'));assert.equal(summer.id,'real-talk');assert.equal(summer.day,'01');assert.equal(summer.month,'JUL');assert.equal(summer.date,'Thursday 1 July 2027');assert.equal(summer.time,'18:30–20:00 BST');assert.equal(summer.start,'20270701T173000Z');assert.equal(summer.past,false);assert.equal(summer.luma,'https://luma.com/x');
+ const summer=liveEvent(row,Date.parse('2027-01-01'));assert.equal(summer.id,'real-talk');assert.equal(summer.weekday,'THU');assert.equal(summer.day,'01');assert.equal(summer.month,'JUL');assert.equal(summer.date,'Thursday 1 July 2027');assert.equal(summer.time,'18:30–20:00 BST');assert.equal(summer.start,'20270701T173000Z');assert.equal(summer.past,false);assert.equal(summer.luma,'https://luma.com/x');
  const winter=liveEvent({...row,starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',signup_required:false,status:'cancelled'},Date.parse('2027-02-01'));assert.equal(winter.time,'17:30–19:00 GMT');assert.equal(winter.past,true);assert.equal(winter.cancelled,true);assert.equal(winter.luma,undefined);
  const file=calendar(summer);assert.ok(!file.includes('PROTOTYPE'));assert.ok(!file.includes('example'));assert.ok(file.includes('UID:real-talk@hwcompsoc'));assert.ok(file.includes('SUMMARY:Real\\, talk'));assert.ok(calendar(winter).includes('STATUS:CANCELLED'));
 });
@@ -90,6 +90,47 @@ test('Visitor branding uses byte-identical official SVG assets',()=>{
  const root=new URL('../',import.meta.url);for(const name of ['compsoc-blue.svg','compsoc-white.svg','cursor-blue.svg','cursor-white.svg']){const type=name.startsWith('cursor')?'icons':'logos';assert.deepEqual(readFileSync(new URL('public/website-assets/'+name,root)),readFileSync(new URL(`../asset-library/${type}/svg/${name}`,root)));}
 });
 
+test('An event can say what it costs and who can come',()=>{
+ const row={slug:'t',title:'T',category:'Workshop',level:'Everyone welcome',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',venue:'V',description:'D',signup_required:false,luma_url:null,status:'published'};
+ const both=liveEvent({...row,cost:'Free',open_to:'All students'});assert.equal(both.cost,'Free');assert.equal(both.openTo,'All students');
+ for(const blank of [{},{cost:null,open_to:null},{cost:'',open_to:''}]){const shown=liveEvent({...row,...blank});assert.equal('cost' in shown,false);assert.equal('openTo' in shown,false)}
+ const sent=editableFields({...blankEvent(),cost:'  Free ',open_to:'   '});assert.equal(sent.cost,'Free');assert.equal(sent.open_to,null);
+ const saved={...blankEvent(),...row,cost:'Free',open_to:null};assert.equal(sitePhase(saved,[{...row,cost:'Free',open_to:null}]),'live');assert.equal(sitePhase(saved,[{...row,cost:null,open_to:null}]),'updating');assert.equal(sitePhase({...saved,cost:null},[row]),'live');
+});
+
+test('FAQ answers link email addresses by themselves and keep links safe',()=>{
+ const link=(text,href)=>({kind:'link',text,href});
+ assert.deepEqual(parseAnswer('Email a.b@hw.ac.uk.'),[{kind:'text',text:'Email '},link('a.b@hw.ac.uk','mailto:a.b@hw.ac.uk'),{kind:'text',text:'.'}]);
+ assert.deepEqual(parseAnswer('[Write to us](mailto:a@hw.ac.uk)'),[link('Write to us','mailto:a@hw.ac.uk')]);
+ assert.deepEqual(parseAnswer('[a@hw.ac.uk](mailto:a@hw.ac.uk)'),[link('a@hw.ac.uk','mailto:a@hw.ac.uk')]);
+ assert.deepEqual(parseAnswer('[Page](https://example.com/a@b.com)'),[link('Page','https://example.com/a@b.com')]);
+ assert.deepEqual(parseAnswer('Join the [Union](https://hwunion.com)'),[{kind:'text',text:'Join the '},link('Union','https://hwunion.com')]);
+ assert.deepEqual(parseAnswer('[click](javascript:alert(1))'),[{kind:'text',text:'click'}]);
+ assert.deepEqual(parseAnswer('No links here.'),[{kind:'text',text:'No links here.'}]);
+});
+
+test('Committee people and roles have stable addresses on the About page',()=>{
+ assert.equal(anchor('Community Manager'),'community-manager');assert.equal(anchor('Events team'),'events-team');assert.equal(anchor(' Vice-President & Co. '),'vice-president-co');assert.equal(anchor('Kevin Paul Job'),'kevin-paul-job');
+ const people=peopleOf(liveCommittee([{name:'Treasurer',description:'Books.',committee_people:[{name:'Sam Lee',photo_path:null}]},{name:'Events team',description:'Events.',committee_people:[{name:'Ann',photo_path:null},{name:'Sam Lee',photo_path:null}]}]));
+ assert.deepEqual(people.map(person=>person.slug),['sam-lee','ann','sam-lee-events-team']);assert.deepEqual(people.map(person=>person.file),['sam-lee.md','events-team/ann.md','events-team/sam-lee-events-team.md']);assert.equal(people[0].team,false);assert.equal(people[1].team,true);assert.equal(people[1].text,'Events.');assert.equal(people[0].title,'Treasurer');assert.equal(people[1].title,'Event Organiser');assert.equal(peopleOf(liveCommittee([{name:'Crew',description:'',committee_people:[{name:'A',photo_path:null},{name:'B',photo_path:null}]}]))[0].title,'Crew');
+});
+
+test('A committee profile keeps only what is filled in, and only usernames',()=>{
+ const person={name:'Sam',photo_path:null,bio:'Hi',studies:null,ask_me_about:'',discord:'sam_lee',github:null,linkedin:'sam-lee'};const [member]=liveCommittee([{name:'T',description:'',committee_people:[person]}])[0].members;assert.deepEqual(member,{name:'Sam',bio:'Hi',discord:'sam_lee',linkedin:'sam-lee'});
+ assert.equal(githubHandle('https://github.com/SamLee/'),'SamLee');assert.equal(githubHandle('@samlee'),'samlee');assert.equal(githubHandle('www.github.com/samlee?tab=repositories'),'samlee');assert.equal(linkedinHandle('https://www.linkedin.com/in/sam-lee-123/?trk=x'),'sam-lee-123');assert.equal(linkedinHandle('uk.linkedin.com/in/sam-lee'),'sam-lee');assert.equal(discordHandle(' @Sam_Lee '),'sam_lee');
+ assert.deepEqual(profileFields({bio:'  ',studies:' CS ',ask_me_about:'',discord:'@Sam',github:'https://github.com/sam',linkedin:null}),{bio:null,studies:'CS',ask_me_about:null,discord:'sam',github:'sam',linkedin:null});
+ assert.deepEqual(profileProblems(blankProfile()),{});assert.ok(profileProblems({...blankProfile(),discord:'has space'}).discord);assert.ok(profileProblems({...blankProfile(),github:'javascript:alert(1)'}).github);assert.ok(profileProblems({...blankProfile(),linkedin:'a/b c'}).linkedin);assert.deepEqual(profileProblems({...blankProfile(),discord:'sam.lee',github:'sam-lee',linkedin:'sam-lee-1'}),{});
+ const team={name:'T',description:'',committee_people:[{name:'Sam',photo_path:null,bio:'Hi'}]};assert.equal(committeePhase([team],[{...team,committee_people:[{name:'Sam',photo_path:null,bio:'Hi'}]}]),'live');assert.equal(committeePhase([team],[{...team,committee_people:[{name:'Sam',photo_path:null,bio:'Old'}]}]),'updating');assert.equal(committeePhase([{...team,committee_people:[{name:'Sam',photo_path:null}]}],[{...team,committee_people:[{name:'Sam',photo_path:null,github:null}]}]),'live');
+});
+
+test('Every font size comes from the shared scale',()=>{
+ const scale=['fs-display','fs-page','fs-section','fs-card','fs-subhead','fs-body','fs-sm','pixel-lg','pixel-sm'];const allowed=new RegExp(`^(inherit|var[(]--(${scale.join('|')})[)])$`);const root=new URL('../src/',import.meta.url);
+ const css=['website.css','motion.css','admin/admin.css'].map(name=>[name,readFileSync(new URL(name,root),'utf8').replace(/\/\*[\s\S]*?\*\//g,'')]);
+ for(const [name,text] of css){for(const [,size] of text.matchAll(/font-size:([^;}]+)/g))assert.match(size.trim(),allowed,name);for(const [,font] of text.matchAll(/(?:^|[;{\s])font:([^;}]+)/g))assert.equal(font.trim(),'inherit',name)}
+ const all=css.map(([,text])=>text).join('');for(const token of scale)assert.equal(all.split(`--${token}:`).length,2,token);
+ for(const file of readdirSync(root,{recursive:true}).map(String).filter(file=>/\.tsx?$/.test(file)&&!/generated/.test(file))){const text=readFileSync(new URL(file.replace(/[^\w./-]/g,'/'),root),'utf8');assert.doesNotMatch(text,/fontSize|\btext-\[[\d.]+(px|rem|em)\]|\btext-([2-9]?xl)\b/,file)}
+});
+
 test('Event images: both shapes and a description are required to go live, and the form never sends the images',()=>{
  const path='00000000-0000-0000-0000-000000000000.jpg';const ready={...blankEvent(),title:'Talk',slug:'talk',starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',venue:'EM1.82',description:'A talk',signup_required:false,native_url:'https://native.fm/x',socials_sent:true};
  const square='00000000-0000-0000-0000-000000000001.jpg';const complete={...ready,cover_path:path,square_path:square,cover_alt:'A poster for the talk'};for(const [gap,step] of [[{cover_path:null},'Add a landscape image'],[{square_path:null},'Add a square image'],[{cover_alt:'  '},'Describe the image']]){assert.deepEqual(missingSteps({...complete,...gap}),[step]);assert.equal(checklist({...complete,...gap})[0].done,false)}assert.deepEqual(missingSteps(complete),[]);assert.equal(checklist(complete)[0].done,true);
@@ -116,10 +157,10 @@ test('The privacy page keeps the expected order, a date, and everything the ICO 
 test('Every address has its own share details, and they are written safely into the page',()=>{
  const base={title:'Rust & "friends"',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'x '.repeat(200),signup_required:false,luma_url:null,status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust'};
  const event=liveEvent({...base,cover_path:'00000000-0000-0000-0000-000000000000.jpg',cover_alt:'A crab <holding> a laptop'},Date.parse('2027-01-01'));const list=sharePages([event,liveEvent({...base,slug:'off',status:'cancelled'},Date.parse('2027-01-01'))]);
- const paths=list.map(s=>s.path);for(const path of ['/','/join','/events','/resources','/about','/partners','/events/rust','/events/off','/resources/git'])assert.ok(paths.includes(path),path);assert.equal(new Set(paths).size,paths.length);for(const share of list){assert.ok(share.title.endsWith(' · HW CompSoc'));assert.ok(share.description.length>0&&share.description.length<=200,share.path);assert.equal(route(share.path).view==='notfound',share.path.startsWith('/events/'),share.path)}
+ const paths=list.map(s=>s.path);for(const path of ['/','/join','/events','/resources','/about','/partners','/events/rust','/events/off','/resources/git'])assert.ok(paths.includes(path),path);assert.equal(new Set(paths).size,paths.length);for(const share of list){assert.ok(share.path==='/'?share.title==='HW CompSoc | Heriot-Watt Computer Science Society':share.title.endsWith(share.path.startsWith('/events/')?' | HW CompSoc Events':share.path.startsWith('/resources/')?' | HW CompSoc Resources':' | HW CompSoc'),share.path);assert.ok(share.description.length>0&&share.description.length<=200,share.path);assert.equal(route(share.path).view==='notfound',share.path.startsWith('/events/'),share.path)}
  const shared=list.find(s=>s.path==='/events/rust');assert.equal(shared.image,'/event-covers/00000000-0000-0000-0000-000000000000.jpg');assert.ok(shared.description.startsWith('Thursday 1 July 2027, 18:30–20:00 BST, EM1.82. '));assert.equal(list.find(s=>s.path==='/about').image,DEFAULT_IMAGE);assert.ok(list.find(s=>s.path==='/events/off').description.startsWith('Cancelled. '));
  const template='<html><head><meta name="description" content="old"><title>old</title></head></html>';const page=sharePage(template,shared,'https://example.com');
- assert.ok(page.includes('<title>Rust &amp; &quot;friends&quot; · HW CompSoc</title>'));assert.ok(!page.includes('content="old"')&&!page.includes('<title>old'));assert.ok(page.includes('<meta property="og:image" content="https://example.com/event-covers/00000000-0000-0000-0000-000000000000.jpg">'));assert.ok(page.includes('<meta property="og:url" content="https://example.com/events/rust">'));assert.ok(page.includes('content="A crab &lt;holding&gt; a laptop"'));assert.ok(page.includes('<link rel="canonical" href="https://example.com/events/rust">'));
+ assert.ok(page.includes('<title>Rust &amp; &quot;friends&quot; | HW CompSoc Events</title>'));assert.ok(!page.includes('content="old"')&&!page.includes('<title>old'));assert.ok(page.includes('<meta property="og:image" content="https://example.com/event-covers/00000000-0000-0000-0000-000000000000.jpg">'));assert.ok(page.includes('<meta property="og:url" content="https://example.com/events/rust">'));assert.ok(page.includes('content="A crab &lt;holding&gt; a laptop"'));assert.ok(page.includes('<link rel="canonical" href="https://example.com/events/rust">'));
  assert.ok(sharePage(template,list.find(s=>s.path==='/'),'https://example.com').includes('<meta property="og:url" content="https://example.com">'));const local=sharePage(template,shared,'');assert.ok(!local.includes('og:image'));assert.ok(local.includes('<meta property="og:title"'));
  assert.ok(readFileSync(new URL('../public'+DEFAULT_IMAGE,import.meta.url)).length>1000);
 });

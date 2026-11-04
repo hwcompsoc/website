@@ -17,6 +17,9 @@ export function parseInline(text:string):Inline[]{const out:Inline[]=[];let at=0
   if(match[1]!==undefined)out.push({kind:'code',text:match[1]});else if(match[2]!==undefined)out.push({kind:'bold',text:match[2]});else if(safeLink(match[4]))out.push({kind:'link',text:match[3],href:match[4]});else plain(match[3])}
  plain(text.slice(at));return out}
 
+// FAQ answers: the same inline formatting, and a bare email address becomes a link by itself.
+export const parseAnswer=(text:string)=>parseInline(text.replace(/(?<![\[(:/\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,email=>`[${email}](mailto:${email})`));
+
 const CHECK=/^\s*[-*]\s+\[[ xX]?\]\s+(.*)$/,BULLET=/^\s*[-*]\s+(.*)$/,NUMBER=/^\s*\d+[.)]\s+(.*)$/,FENCE=/^\s*```/,HEADING=/^(#{1,4})\s+(.*)$/;
 export function parseGuide(source:string):Block[]{const lines=source.replace(/\r\n?/g,'\n').split('\n');const blocks:Block[]=[];let i=0;
  const collect=(pattern:RegExp)=>{const items:string[]=[];while(i<lines.length){const match=lines[i].match(pattern);if(!match||(pattern===BULLET&&CHECK.test(lines[i])))break;items.push(match[1].trim());i++}return items};

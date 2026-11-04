@@ -6,6 +6,7 @@
 //
 // It asks for the Supabase secret key (Project Settings > API Keys), or reads SUPABASE_SECRET_KEY. The key and the temporary
 // passwords are never saved: copy each password from the screen, send it privately, and close the terminal.
+import './load-env.mjs';
 import {randomInt} from 'node:crypto';
 import {SUPABASE_URL} from '../src/supabase-config.ts';
 

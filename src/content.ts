@@ -6,17 +6,30 @@ import documentRows from './generated/documents.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
+// What a browser tab or shared link calls each page: the page and then the society, with the home page the other way round. A single event or guide names its section too. The headings on the pages themselves are in `titles`.
+const tabTitle=(name:string)=>`${name} | HW CompSoc`;
+export const eventTabTitle=(name:string)=>`${tabTitle(name)} Events`;
+export const guideTabTitle=(name:string)=>`${tabTitle(name)} Resources`;
+export const tabTitles={notfound:tabTitle('File not found'),privacy:tabTitle('Privacy'),home:'HW CompSoc | Heriot-Watt Computer Science Society',join:tabTitle('Join'),events:tabTitle('Events'),resources:tabTitle('Resources'),about:tabTitle('About'),partners:tabTitle('Partners')};
 export const titles={notfound:'File not found',privacy:'Privacy',home:'Find your people.',join:'Join the community.',events:'What’s on',resources:'Guides and resources',about:'Built by students. For students.',partners:'Work with us'};
 export const pages=[{id:'home',name:'Home'},{id:'join',name:'Join'},{id:'events',name:'Events'},{id:'resources',name:'Resources'},{id:'about',name:'About'},{id:'partners',name:'Partners'}] as const;
 export type Page=typeof pages[number]['id'];
 export type View=Page|'notfound'|'privacy';
 export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
-export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string};
+export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';weekday:string;day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string;cost?:string;openTo?:string};
 // Committee (About), from the admin. Roles with nobody in them stay off the page.
-export type Member={name:string;photo?:string};
-export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null}[]};
-export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee_people.length).map(team=>({role:team.name,text:team.description,members:team.committee_people.map(person=>({name:person.name,...person.photo_path?{photo:`/committee-photos/${person.photo_path}`}:{}})) as Member[]}));
+export type Member={name:string;photo?:string;bio?:string;studies?:string;askMeAbout?:string;discord?:string;github?:string;linkedin?:string};
+export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null;bio?:string|null;studies?:string|null;ask_me_about?:string|null;discord?:string|null;github?:string|null;linkedin?:string|null}[]};
+export const liveCommittee=(teams:LiveTeam[])=>teams.filter(team=>team.committee_people.length).map(team=>({role:team.name,text:team.description,members:team.committee_people.map(person=>({name:person.name,...person.photo_path?{photo:`/committee-photos/${person.photo_path}`}:{},...person.bio?{bio:person.bio}:{},...person.studies?{studies:person.studies}:{},...person.ask_me_about?{askMeAbout:person.ask_me_about}:{},...person.discord?{discord:person.discord}:{},...person.github?{github:person.github}:{},...person.linkedin?{linkedin:person.linkedin}:{}})) as Member[]}));
+// The address of a role or person on the About page, so other pages can link straight to them.
+export const anchor=(text:string)=>text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export const committee=liveCommittee(teams as LiveTeam[]);
+export type Person=Member&{role:string;title:string;text:string;team:boolean;slug:string;file:string};
+// What one person in a team is called. A team not listed here uses its own name.
+const memberTitles:Record<string,string>={'Events team':'Event Organiser'};
+// Everyone in order, each with their own address. Someone holding two roles gets a second address that names the role.
+export const peopleOf=(teams:ReturnType<typeof liveCommittee>):Person[]=>{const taken=new Set<string>();return teams.flatMap(({role,text,members})=>members.map(member=>{const base=anchor(member.name);const slug=taken.has(base)?`${base}-${anchor(role)}`:base;taken.add(slug);const team=members.length>1;return {...member,role,title:team?memberTitles[role]??role:role,text,team,slug,file:`${team?anchor(role)+'/':''}${slug}.md`}}))};
+export const committeePeople=peopleOf(committee);
 export type Faq={id:string;question:string;answer:string};
 export const faqs=faqRows as Faq[];
 // Approved documents (About), from the admin.
@@ -30,11 +43,13 @@ export type LiveGuide={slug:string;title:string;category:string;kind:string;desc
 export const liveGuide=(row:LiveGuide)=>({id:row.slug,title:row.title,category:row.category,description:row.description,type:row.kind,minutes:`${readingMinutes(row.body)} min`,body:row.body,reviewed:row.reviewed_on?new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',month:'long',year:'numeric'}).format(new Date(`${row.reviewed_on}T00:00:00Z`)):''});
 export type Resource=ReturnType<typeof liveGuide>;
 export const resources=(guides as LiveGuide[]).map(liveGuide);
+// The pages the menus link to. Resources stays out of them until there's a guide to find.
+export const menuPages=pages.filter(p=>p.id!=='resources'||resources.length>0);
 // Events are copied in from Supabase when the site builds.
-export type LiveEvent={slug:string;title:string;category:string;level:string;starts_at:string;ends_at:string;venue:string;description:string;signup_required:boolean;luma_url:string|null;status:string;cover_path?:string|null;cover_alt?:string};
+export type LiveEvent={slug:string;title:string;category:string;level:string;starts_at:string;ends_at:string;venue:string;description:string;signup_required:boolean;luma_url:string|null;status:string;cover_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null};
 const icsTime=(ms:number|string)=>new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g,'');
 export function liveEvent(row:LiveEvent,now=Date.now()):Event{const part=(iso:string,options:Intl.DateTimeFormatOptions,type:Intl.DateTimeFormatPartTypes)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',...options}).formatToParts(new Date(iso)).find(p=>p.type===type)?.value??'';const at=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));const s=row.starts_at;
- return {id:row.slug,title:row.title,category:row.category as Event['category'],level:row.level,venue:row.venue,description:row.description,day:part(s,{day:'2-digit'},'day'),month:part(s,{month:'short'},'month').slice(0,3).toUpperCase(),date:`${part(s,{weekday:'long'},'weekday')} ${part(s,{day:'numeric'},'day')} ${part(s,{month:'long'},'month')} ${part(s,{year:'numeric'},'year')}`,time:`${at(s)}–${at(row.ends_at)} ${part(s,{timeZoneName:'short'},'timeZoneName')}`,start:icsTime(s),end:icsTime(row.ends_at),past:new Date(row.ends_at).getTime()<now,cancelled:row.status==='cancelled',luma:row.signup_required&&row.luma_url?row.luma_url:undefined,...row.cover_path?{cover:`/event-covers/${row.cover_path}`,thumb:`/event-covers/${coverThumb(row.cover_path)}`,coverAlt:row.cover_alt??''}:{}}}
+ return {id:row.slug,title:row.title,category:row.category as Event['category'],level:row.level,venue:row.venue,description:row.description,weekday:part(s,{weekday:'short'},'weekday').slice(0,3).toUpperCase(),day:part(s,{day:'2-digit'},'day'),month:part(s,{month:'short'},'month').slice(0,3).toUpperCase(),date:`${part(s,{weekday:'long'},'weekday')} ${part(s,{day:'numeric'},'day')} ${part(s,{month:'long'},'month')} ${part(s,{year:'numeric'},'year')}`,time:`${at(s)}–${at(row.ends_at)} ${part(s,{timeZoneName:'short'},'timeZoneName')}`,start:icsTime(s),end:icsTime(row.ends_at),past:new Date(row.ends_at).getTime()<now,cancelled:row.status==='cancelled',luma:row.signup_required&&row.luma_url?row.luma_url:undefined,...row.cost?{cost:row.cost}:{},...row.open_to?{openTo:row.open_to}:{},...row.cover_path?{cover:`/event-covers/${row.cover_path}`,thumb:`/event-covers/${coverThumb(row.cover_path)}`,coverAlt:row.cover_alt??''}:{}}}
 const inOrder=(list:Event[])=>[...list.filter(e=>!e.past).sort((a,b)=>a.start.localeCompare(b.start)),...list.filter(e=>e.past).sort((a,b)=>b.start.localeCompare(a.start))];
 export const events:Event[]=inOrder((live as LiveEvent[]).map(row=>liveEvent(row)));
 export function filterEvents(category:string,query:string,past:boolean,list:Event[]=events){return list.filter(e=>!!e.past===past&&(category==='All'||e.category===category)&&`${e.title} ${e.description} ${e.category}`.toLowerCase().includes(query.trim().toLowerCase()))}

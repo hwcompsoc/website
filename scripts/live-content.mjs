@@ -1,5 +1,6 @@
 // What the site copies from Supabase: live events, the committee, the FAQs, the guides and the documents, with their files, so visitors never depend on Supabase.
 // A file that has gone from storage costs its item the image rather than blocking every build. Any other failure throws.
+import './load-env.mjs';
 import {existsSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
 import {COMMITTEE_BUCKET,COMMITTEE_SELECT,COVER_BUCKET,DOCUMENT_BUCKET,DOCUMENT_COLUMNS,FAQ_COLUMNS,GUIDE_COLUMNS,LIVE_EVENT_COLUMNS,SUPABASE_KEY,SUPABASE_URL,coverThumb} from '../src/supabase-config.ts';
 
