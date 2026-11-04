@@ -182,9 +182,7 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 .header-inner{height:72px}
 @media(max-width:800px){
 .header-inner{height:64px}}
-.resource-card .resource-bottom>.resource-type{font-family:var(--font-pixel);font-size:var(--pixel-sm)}
 .resource-stack>a:nth-child(2){background:var(--surface)}
-.resource-card .suggest-title{font-size:var(--fs-card);letter-spacing:-.4px}
 @media(forced-colors:active){
 .select-fill,.nav-select,.scroll-progress,.format-dot,.caret{background:Highlight;color:HighlightText}
 .header-inner nav>a[aria-current=page]{color:HighlightText}
