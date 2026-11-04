@@ -29,6 +29,8 @@ export type LiveDocument={id:string;title:string;approved_on:string;file_path:st
 const fileSize=(bytes:number)=>bytes<1024*1024?`${Math.max(1,Math.round(bytes/1024))} KB`:`${(bytes/1024/1024).toFixed(1)} MB`;
 export const liveDocument=(row:LiveDocument)=>({id:row.id,title:row.title,approved:new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(`${row.approved_on}T00:00:00Z`)),href:`/documents/${row.file_path}`,size:fileSize(row.size_bytes)});
 export const documents=(documentRows as LiveDocument[]).map(liveDocument);
+// Where each role sits on the About page, so other pages can link straight to it.
+export const roleAnchor=(role:string)=>role.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]).filter((_,i,a)=>i===0||i===a.length-1).join('').toUpperCase();
 // Guides (Resources), from the admin. Anything still a draft never reaches the site.
 export type LiveGuide={slug:string;title:string;category:string;kind:string;description:string;body:string;status:string;reviewed_on:string|null};

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
-import {parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
+import {roleAnchor,links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
+import {parseAnswer,parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
@@ -96,6 +96,21 @@ test('An event can say what it costs and who can come',()=>{
  for(const blank of [{},{cost:null,open_to:null},{cost:'',open_to:''}]){const shown=liveEvent({...row,...blank});assert.equal('cost' in shown,false);assert.equal('openTo' in shown,false)}
  const sent=editableFields({...blankEvent(),cost:'  Free ',open_to:'   '});assert.equal(sent.cost,'Free');assert.equal(sent.open_to,null);
  const saved={...blankEvent(),...row,cost:'Free',open_to:null};assert.equal(sitePhase(saved,[{...row,cost:'Free',open_to:null}]),'live');assert.equal(sitePhase(saved,[{...row,cost:null,open_to:null}]),'updating');assert.equal(sitePhase({...saved,cost:null},[row]),'live');
+});
+
+test('FAQ answers link email addresses by themselves and keep links safe',()=>{
+ const link=(text,href)=>({kind:'link',text,href});
+ assert.deepEqual(parseAnswer('Email a.b@hw.ac.uk.'),[{kind:'text',text:'Email '},link('a.b@hw.ac.uk','mailto:a.b@hw.ac.uk'),{kind:'text',text:'.'}]);
+ assert.deepEqual(parseAnswer('[Write to us](mailto:a@hw.ac.uk)'),[link('Write to us','mailto:a@hw.ac.uk')]);
+ assert.deepEqual(parseAnswer('[a@hw.ac.uk](mailto:a@hw.ac.uk)'),[link('a@hw.ac.uk','mailto:a@hw.ac.uk')]);
+ assert.deepEqual(parseAnswer('[Page](https://example.com/a@b.com)'),[link('Page','https://example.com/a@b.com')]);
+ assert.deepEqual(parseAnswer('Join the [Union](https://hwunion.com)'),[{kind:'text',text:'Join the '},link('Union','https://hwunion.com')]);
+ assert.deepEqual(parseAnswer('[click](javascript:alert(1))'),[{kind:'text',text:'click'}]);
+ assert.deepEqual(parseAnswer('No links here.'),[{kind:'text',text:'No links here.'}]);
+});
+
+test('Committee roles have stable addresses on the About page',()=>{
+ assert.equal(roleAnchor('Community Manager'),'community-manager');assert.equal(roleAnchor('Events team'),'events-team');assert.equal(roleAnchor(' Vice-President & Co. '),'vice-president-co');
 });
 
 test('Every font size comes from the shared scale',()=>{
