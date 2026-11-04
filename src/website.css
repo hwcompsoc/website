@@ -62,7 +62,8 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 .footer-main,.footer-bottom,.footer-contact,.footer-legal{display:flex;align-items:center;flex-wrap:wrap}
 .footer-main,.footer-bottom{justify-content:space-between}
 .footer-main{gap:var(--space-4) var(--space-32);padding-block:var(--space-12)}
-.footer-logo{width:80px;height:47px}
+/* The cursor hangs below the wordmark, so a truly centred logo reads high beside the nav links. */
+.footer-logo{width:80px;height:47px;transform:translateY(3px)}
 .footer-nav{display:flex;flex-wrap:wrap;gap:0 var(--space-24)}
 .footer-nav>a{display:flex;align-items:center;min-height:44px;font-size:var(--fs-body)}
 .footer-bottom{gap:0 var(--space-32);padding-block:var(--space-8);border-top:1px solid var(--panel-line)}
@@ -75,6 +76,7 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 .footer-legal svg{width:14px;height:14px}
 @media(max-width:540px){
 .footer-main{padding-block:var(--space-8) 0}
+.footer-logo{transform:none}
 .footer-nav{gap:0 var(--space-20)}
 .footer-bottom{padding-block:var(--space-4) var(--space-12)}
 .footer-copyright{flex-basis:100%}}
@@ -349,3 +351,24 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 
 /* On the Join page the button shows where you are, as the highlighted link does on other pages. */
 .header-join[aria-current=page]{background:var(--select-strong);border-color:var(--select-strong);color:var(--on-accent)}
+
+/* Lists with no order leave the numbers off. */
+.value-list-plain>li{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+@media(max-width:800px){.value-list-plain>li{grid-template-columns:minmax(0,1fr)}.value-list-plain p{grid-column:1}}
+/* Home: the hero panel's next event, and the shorter panel on phones. */
+.art-next{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px var(--space-16);margin:var(--space-32) 0 var(--space-64);padding:var(--space-12) var(--space-16);background:var(--panel-hover);border:1px solid var(--panel-line);border-radius:4px;color:var(--on-accent)}
+.art-next:hover{border-color:var(--panel-control)}
+.art-next:hover b{text-decoration:underline;text-underline-offset:4px}
+.art-next-label{grid-column:1;font-family:var(--font-pixel);font-size:var(--pixel-sm);letter-spacing:.04em;color:var(--on-panel-quiet)}
+.art-next b{grid-column:1;font-size:var(--fs-body);font-weight:650;line-height:1.3;overflow-wrap:anywhere}
+.art-next-when{grid-column:1;font-size:var(--fs-sm);color:var(--on-panel-quiet);overflow-wrap:anywhere}
+.art-next>svg{grid-column:2;grid-row:1/4;width:18px;height:18px}
+@media(max-width:540px){.hero-art{min-height:250px}.hero-art .art-word{margin-top:var(--space-24)}.hero-art .hero-cursor{width:65px;height:80px;top:20px}.art-next{margin:var(--space-20) 0 var(--space-64)}}
+@media(min-width:801px){.journey-strip:not(:has(>a:nth-child(3))){grid-template-columns:repeat(2,minmax(0,1fr))}}
+.home-nothing{margin-top:0}
+/* Home: the committee's faces. */
+.people-strip{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:var(--space-24) var(--space-16)}
+.people-strip img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;background:var(--tint);margin-bottom:var(--space-8)}
+.people-strip b{display:block;font-size:var(--fs-body);line-height:1.3;font-weight:600;color:var(--ink)}
+.people-strip small{display:block;margin-top:var(--space-4);font-size:var(--fs-sm);line-height:1.3;color:var(--text-quiet)}
+@media(max-width:540px){.people-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-16) var(--space-12)}}
