@@ -150,8 +150,8 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 .about-story .large-text{grid-row:1/3;margin:0}
 .about-story>div>:not(.large-text){grid-column:2;justify-self:start}}
 /* Callouts: the action looks like a button whichever kind of link it is. */
-.quiet-callout>.text-link{justify-content:center;padding:0 var(--space-16);background:var(--surface);border:1px solid var(--dots);border-radius:var(--radius);font-size:var(--fs-body);font-weight:500}
-.quiet-callout>.text-link:hover{background:var(--tint);text-decoration:none}
+.quiet-callout .text-link{justify-content:center;padding:0 var(--space-16);background:var(--surface);border:1px solid var(--dots);border-radius:var(--radius);font-size:var(--fs-body);font-weight:500}
+.quiet-callout .text-link:hover{background:var(--tint);text-decoration:none}
 /* Status messages are smaller than the heading they sit under. */
 :is(.enquiry-form-shell,.website-dialog) :is([role=alert],[role=note]) h3{margin:0 0 var(--space-4);font-size:var(--fs-body);font-weight:650;line-height:1.3;letter-spacing:0}
 @media(max-width:540px){
@@ -232,6 +232,9 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 .calendar-menu{width:min(320px,calc(100vw - 32px));max-height:var(--radix-popover-content-available-height);overflow-y:auto;padding:var(--space-8)}
 .quiet-callout>button{flex:none;margin-left:auto}
 @media(max-width:800px){.quiet-callout>button{grid-column:2;justify-self:start;margin-left:0}}
+/* Two actions travel as one group, so the free space stays between them and the text. */
+.quiet-actions{display:flex;flex:none;flex-wrap:wrap;gap:var(--space-12);margin-left:auto}
+@media(max-width:800px){.quiet-actions{grid-column:2;justify-self:start;margin-left:0}}
 .calendar-menu ul{list-style:none;margin:0;padding:0}
 .calendar-menu li a{display:flex;align-items:center;justify-content:space-between;gap:var(--space-12);padding:var(--space-12);font-size:var(--fs-body);font-weight:600;color:var(--ink);text-decoration:none}
 .calendar-menu li a:is(:hover,:focus-visible){background:var(--tint)}
