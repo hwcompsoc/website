@@ -90,6 +90,14 @@ test('Visitor branding uses byte-identical official SVG assets',()=>{
  const root=new URL('../',import.meta.url);for(const name of ['compsoc-blue.svg','compsoc-white.svg','cursor-blue.svg','cursor-white.svg']){const type=name.startsWith('cursor')?'icons':'logos';assert.deepEqual(readFileSync(new URL('public/website-assets/'+name,root)),readFileSync(new URL(`../asset-library/${type}/svg/${name}`,root)));}
 });
 
+test('Every font size comes from the shared scale',()=>{
+ const scale=['fs-display','fs-page','fs-section','fs-card','fs-subhead','fs-body','fs-sm','pixel-lg','pixel-sm'];const allowed=new RegExp(`^(inherit|var[(]--(${scale.join('|')})[)])$`);const root=new URL('../src/',import.meta.url);
+ const css=['website.css','motion.css','admin/admin.css'].map(name=>[name,readFileSync(new URL(name,root),'utf8').replace(/\/\*[\s\S]*?\*\//g,'')]);
+ for(const [name,text] of css){for(const [,size] of text.matchAll(/font-size:([^;}]+)/g))assert.match(size.trim(),allowed,name);for(const [,font] of text.matchAll(/(?:^|[;{\s])font:([^;}]+)/g))assert.equal(font.trim(),'inherit',name)}
+ const all=css.map(([,text])=>text).join('');for(const token of scale)assert.equal(all.split(`--${token}:`).length,2,token);
+ for(const file of readdirSync(root,{recursive:true}).map(String).filter(file=>/\.tsx?$/.test(file)&&!/generated/.test(file))){const text=readFileSync(new URL(file.replace(/[^\w./-]/g,'/'),root),'utf8');assert.doesNotMatch(text,/fontSize|\btext-\[[\d.]+(px|rem|em)\]|\btext-([2-9]?xl)\b/,file)}
+});
+
 test('Event images: both shapes and a description are required to go live, and the form never sends the images',()=>{
  const path='00000000-0000-0000-0000-000000000000.jpg';const ready={...blankEvent(),title:'Talk',slug:'talk',starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',venue:'EM1.82',description:'A talk',signup_required:false,native_url:'https://native.fm/x',socials_sent:true};
  const square='00000000-0000-0000-0000-000000000001.jpg';const complete={...ready,cover_path:path,square_path:square,cover_alt:'A poster for the talk'};for(const [gap,step] of [[{cover_path:null},'Add a landscape image'],[{square_path:null},'Add a square image'],[{cover_alt:'  '},'Describe the image']]){assert.deepEqual(missingSteps({...complete,...gap}),[step]);assert.equal(checklist({...complete,...gap})[0].done,false)}assert.deepEqual(missingSteps(complete),[]);assert.equal(checklist(complete)[0].done,true);
