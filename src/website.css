@@ -445,3 +445,24 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 /* The text scrolls by keyboard too, so the scrolling area takes focus. */
 .guide-reader [data-radix-scroll-area-viewport]:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px}
 @media(max-width:540px){.guide-reader [data-radix-scroll-area-viewport]{max-height:54dvh}}
+
+/* Privacy: a summary first, and on narrow screens the jump links fold away. */
+.privacy-summary{margin:0 0 var(--space-32);padding:var(--space-20) var(--space-24);background:var(--tint);border:1px solid var(--line);border-radius:4px}
+.privacy-content .privacy-summary h2{margin:0 0 var(--space-8);font-size:var(--fs-subhead)}
+.privacy-content .privacy-summary ul{margin:0}
+.privacy-contents-small{display:none;margin:0 0 var(--space-32);border:1px solid var(--line);border-radius:4px}
+.privacy-contents-small summary{display:flex;align-items:center;min-height:44px;padding-inline:var(--space-16);font-weight:600;color:var(--ink)}
+.privacy-content .privacy-contents-small ul{margin:0;padding:0 var(--space-16) var(--space-8);list-style:none;gap:0}
+.privacy-contents-small a{display:flex;align-items:center;min-height:44px;font-weight:600;color:var(--ink)}
+@media(max-width:1050px){.privacy-content .privacy-contents{display:none}.privacy-contents-small{display:block}}
+/* The contents list reads as a table of contents: numbered, with a marker on the section you're reading. */
+.privacy-content .toc{counter-reset:toc;margin:0;padding:0;list-style:none;gap:0}
+.toc li{counter-increment:toc}
+.privacy-content .toc a{display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:var(--space-8);align-items:baseline;min-height:32px;padding:var(--space-4) var(--space-8) var(--space-4) var(--space-12);border-left:2px solid var(--line);font-weight:400;line-height:1.35;color:var(--text)}
+.privacy-content .toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text)}
+.privacy-content .toc a:hover{color:var(--ink);text-decoration:underline}
+.privacy-content .toc a[aria-current]{border-left-color:var(--select-strong);font-weight:600;color:var(--ink)}
+.privacy-content .toc a[aria-current]::before{color:var(--ink)}
+.privacy-contents-small .toc{padding-bottom:var(--space-8)}
+.privacy-content .privacy-contents-small .toc a{align-items:center;min-height:44px;margin-inline:var(--space-16) 0}
+@media(pointer:coarse){.privacy-content .toc a{min-height:44px;align-items:center}}
