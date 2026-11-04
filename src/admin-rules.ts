@@ -3,8 +3,8 @@ import {COMMITTEE_BUCKET,COVER_BUCKET,DOCUMENT_BUCKET,SUPABASE_URL,coverThumb} f
 export const NATIVE_CREATE='https://promoters.native.fm/event/event/create';
 export const LUMA_CREATE='https://luma.com/create';
 
-export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';cover_path?:string|null;square_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null;published_at?:string|null;updated_at?:string};
-export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,luma_url:null,socials_sent:false,status:'draft',cover_path:null,square_path:null,cover_alt:'',cost:null,open_to:null});
+export type AdminEvent={id?:string;slug:string;title:string;category:string;level:string;starts_at:string|null;ends_at:string|null;venue:string;description:string;signup_required:boolean;native_url:string|null;native_skipped?:boolean;luma_url:string|null;socials_sent:boolean;status:'draft'|'published'|'cancelled';cover_path?:string|null;square_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null;published_at?:string|null;updated_at?:string};
+export const blankEvent=():AdminEvent=>({slug:'',title:'',category:'Workshop',level:'Everyone welcome',starts_at:null,ends_at:null,venue:'',description:'',signup_required:true,native_url:null,native_skipped:false,luma_url:null,socials_sent:false,status:'draft',cover_path:null,square_path:null,cover_alt:'',cost:null,open_to:null});
 
 // Event images: 'cover' is the landscape one the site shows and Native needs (Native serves its images at 736 × 412, about 16:9),
 // 'square' is for Luma, Instagram and Discord. Close to the shape is enough, so a few pixels out doesn't mean redoing a poster.
@@ -33,7 +33,7 @@ export function missingSteps(event:AdminEvent){const missing:string[]=[];
  if(!event.cover_path)missing.push('Add a landscape image');
  if(!event.square_path)missing.push('Add a square image');
  if(!event.cover_alt?.trim())missing.push('Describe the image');
- if(!isLink(event.native_url))missing.push('Create it on Native and paste the link');
+ if(!isLink(event.native_url)&&!event.native_skipped)missing.push('Create it on Native and paste the link, or skip it');
  if(event.signup_required&&!isLink(event.luma_url))missing.push('Create it on Luma and paste the link');
  if(!event.socials_sent)missing.push('Send the details to Amanda and Kevin');
  return missing}
@@ -65,7 +65,7 @@ export const statusLabel={draft:'Draft',published:'Live',cancelled:'Cancelled'} 
 export type StepId='details'|'native'|'luma'|'socials';
 export function detailsMissing(event:AdminEvent){const missing:string[]=[];if(!event.title.trim())missing.push('A title');if(!event.slug)missing.push('A web address');if(!event.starts_at)missing.push('A date and start time');if(!event.ends_at)missing.push('An end time');if(!event.venue.trim())missing.push('A venue');if(!event.description.trim())missing.push('A description');if(!event.cover_path)missing.push('A landscape image');if(!event.square_path)missing.push('A square image');if(!event.cover_alt?.trim())missing.push('A description of the image');return missing}
 // The steps that get an event live. Luma only appears when the event needs sign-up.
-export function checklist(event:AdminEvent){const steps:{id:StepId;label:string;done:boolean}[]=[{id:'details',label:'Finish the event details',done:!detailsMissing(event).length},{id:'native',label:'Create it on Native',done:isLink(event.native_url)}];if(event.signup_required)steps.push({id:'luma',label:'Create it on Luma',done:isLink(event.luma_url)});steps.push({id:'socials',label:'Tell Amanda and Kevin',done:event.socials_sent});return steps}
+export function checklist(event:AdminEvent){const steps:{id:StepId;label:string;done:boolean}[]=[{id:'details',label:'Finish the event details',done:!detailsMissing(event).length},{id:'native',label:'Create it on Native',done:isLink(event.native_url)||!!event.native_skipped}];if(event.signup_required)steps.push({id:'luma',label:'Create it on Luma',done:isLink(event.luma_url)});steps.push({id:'socials',label:'Tell Amanda and Kevin',done:event.socials_sent});return steps}
 export const progress=(event:AdminEvent)=>{const steps=checklist(event);return {done:steps.filter(step=>step.done).length,total:steps.length}};
 export const nextStep=(event:AdminEvent)=>checklist(event).find(step=>!step.done)?.label??null;
 
@@ -83,7 +83,7 @@ export const descriptionProblems=(event:AdminEvent):Problems=>event.description.
 export function whenProblems(when:When,venue:string,required=true){const found:Problems={};if(required){if(!when.date)found.date='Choose a date.';if(!when.start)found.start='Add a start time.';if(!when.end)found.end='Add an end time.';if(!venue.trim())found.venue='Say where it is.'}const {starts_at,ends_at}=whenToIso(when);if(starts_at&&ends_at&&new Date(ends_at)<=new Date(starts_at))found.end='The end must be after the start. If it finishes after midnight, tick the box below.';return found}
 export const slugAttempt=(base:string,attempt:number)=>attempt<=1?base:`${base.slice(0,56).replace(/-+$/,'')}-${attempt}`;
 // The only fields a form may send: never the id or published time, or the images, which CoverField saves itself.
-export function editableFields(event:AdminEvent){const {slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status,cover_alt,cost,open_to}=event;return {cover_alt,cost:cost?.trim()||null,open_to:open_to?.trim()||null,slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,luma_url,socials_sent,status}}
+export function editableFields(event:AdminEvent){const {slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,native_skipped=false,luma_url,socials_sent,status,cover_alt,cost,open_to}=event;return {cover_alt,cost:cost?.trim()||null,open_to:open_to?.trim()||null,slug,title,category,level,starts_at,ends_at,venue,description,signup_required,native_url,native_skipped,luma_url,socials_sent,status}}
 
 const uk=(iso:string,options:Intl.DateTimeFormatOptions)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',...options}).format(new Date(iso));
 export const shortDate=(iso:string|null)=>iso?`${uk(iso,{day:'2-digit'})} ${uk(iso,{month:'short'}).slice(0,3).toUpperCase()}`:'';
