@@ -3,8 +3,8 @@ import type {Event} from './content.ts';
 
 const FEED_NAME='HW CompSoc events';
 export const FEED_PATH='/events.ics';
-// The subscribe offer stays hidden until the site is on its permanent domain, because a subscription stays tied to the address it was made on. The feed itself still exists.
-export const ADVERTISE_FEED=false;
+// A subscription stays tied to the address it was made on, so moving to a permanent domain means people subscribing again.
+export const ADVERTISE_FEED=true;
 export const eventFilePath=(event:Event)=>`/events/${event.id}.ics`;
 
 const icsNow=(now:number)=>new Date(now).toISOString().replace(/[-:]|\.\d{3}/g,'');
