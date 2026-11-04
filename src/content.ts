@@ -35,6 +35,8 @@ export type LiveGuide={slug:string;title:string;category:string;kind:string;desc
 export const liveGuide=(row:LiveGuide)=>({id:row.slug,title:row.title,category:row.category,description:row.description,type:row.kind,minutes:`${readingMinutes(row.body)} min`,body:row.body,reviewed:row.reviewed_on?new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',month:'long',year:'numeric'}).format(new Date(`${row.reviewed_on}T00:00:00Z`)):''});
 export type Resource=ReturnType<typeof liveGuide>;
 export const resources=(guides as LiveGuide[]).map(liveGuide);
+// The pages the menus link to. Resources stays out of them until there's a guide to find.
+export const menuPages=pages.filter(p=>p.id!=='resources'||resources.length>0);
 // Events are copied in from Supabase when the site builds.
 export type LiveEvent={slug:string;title:string;category:string;level:string;starts_at:string;ends_at:string;venue:string;description:string;signup_required:boolean;luma_url:string|null;status:string;cover_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null};
 const icsTime=(ms:number|string)=>new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g,'');
