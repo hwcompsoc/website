@@ -15,7 +15,7 @@ import {EventBoard} from '../components/EventBoard';
 import {FlipText} from '../motion/FlipText';
 import {Typed} from '../motion/Typed';
 
-const CATEGORIES=['All','Workshop','Community','Industry'];
+const CATEGORIES=['All','Workshop','Talk','Social'];
 // The type comes from the URL (`/events?category=workshop`), as it does on Resources, so a filtered list can be shared.
 const fromUrl=()=>CATEGORIES.find(c=>c.toLowerCase()===new URLSearchParams(location.search).get('category')?.toLowerCase())??'All';
 // Search only earns its place once the list is long enough to need it.

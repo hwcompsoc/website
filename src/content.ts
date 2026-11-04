@@ -16,7 +16,7 @@ export const pages=[{id:'home',name:'Home'},{id:'join',name:'Join'},{id:'events'
 export type Page=typeof pages[number]['id'];
 export type View=Page|'notfound'|'privacy';
 export const pagePath=(page:Page)=>page==='home'?'/':`/${page}`;
-export type Event={id:string;title:string;category:'Workshop'|'Community'|'Industry';weekday:string;day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string;cost?:string;openTo?:string};
+export type Event={id:string;title:string;category:'Workshop'|'Talk'|'Social';weekday:string;day:string;month:string;date:string;time:string;venue:string;description:string;level:string;start:string;end:string;past?:boolean;cancelled?:boolean;luma?:string;cover?:string;thumb?:string;coverAlt?:string;cost?:string;openTo?:string};
 // Committee (About), from the admin. Roles with nobody in them stay off the page.
 export type Member={name:string;photo?:string;bio?:string;studies?:string;askMeAbout?:string;discord?:string;github?:string;linkedin?:string};
 export type LiveTeam={name:string;description:string;committee_people:{name:string;photo_path:string|null;bio?:string|null;studies?:string|null;ask_me_about?:string|null;discord?:string|null;github?:string|null;linkedin?:string|null}[]};

@@ -18,7 +18,7 @@ test('Paths resolve to pages and items, and anything else is not found',()=>{
  for(const path of ['/unknown','/home','/events/nope','/resources/nope','/about/team','/events/web/extra'])assert.equal(route(path).view,'notfound',path);
 });
 test('Live events become site events in UK time, and real calendar files carry no prototype labels',()=>{
- const row={slug:'real-talk',title:'Real, talk',category:'Industry',level:'Everyone welcome',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',venue:'EM1.82',description:'A talk',signup_required:true,luma_url:'https://luma.com/x',status:'published'};
+ const row={slug:'real-talk',title:'Real, talk',category:'Talk',level:'Everyone welcome',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',venue:'EM1.82',description:'A talk',signup_required:true,luma_url:'https://luma.com/x',status:'published'};
  const summer=liveEvent(row,Date.parse('2027-01-01'));assert.equal(summer.id,'real-talk');assert.equal(summer.weekday,'THU');assert.equal(summer.day,'01');assert.equal(summer.month,'JUL');assert.equal(summer.date,'Thursday 1 July 2027');assert.equal(summer.time,'18:30–20:00 BST');assert.equal(summer.start,'20270701T173000Z');assert.equal(summer.past,false);assert.equal(summer.luma,'https://luma.com/x');
  const winter=liveEvent({...row,starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',signup_required:false,status:'cancelled'},Date.parse('2027-02-01'));assert.equal(winter.time,'17:30–19:00 GMT');assert.equal(winter.past,true);assert.equal(winter.cancelled,true);assert.equal(winter.luma,undefined);
  const file=calendar(summer);assert.ok(!file.includes('PROTOTYPE'));assert.ok(!file.includes('example'));assert.ok(file.includes('UID:real-talk@hwcompsoc'));assert.ok(file.includes('SUMMARY:Real\\, talk'));assert.ok(calendar(winter).includes('STATUS:CANCELLED'));
@@ -71,8 +71,8 @@ test('The host sends every address to the app, so paths survive a refresh',()=>{
  const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(rewrites,[{source:'/((?!assets/).*)',destination:'/index.html'}]);
 });
 test('Event filters separate past events',()=>{
- const base={title:'Talk',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'A talk',signup_required:false,luma_url:null,status:'published'};const list=[liveEvent({...base,slug:'next',starts_at:'2030-01-01T18:00:00Z',ends_at:'2030-01-01T19:00:00Z'}),liveEvent({...base,slug:'old',category:'Industry',starts_at:'2020-01-01T18:00:00Z',ends_at:'2020-01-01T19:00:00Z'})];
- assert.deepEqual(filterEvents('All','',false,list).map(e=>e.id),['next']);assert.deepEqual(filterEvents('All','',true,list).map(e=>e.id),['old']);assert.equal(filterEvents('Industry','',false,list).length,0);assert.equal(filterEvents('All','unlikely unmatched phrase',false,list).length,0);
+ const base={title:'Talk',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'A talk',signup_required:false,luma_url:null,status:'published'};const list=[liveEvent({...base,slug:'next',starts_at:'2030-01-01T18:00:00Z',ends_at:'2030-01-01T19:00:00Z'}),liveEvent({...base,slug:'old',category:'Talk',starts_at:'2020-01-01T18:00:00Z',ends_at:'2020-01-01T19:00:00Z'})];
+ assert.deepEqual(filterEvents('All','',false,list).map(e=>e.id),['next']);assert.deepEqual(filterEvents('All','',true,list).map(e=>e.id),['old']);assert.equal(filterEvents('Talk','',false,list).length,0);assert.equal(filterEvents('All','unlikely unmatched phrase',false,list).length,0);
  const text=calendar(list[0]);assert.ok(text.includes('DTSTART:20300101T180000Z'));assert.ok(!text.includes('ATTENDEE:'));assert.ok(text.endsWith('\r\n'));
  const href=enquiryMail('Example & team','review@example.invalid','Workshop','A local example only.');assert.ok(href.startsWith('mailto:compsci.society@hw.ac.uk?'));assert.ok(decodeURIComponent(href).includes('Example & team'));
 });
