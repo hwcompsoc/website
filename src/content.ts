@@ -66,6 +66,8 @@ export type EventStatus='Cancelled'|'On now'|'Today'|'Tomorrow';
 export function eventStatus(e:Event,now=Date.now()):EventStatus|undefined{
  if(e.cancelled)return 'Cancelled';const start=fromIcs(e.start),end=fromIcs(e.end);if(end<=now)return;if(start<=now)return 'On now';
  const day=ukDate(start),today=ukDate(now);return day===today?'Today':day===dayAfter(today)?'Tomorrow':undefined}
+// A past event's short "commit hash" in the Events log: made from its address (FNV-1a), so it's the same on every visit.
+export const commitHash=(id:string)=>{let h=0x811c9dc5;for(const ch of id){h^=ch.charCodeAt(0);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0').slice(0,7)};
 export function filterEvents(category:string,query:string,past:boolean,list:Event[]=events){return list.filter(e=>!!e.past===past&&(category==='All'||e.category===category)&&`${e.title} ${e.description} ${e.category}`.toLowerCase().includes(query.trim().toLowerCase()))}
 export function enquiryMail(org:string,email:string,format:string,message:string){return `mailto:${links.email}?subject=${encodeURIComponent('Partnership enquiry: '+org)}&body=${encodeURIComponent(`Organisation: ${org}\nReply email: ${email}\nInterested in: ${format}\n\n${message}`)}`}
 // Routes. `/events/web` and `/resources/git` open one item; a Resources filter is a query (`/resources?category=support`), because "support" is also a guide.

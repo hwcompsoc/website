@@ -7,7 +7,7 @@ import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {entries,grouped,search} from '../src/search.ts';
 import {DISCORD_INVITE} from './live-content.mjs';
-import {discordMembers} from '../src/content.ts';
+import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
 import {blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
@@ -271,4 +271,8 @@ test('Site search: best matches first, every word must match, and an empty searc
 test('The Discord member count comes from the same invite the site links to, and is left out when unknown',()=>{
  assert.ok(links.discord.endsWith('/'+DISCORD_INVITE));assert.equal(discordMembers,null,'tests run with no count');
  assert.equal(search('discord').find(r=>r.id==='action-discord').detail,'Announcements and chat');
+});
+test('Past events get short commit hashes that never change',()=>{
+ assert.match(commitHash('git-night'),/^[0-9a-f]{7}$/);assert.equal(commitHash('git-night'),commitHash('git-night'));assert.notEqual(commitHash('git-night'),commitHash('git-nights'));
+ assert.equal(commitHash(''),'811c9dc');
 });
