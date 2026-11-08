@@ -355,6 +355,7 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 /* Join: who to say hi to. */
 .join-person{flex-basis:100%;display:flex;align-items:center;gap:var(--space-8);margin:0;color:var(--text-quiet)}
 .join-person img{flex:none;width:28px;height:28px;object-fit:cover;border-radius:50%;background:var(--tint)}
+.join-person-photo{flex:none;width:28px;height:28px;border-radius:50%;overflow:hidden}
 .join-person a{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .join-steps .value-list p.join-person{max-width:none;font-size:var(--fs-sm);line-height:1.4}
 

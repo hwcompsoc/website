@@ -131,6 +131,17 @@ mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color
 .art-rise{display:inline-block}
 
 /* ---- Page choreography ---- */
+/* Arrows on links nudge the way they point, on hover or keyboard focus. :where() keeps this at zero specificity,
+   so places with their own arrow motion (Join button, journey links, board rows) keep it. */
+:where(a)>:where(svg.lucide-arrow-right,svg.lucide-arrow-up-right){transition:transform var(--dur-hover) var(--ease-enter)}
+:where(a:is(:hover,:focus-visible))>:where(svg.lucide-arrow-right){transform:translateX(4px)}
+:where(a:is(:hover,:focus-visible))>:where(svg.lucide-arrow-up-right){transform:translate(2px,-2px)}
+
+/* A cancelled event's title is struck through: the line draws left to right once as the row appears. The resting
+   state is the drawn line, so with animation off it is simply there. A hard-stop fill, not a gradient effect. */
+.board-struck{background:linear-gradient(90deg,currentColor 50%,transparent 50%) 0 58%/200% 2px no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;animation:strike var(--dur-ui) var(--ease-enter) .3s backwards}
+@keyframes strike{from{background-position:100% 58%}}
+
 /* Buttons give slightly under a press */
 .site-button{transition:transform var(--dur-hover) var(--ease-enter),background-color var(--dur-hover)}
 .site-button:active{transform:scale(.97)}

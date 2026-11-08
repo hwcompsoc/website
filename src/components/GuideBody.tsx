@@ -1,4 +1,6 @@
-import {useMemo,useState,type ReactNode} from 'react';
+import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
+import {useClickBurst} from '../motion/ClickBurst';
+import {Typed} from '../motion/Typed';
 import {Checkbox} from './ui/checkbox';
 import {Progress} from './ui/progress';
 import {Check,Copy} from 'lucide-react';
@@ -7,8 +9,10 @@ import {Copied,CopyFlash,useCopy} from './copy';
 
 export const inline=(parts:Inline[]):ReactNode=>parts.map((part,i)=>part.kind==='code'?<code key={i}>{part.text}</code>:part.kind==='bold'?<strong key={i}>{part.text}</strong>:part.kind==='link'?<a key={i} className="guide-link" href={part.href} {...part.href.startsWith('https:')?{target:'_blank',rel:'noopener noreferrer'}:{}}>{part.text}{part.href.startsWith('https:')&&<span className="sr-only"> (opens in a new tab)</span>}</a>:<span key={i}>{part.text}</span>);
 
-// A personal prompt: it stays in the open guide and nothing is saved or sent.
-function Checklist({items}:{items:string[]}){const [done,setDone]=useState<number[]>([]);return <><Progress value={done.length/items.length*100} aria-label="Guide checklist completion" aria-valuetext={`${done.length} of ${items.length} prompts checked`}/><p className="small" role="status">{done.length} of {items.length} prompts checked</p>{items.map((item,i)=><label className="checkbox-label guide-check" key={i}><Checkbox checked={done.includes(i)} onCheckedChange={value=>setDone(old=>value===true?[...old,i]:old.filter(v=>v!==i))}/>{item}</label>)}</>}
+// A personal prompt: it stays in the open guide and nothing is saved or sent. Ticking the last box fires a burst at the end of the bar and types "All done."
+function Checklist({items}:{items:string[]}){const [done,setDone]=useState<number[]>([]);const fire=useClickBurst();const bar=useRef<HTMLDivElement>(null);const complete=done.length===items.length;
+ useEffect(()=>{if(!complete)return;const box=bar.current?.getBoundingClientRect();if(box)fire(box.right,box.top+box.height/2,{count:6})},[complete]);
+ return <><Progress ref={bar} value={done.length/items.length*100} aria-label="Guide checklist completion" aria-valuetext={`${done.length} of ${items.length} prompts checked`}/><p className="small" role="status">{done.length} of {items.length} prompts checked{complete&&<>. <Typed text="All done." caret={false} trigger="mount"/></>}</p>{items.map((item,i)=><label className="checkbox-label guide-check" key={i}><Checkbox checked={done.includes(i)} onCheckedChange={value=>setDone(old=>value===true?[...old,i]:old.filter(v=>v!==i))}/>{item}</label>)}</>}
 
 // A code block as a small terminal window with a Copy button. A copy flash-selects the code and "Copied" types out.
 function CodeBlock({text}:{text:string}){const {copy,count,copied,failed}=useCopy();

@@ -8,6 +8,7 @@ import {useMotionLevel} from '../motion/level';
 import {Reveal} from '../motion/Reveal';
 import {Select} from '../motion/Select';
 import {Typed} from '../motion/Typed';
+import {FlipText} from '../motion/FlipText';
 import {PixelBuild} from '../motion/PixelBuild';
 import {useClickBurst} from '../motion/ClickBurst';
 import {usePointerLean} from '../motion/usePointerLean';
@@ -69,7 +70,7 @@ function RiseWord({children,order,play,skip,className=''}:{children:string;order
 
 // The slogan always shows, and a small card under it points to the next event when something's on. A real link, so it can still open in a new tab.
 function NextUp({event:e,onOpen,show,skip}:{event:Event;onOpen:(event:Event,origin:DOMRect)=>void;show:boolean;skip:boolean}){const [weekday='',day='',month='']=e.date.split(' ');
- return <m.a className="art-next" href={`/events/${e.id}`} onClick={click=>{if(click.metaKey||click.ctrlKey||click.shiftKey||click.altKey)return;click.preventDefault();onOpen(e,click.currentTarget.getBoundingClientRect())}} initial={skip?false:{opacity:0}} animate={{opacity:show?1:0}} transition={{duration:dur.reveal,ease:ease.enter}}><span className="art-next-label">Next up</span><b>{e.title}</b><span className="art-next-when">{weekday.slice(0,3)} {day} {month.slice(0,3)}, {e.time.split('–')[0]} · {e.venue}</span><ArrowRight aria-hidden="true"/></m.a>;
+ return <m.a className="art-next" href={`/events/${e.id}`} onClick={click=>{if(click.metaKey||click.ctrlKey||click.shiftKey||click.altKey)return;click.preventDefault();onOpen(e,click.currentTarget.getBoundingClientRect())}} initial={skip?false:{opacity:0}} animate={{opacity:show?1:0}} transition={{duration:dur.reveal,ease:ease.enter}}><span className="art-next-label"><Typed text="Next up" caret={false} trigger="manual" play={show} instant={skip}/></span><b>{e.title}</b><span className="art-next-when">{weekday.slice(0,3)} {day} {month.slice(0,3)}, {e.time.split('–')[0]} · {e.venue}</span><ArrowRight aria-hidden="true"/></m.a>;
 }
 const nextEvent=events.find(e=>!e.past&&!e.cancelled);
 
@@ -115,6 +116,6 @@ export function Hero({onEvent}:{onEvent:(event:Event,origin:DOMRect)=>void}){
     <img ref={white} src={asset('cursor-white.svg')} alt="" data-shown=""/><img ref={blue} src={asset('cursor-blue.svg')} alt=""/>
    </m.span></m.span>
    <div className="art-word">{words.map((line,l)=><span className="art-line" key={l}>{line.map((word,w)=>{const order=words.slice(0,l).flat().length+w;return <Fragment key={word}>{w?' ':''}<RiseWord order={order} play={at('words')} skip={skip}>{word}</RiseWord></Fragment>})}{l===words.length-1&&<RiseWord className="art-dot" order={words.flat().length} play={at('words')} skip={skip}>.</RiseWord>}</span>)}</div>{nextEvent&&<NextUp event={nextEvent} onOpen={onEvent} show={at('return')} skip={skip}/>}
-   <div className="art-bottom"><span>01 / MEET</span><span>02 / MAKE</span><span>03 / BELONG</span></div>
+   {/* The step numbers flip as the cursor heads home, still inside the hero's one moment. */}<div className="art-bottom">{['MEET','MAKE','BELONG'].map((word,i)=><span key={word}><FlipText value={`0${i+1}`} trigger="manual" play={!skip&&at('return')}/> / {word}</span>)}</div>
   </div></section>;
 }
