@@ -1,3 +1,4 @@
+import {execSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {defineConfig,normalizePath,type Plugin} from 'vite';
 import react from '@vitejs/plugin-react';
@@ -26,4 +27,7 @@ function liveEvents():Plugin{
   }};
 }
 
-export default defineConfig({plugins:[react(),tailwindcss(),liveEvents()],resolve:{alias:{'@':new URL('./src',import.meta.url).pathname.replace(/^\/(\w:)/,'$1')}}});
+// The commit this build came from, for the footer's build stamp. Vercel supplies it; locally it comes from git, and it's left out if neither has it.
+const commit=process.env.VERCEL_GIT_COMMIT_SHA||(()=>{try{return execSync('git rev-parse HEAD',{stdio:['ignore','pipe','ignore']}).toString().trim()}catch{return ''}})();
+
+export default defineConfig({define:{__COMMIT__:JSON.stringify(commit)},plugins:[react(),tailwindcss(),liveEvents()],resolve:{alias:{'@':new URL('./src',import.meta.url).pathname.replace(/^\/(\w:)/,'$1')}}});

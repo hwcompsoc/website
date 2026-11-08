@@ -8,6 +8,7 @@ import {Logo} from './Logo';
 const COPIED_MS=3000;
 // Compact and the same on every page, so contact and legal links stay where people expect them. Two rows only: where to go, then who we are and how to reach us.
 // Nothing here collapses, and every standalone link is a 44px target. Page content, such as invitations to join, belongs on the pages themselves.
+// The legal row can end with the site's source and the commit it was built from (commented out below for now).
 // A copy flash-selects the address and "Email copied" types out (components/copy.tsx).
 // The copy button is icon-only until used (its label stays for screen readers and as a tooltip), and returns to that a few seconds after a copy.
 // The tick and button label confirm a copy on screen; the status line repeats it for screen readers only, and is shown only on failure.
@@ -15,5 +16,6 @@ export function Footer(){const {copy:copyText,count,copied,failed:copyError}=use
  return <footer className="site-footer"><div className="wrap">
   <div className="footer-main"><a href="/" aria-label="HW CompSoc home" className="logo-link"><Logo tone="white" align="left" className="footer-logo"/></a><nav className="footer-nav" aria-label="Footer navigation">{sitePages.filter(p=>p.id!=='home').map(p=><a key={p.id} href={pagePath(p.id)}>{p.name}</a>)}</nav></div>
   <div className="footer-bottom"><div className="footer-contact"><a className="email-link" href={`mailto:${links.email}`}><CopyFlash text={links.email} count={count}/></a><Button variant="ghost" onClick={copy} className="footer-copy" title={copied?undefined:'Copy email address'}>{copied?<><Check aria-hidden="true"/><Copied text="Email copied"/></>:<><Copy aria-hidden="true"/><span className="sr-only">Copy email address</span></>}</Button><p role="status" className={copyError?'footer-status':'footer-status sr-only'}>{copyError?'Copy is unavailable here. Select the address or open your email app.':copied?'Email copied.':''}</p></div>
-   <div className="footer-legal"><span className="footer-copyright">© {new Date().getFullYear()} Heriot-Watt Computer Science Society</span><External href={links.membership}>Affiliated to HW Union</External><a href="/privacy">Privacy</a></div></div>
+   <div className="footer-legal"><span className="footer-copyright">© {new Date().getFullYear()} Heriot-Watt Computer Science Society</span><External href={links.membership}>Affiliated to HW Union</External><a href="/privacy">Privacy</a>{/* Switched off for now. To bring back the source link and build stamp, uncomment:
+   <External href={links.source}>Source on GitHub</External>{__COMMIT__&&<External href={`${links.source}/commit/${__COMMIT__}`} className="footer-build">build {__COMMIT__.slice(0,7)}</External>} */}</div></div>
  </div></footer>}

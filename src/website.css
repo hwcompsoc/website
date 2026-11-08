@@ -156,9 +156,7 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 @media(min-width:801px){
 .partner-enquiry>div:first-child{position:sticky;top:96px;align-self:start}
 .site-section.two-column>div:first-child{position:sticky;top:96px;align-self:start}
-.about-story>div{max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:0 var(--space-80);align-items:start}
-.about-story .large-text{grid-row:1/3;margin:0}
-.about-story>div>:not(.large-text){grid-column:2;justify-self:start}}
+.about-story>div{max-width:none}}
 /* Callouts: the action looks like a button whichever kind of link it is. */
 .quiet-callout .text-link{justify-content:center;padding:0 var(--space-16);background:var(--surface);border:1px solid var(--dots);border-radius:var(--radius);font-size:var(--fs-body);font-weight:500}
 .quiet-callout .text-link:hover{background:var(--tint);text-decoration:none}
@@ -487,3 +485,72 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 .privacy-contents-small .toc{padding-bottom:var(--space-8)}
 .privacy-content .privacy-contents-small .toc a{align-items:center;min-height:44px;margin-inline:var(--space-16) 0}
 @media(pointer:coarse){.privacy-content .toc a{min-height:44px;align-items:center}}
+/* Join worries as a diff: removed lines are quiet, added lines sit on a tint. Signs carry the meaning as well as colour. */
+.diff-window{max-width:820px;border:1px solid var(--line);border-radius:4px;background:var(--surface);overflow:hidden}
+.diff-list{list-style:none;margin:0;padding:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.diff-list li+li{border-top:1px solid var(--line)}
+.diff-list :is(del,ins){display:flex;gap:var(--space-12);padding:var(--space-8) var(--space-16);font-size:var(--fs-body);line-height:1.6;text-decoration:none}
+.diff-list del{color:var(--text-quiet)}
+.diff-list ins{color:var(--ink);background:var(--tint-soft)}
+.diff-sign{flex:none;font-weight:700}
+.diff-list del .diff-sign{color:var(--danger)}
+.diff-list ins .diff-sign{color:var(--accent-text)}
+.footer-legal .footer-build{font-family:var(--font-pixel);font-size:var(--pixel-sm);text-decoration:none}
+.footer-legal .footer-build:is(:hover,:focus-visible){text-decoration:underline}
+/* Site search: the header's Search button, and the palette as a window near the top of the screen */
+.header-search{min-height:44px;gap:var(--space-8);padding-inline:var(--space-12);font-size:var(--fs-sm);font-weight:600;color:var(--ink);background:var(--surface);border-color:var(--line-strong);border-radius:4px;box-shadow:none}
+.header-search:hover{background:var(--tint);color:var(--ink)}
+.header-search-key{font-family:var(--font-pixel);font-size:var(--pixel-sm);padding:0 var(--space-4);border:1px solid var(--line-strong);border-radius:2px;color:var(--text-quiet)}
+@media(max-width:1050px){.header-search-label,.header-search-key{display:none}.header-search{width:44px;padding:0}}
+@media(max-width:800px){.header-search{margin-left:auto}}
+.palette{position:fixed;z-index:50;left:50%;top:min(12vh,96px);translate:-50% 0;width:min(640px,calc(100% - 32px));max-height:min(72dvh,600px);display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:4px;box-shadow:var(--shadow-page-small);overflow:hidden}
+.palette:focus{outline:none}
+.palette .window-bar{flex:none}
+.palette-prompt{flex:none;display:flex;align-items:center;gap:var(--space-12);padding:0 var(--space-16);border-bottom:1px solid var(--line)}
+.palette-sign{font-family:var(--font-pixel);font-size:var(--pixel-lg);color:var(--accent-text)}
+.palette-prompt input{flex:1;min-width:0;height:56px;border:0;background:none;color:var(--ink);font:inherit;font-size:var(--fs-subhead);outline:none}
+.palette-prompt input::placeholder{color:var(--text-quiet)}
+.palette-prompt:has(input:focus-visible){box-shadow:inset 0 -2px 0 var(--select)}
+.palette-results{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:var(--space-8) 0}
+.palette-group{padding:var(--space-8) var(--space-16) var(--space-4);font-family:var(--font-pixel);font-size:var(--pixel-sm);letter-spacing:.04em;text-transform:uppercase;color:var(--text-quiet)}
+.palette-option{position:relative;isolation:isolate;display:flex;align-items:center;gap:var(--space-16);min-height:48px;padding:var(--space-8) var(--space-16);cursor:var(--site-pointer,pointer)}
+.palette-select{position:absolute;inset:0;z-index:-1;background:var(--select-strong)}
+.palette-option[aria-selected=true]{color:var(--on-accent)}
+.palette-option[aria-selected=true] small{color:var(--on-accent)}
+.palette-option[aria-selected=true] mark.match{background:none;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.palette-text{flex:1;min-width:0;display:flex;flex-direction:column}
+.palette-text b{font-size:var(--fs-body);font-weight:650;line-height:1.4}
+.palette-text small{font-size:var(--fs-sm);line-height:1.4;color:var(--text-quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.palette-hint{flex:none;display:inline-flex;align-items:center;font-family:var(--font-pixel);font-size:var(--pixel-sm)}
+.palette-empty{margin:0;padding:var(--space-24) var(--space-16);font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text-quiet)}
+.palette-status{flex:none;display:flex;gap:var(--space-16);flex-wrap:wrap;padding:var(--space-8) var(--space-16);border-top:1px solid var(--line);font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text-quiet)}
+@media(max-width:540px){.palette{top:16px;max-height:calc(100dvh - 32px)}.palette-status{display:none}}
+@media(hover:none){.palette-status{display:none}}
+@media(forced-colors:active){.palette-option[aria-selected=true]{outline:2px solid Highlight;outline-offset:-2px}}
+/* About: the story beside the society at a glance, laid out like neofetch */
+.about-story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-64);align-items:start}
+.fetch-window{border:1px solid var(--line);border-radius:4px;background:var(--surface);box-shadow:var(--shadow-card);min-width:0}
+.fetch-body{display:flex;gap:var(--space-24);padding:var(--space-24);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:var(--fs-sm);line-height:1.6}
+.fetch-art{flex:none;width:72px}
+.fetch-art img{display:block;width:100%;height:auto}
+.fetch-art-dark,:root[data-theme=dark] .fetch-art-light{display:none!important}
+:root[data-theme=dark] .fetch-art-dark{display:block!important}
+.fetch-info{min-width:0;flex:1}
+.fetch-host{margin:0;font-size:var(--fs-sm);color:var(--ink)}
+.fetch-host b{color:var(--accent-text)}
+.fetch-rule{display:block;color:var(--text-quiet);overflow:hidden;white-space:nowrap}
+.fetch-info dl{margin:0}
+.fetch-info dl>div{display:flex;gap:var(--space-8);min-width:0}
+.fetch-info dt{flex:none;font-weight:700;color:var(--accent-text)}
+.fetch-info dd{margin:0;min-width:0;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fetch-swatches{display:flex;margin-top:var(--space-12)}
+.fetch-swatches>span{width:20px;height:12px}
+@media(max-width:800px){.about-story{grid-template-columns:1fr;gap:var(--space-40)}}
+@media(max-width:540px){.fetch-body{flex-direction:column;gap:var(--space-16)}.fetch-art{width:40px}}
+/* Discord button with its member count attached, GitHub-counter style: the button's right corners square off into a light segment. */
+.discord-join{display:inline-flex;align-items:stretch;max-width:100%}
+.discord-join>.site-button{border-top-right-radius:0;border-bottom-right-radius:0}
+.discord-count{display:inline-flex;align-items:center;gap:var(--space-8);padding:0 var(--space-16);border:1px solid var(--line-strong);border-left:0;border-radius:0 4px 4px 0;background:var(--tint-soft);color:var(--text);white-space:nowrap}
+.discord-count .flip{font-family:var(--font-pixel);font-size:var(--pixel-lg);line-height:1;color:var(--accent-text)}
+/* Phones: the pair spans the width with the label on one line; the count drops its icon to make room. */
+@media(max-width:540px){.discord-join{display:flex;width:100%}.discord-join>.site-button{flex:1;white-space:nowrap;gap:var(--space-8);padding-inline:var(--space-16)}.discord-count{padding:0 var(--space-12)}.discord-count>svg{display:none}}

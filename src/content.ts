@@ -3,10 +3,13 @@ import teams from './generated/committee.json' with {type:'json'};
 import faqRows from './generated/faqs.json' with {type:'json'};
 import guides from './generated/guides.json' with {type:'json'};
 import documentRows from './generated/documents.json' with {type:'json'};
+import discord from './generated/discord.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 import {resourcesSwitchedOn} from './env.ts';
-export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
+export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk',source:'https://github.com/hwcompsoc/website'};
+// How many people are in the Discord server, as of the last build (scripts/live-content.mjs), or null if Discord didn't say.
+export const discordMembers:number|null=(discord as {members:number|null}).members??null;
 // What a browser tab or shared link calls each page: the page and then the society, with the home page the other way round. A single event or guide names its section too. The headings on the pages themselves are in `titles`.
 const tabTitle=(name:string)=>`${name} | HW CompSoc`;
 export const eventTabTitle=(name:string)=>`${tabTitle(name)} Events`;
@@ -54,6 +57,17 @@ export function liveEvent(row:LiveEvent,now=Date.now()):Event{const part=(iso:st
  return {id:row.slug,title:row.title,category:row.category as Event['category'],level:row.level,venue:row.venue,description:row.description,weekday:part(s,{weekday:'short'},'weekday').slice(0,3).toUpperCase(),day:part(s,{day:'2-digit'},'day'),month:part(s,{month:'short'},'month').slice(0,3).toUpperCase(),date:`${part(s,{weekday:'long'},'weekday')} ${part(s,{day:'numeric'},'day')} ${part(s,{month:'long'},'month')} ${part(s,{year:'numeric'},'year')}`,time:`${at(s)}–${at(row.ends_at)} ${part(s,{timeZoneName:'short'},'timeZoneName')}`,start:icsTime(s),end:icsTime(row.ends_at),past:new Date(row.ends_at).getTime()<now,cancelled:row.status==='cancelled',luma:row.signup_required&&row.luma_url?row.luma_url:undefined,...row.cost?{cost:row.cost}:{},...row.open_to?{openTo:row.open_to}:{},...row.cover_path?{cover:`/event-covers/${row.cover_path}`,thumb:`/event-covers/${coverThumb(row.cover_path)}`,coverAlt:row.cover_alt??''}:{}}}
 const inOrder=(list:Event[])=>[...list.filter(e=>!e.past).sort((a,b)=>a.start.localeCompare(b.start)),...list.filter(e=>e.past).sort((a,b)=>b.start.localeCompare(a.start))];
 export const events:Event[]=inOrder((live as LiveEvent[]).map(row=>liveEvent(row)));
+// The departures-board status for a row, worked out once when the page loads (it never ticks). Cancelled wins; otherwise an event
+// that has started says so, and one starting today or tomorrow (UK dates) says when. Anything further off has no status.
+const fromIcs=(time:string)=>Date.parse(time.replace(/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)Z$/,'$1-$2-$3T$4:$5:$6Z'));
+const ukDate=(ms:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London'}).format(new Date(ms));
+const dayAfter=(date:string)=>{const [y,m,d]=date.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10)};
+export type EventStatus='Cancelled'|'On now'|'Today'|'Tomorrow';
+export function eventStatus(e:Event,now=Date.now()):EventStatus|undefined{
+ if(e.cancelled)return 'Cancelled';const start=fromIcs(e.start),end=fromIcs(e.end);if(end<=now)return;if(start<=now)return 'On now';
+ const day=ukDate(start),today=ukDate(now);return day===today?'Today':day===dayAfter(today)?'Tomorrow':undefined}
+// A past event's short "commit hash" in the Events log: made from its address (FNV-1a), so it's the same on every visit.
+export const commitHash=(id:string)=>{let h=0x811c9dc5;for(const ch of id){h^=ch.charCodeAt(0);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0').slice(0,7)};
 export function filterEvents(category:string,query:string,past:boolean,list:Event[]=events){return list.filter(e=>!!e.past===past&&(category==='All'||e.category===category)&&`${e.title} ${e.description} ${e.category}`.toLowerCase().includes(query.trim().toLowerCase()))}
 export function enquiryMail(org:string,email:string,format:string,message:string){return `mailto:${links.email}?subject=${encodeURIComponent('Partnership enquiry: '+org)}&body=${encodeURIComponent(`Organisation: ${org}\nReply email: ${email}\nInterested in: ${format}\n\n${message}`)}`}
 // Routes. `/events/web` and `/resources/git` open one item; a Resources filter is a query (`/resources?category=support`), because "support" is also a guide.
