@@ -268,3 +268,11 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 .log-title{flex:1;min-width:0;font-size:var(--fs-body);font-weight:600}
 .log-ref{color:var(--text-quiet);border:1px solid currentColor;padding:0 var(--space-4)}
 @media(max-width:540px){.log-open{flex-wrap:wrap;gap:0 var(--space-12)}.log-title{flex-basis:100%;order:3}.log-ref{display:none}}
+/* A linked passage (#:~:text=) is highlighted in the select colour, like the rest of the site's selections. */
+::target-text{background:var(--select-strong);color:var(--on-accent)}
+/* "Copy link" over a selection: a small pixel-font chip, placed by the selection's end. It fades in over one instant. */
+.selection-link{position:fixed;z-index:70;pointer-events:auto;animation:overlay-in var(--dur-instant) linear both}
+.selection-link[data-in-dialog]{position:absolute}
+.selection-link button{display:inline-flex;align-items:center;gap:var(--space-8);min-height:32px;padding:0 var(--space-12);background:var(--panel);color:var(--on-accent);border:1px solid var(--button-line);border-radius:4px;box-shadow:var(--shadow-hard);font-family:var(--font-pixel);font-size:var(--pixel-sm);white-space:nowrap;cursor:var(--site-pointer,pointer)}
+.selection-link button:hover{background:var(--button-hover)}
+.selection-link button:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}

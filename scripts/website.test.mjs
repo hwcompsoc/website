@@ -7,6 +7,7 @@ import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
 import {entries,grouped,search} from '../src/search.ts';
 import {DISCORD_INVITE} from './live-content.mjs';
+import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
 import {blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
@@ -275,4 +276,12 @@ test('The Discord member count comes from the same invite the site links to, and
 test('Past events get short commit hashes that never change',()=>{
  assert.match(commitHash('git-night'),/^[0-9a-f]{7}$/);assert.equal(commitHash('git-night'),commitHash('git-night'));assert.notEqual(commitHash('git-night'),commitHash('git-nights'));
  assert.equal(commitHash(''),'811c9dc');
+});
+test('Passage links: short selections whole, long ones by their first and last words, with the directive characters escaped',()=>{
+ assert.equal(textFragment('  no   preparation\nis needed '),'#:~:text=no%20preparation%20is%20needed');
+ assert.equal(textFragment('pay-as-you-go, & more'),'#:~:text=pay%2Das%2Dyou%2Dgo%2C%20%26%20more');
+ const long='Whether you want to make friends, build confidence or explore what comes after university, the easiest place to start is the community.';
+ assert.equal(textFragment(long),'#:~:text=Whether%20you%20want%20to,start%20is%20the%20community.');
+ assert.equal(textFragment('   '),'');
+ assert.equal(passageLink('https://x.test','/events/git','no preparation'),'https://x.test/events/git#:~:text=no%20preparation');
 });
