@@ -251,13 +251,12 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 /* The board's keys, under it, only where there's a mouse and so probably a keyboard. Matches the committee explorer's status line. */
 .board-keys{display:none;gap:var(--space-16);margin:var(--space-12) 0 0;font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text-quiet)}
 @media(hover:hover) and (pointer:fine){.board-keys{display:flex}}
-/* Past events: the board read as a git log. A graph line runs down the left gutter with a node at each row; hashes sit where times go. */
+/* Past events: the board read as a git log. One unbroken graph line runs down the whole left gutter, with a node at each row; hashes sit
+   where times go. The line isn't trimmed at the first and last rows: rows leaving during a filter change still count as children, so a trimmed
+   line would flicker as they went (and with a single event it would vanish entirely). */
 .board-log-caption{margin:0 0 var(--space-8);font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text-quiet)}
 .event-board[data-log]>.board-item{position:relative;padding-left:var(--space-32)}
 .event-board[data-log]>.board-item::before{content:'';position:absolute;left:11px;top:0;bottom:-1px;width:2px;background:var(--line-strong)}
-.event-board[data-log]>.board-item:first-child::before{top:50%}
-.event-board[data-log]>.board-item:last-child::before{bottom:50%}
-.event-board[data-log]>.board-item:only-child::before{display:none}
 .board-node{position:absolute;left:6px;top:50%;width:12px;height:12px;margin-top:-6px;background:var(--surface);border:2px solid var(--accent-text);z-index:1}
 .board-hash{color:var(--accent-text)}
 /* A linked passage (#:~:text=) is highlighted in the select colour, like the rest of the site's selections. */
