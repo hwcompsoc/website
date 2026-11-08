@@ -3,10 +3,13 @@ import teams from './generated/committee.json' with {type:'json'};
 import faqRows from './generated/faqs.json' with {type:'json'};
 import guides from './generated/guides.json' with {type:'json'};
 import documentRows from './generated/documents.json' with {type:'json'};
+import discord from './generated/discord.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
 import {resourcesSwitchedOn} from './env.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk',source:'https://github.com/hwcompsoc/website'};
+// How many people are in the Discord server, as of the last build (scripts/live-content.mjs), or null if Discord didn't say.
+export const discordMembers:number|null=(discord as {members:number|null}).members??null;
 // What a browser tab or shared link calls each page: the page and then the society, with the home page the other way round. A single event or guide names its section too. The headings on the pages themselves are in `titles`.
 const tabTitle=(name:string)=>`${name} | HW CompSoc`;
 export const eventTabTitle=(name:string)=>`${tabTitle(name)} Events`;

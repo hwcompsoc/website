@@ -1,6 +1,6 @@
 // What the command palette searches: pages, events, people, questions, guides, documents and a few actions. Built from the
 // same content as the pages, so nothing here needs keeping up to date by hand. Kept free of the DOM so the tests can load it.
-import {anchor,committeePeople,documents,events,faqs,links,pagePath,resources,sitePages,type Event} from './content.ts';
+import {anchor,committeePeople,discordMembers,documents,events,faqs,links,pagePath,resources,sitePages,type Event} from './content.ts';
 
 export type Group='Pages'|'Events'|'People'|'Questions'|'Guides'|'Documents'|'Actions';
 export const groups:Group[]=['Pages','Events','People','Questions','Guides','Documents','Actions'];
@@ -22,7 +22,7 @@ export function entries():Entry[]{return [
  ...faqs.map(f=>({id:`faq-${f.id}`,group:'Questions' as const,title:f.question,detail:plain(f.answer),keywords:'faq',href:`/join#${anchor(f.question)}`})),
  ...resources.map(r=>({id:`guide-${r.id}`,group:'Guides' as const,title:r.title,detail:r.description,keywords:`${r.category} ${r.type} guide`,href:`/resources/${r.id}`})),
  ...documents.map(d=>({id:`document-${d.id}`,group:'Documents' as const,title:d.title,detail:`PDF · approved ${d.approved}`,keywords:'governance constitution document',href:d.href,external:true})),
- {id:'action-discord',group:'Actions',title:'Join the Discord',detail:'Announcements and chat',keywords:'chat community server',href:links.discord,external:true},
+ {id:'action-discord',group:'Actions',title:'Join the Discord',detail:discordMembers?`${discordMembers.toLocaleString('en-GB')} members · announcements and chat`:'Announcements and chat',keywords:'chat community server',href:links.discord,external:true},
  {id:'action-instagram',group:'Actions',title:'Follow us on Instagram',detail:'@hwcompsoc',keywords:'socials photos',href:links.instagram,external:true},
  {id:'action-membership',group:'Actions',title:'Become a member',detail:'Free, through the Heriot-Watt Union',keywords:'join union membership sign up',href:links.membership,external:true},
  {id:'action-email',group:'Actions',title:'Copy our email address',detail:links.email,keywords:'contact mail',action:'copy-email'},

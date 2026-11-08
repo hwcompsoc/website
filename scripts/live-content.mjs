@@ -35,3 +35,11 @@ export function saveContent(content){mkdirSync(new URL('../src/generated/',impor
 export const EMPTY_CONTENT={events:[],committee:[],faqs:[],guides:[],documents:[]};
 // Addresses for the tests to find, so they don't depend on what the committee has published.
 export const TEST_CONTENT={...EMPTY_CONTENT,guides:['git','web','contribute','support'].map(slug=>({slug,title:slug,category:'Learning',kind:'Guide',description:slug,body:'A guide.',status:'confirmed',reviewed_on:null}))};
+
+// The Discord server's member count, for "218 people are already there". Discord's public invite address gives it without a login.
+// It's only as fresh as the last build, and the site leaves it out when it's missing, so a Discord outage never fails a build.
+export const DISCORD_INVITE='VwXhpb7mZW';
+const discordFile=()=>new URL('../src/generated/discord.json',import.meta.url);
+export async function fetchDiscord(timeout=8000){const response=await fetch(`https://discord.com/api/v10/invites/${DISCORD_INVITE}?with_counts=true`,{signal:AbortSignal.timeout(timeout)});if(!response.ok)throw new Error(`Discord answered ${response.status}`);const {approximate_member_count:members}=await response.json();return {members:Number.isInteger(members)?members:null}}
+export function saveDiscord(data){mkdirSync(new URL('../src/generated/',import.meta.url),{recursive:true});writeFileSync(discordFile(),JSON.stringify(data)+'\n')}
+export const discordExists=()=>existsSync(discordFile());
