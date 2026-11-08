@@ -13,3 +13,5 @@ showCursor('dark');
 export const updateCursor=()=>{cursorFrame||=requestAnimationFrame(()=>{cursorFrame=0;showCursor(backgroundIsDark(document.elementFromPoint(cursorX,cursorY))?'light':'dark')})};
 addEventListener('pointermove',event=>{if(event.pointerType!=='mouse')return;cursorX=event.clientX;cursorY=event.clientY;updateCursor()},{passive:true});
 addEventListener('scroll',updateCursor,{passive:true});
+// A theme change flips the backgrounds under a still pointer, so check again without waiting for it to move.
+new MutationObserver(updateCursor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
