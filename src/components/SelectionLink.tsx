@@ -20,7 +20,9 @@ function current():Place|null{const selection=getSelection();if(!selection||sele
  const inArea=(node:Node|null)=>{const element=node instanceof Element?node:node?.parentElement;return !!element?.closest(AREA)&&!element.closest('input,textarea,.palette,[contenteditable=true]')};
  if(!inArea(selection.anchorNode)||!inArea(selection.focusNode))return null;
  const rects=selection.getRangeAt(0).getClientRects();const last=rects[rects.length-1];if(!last)return null;
- const x=Math.min(last.right,innerWidth-150),y=Math.max(last.top-40,8);
+ // Just below where the selection ends: Edge's mini menu (and most selection menus) open above it, and a page can't turn them off.
+ // Above instead only when there's no room below.
+ const x=Math.min(last.right,innerWidth-150),y=last.bottom+44<innerHeight?last.bottom+8:Math.max(last.top-40,8);
  const element=selection.focusNode instanceof Element?selection.focusNode:selection.focusNode?.parentElement;const dialog=element?.closest<HTMLElement>('[role=dialog]');
  if(!dialog)return {x,y,text:trimmed,host:document.body};const box=dialog.getBoundingClientRect();
  return {x:Math.min(x-box.left+dialog.scrollLeft,dialog.clientWidth-150),y:y-box.top+dialog.scrollTop,text:trimmed,host:dialog}}
