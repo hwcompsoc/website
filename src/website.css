@@ -500,8 +500,9 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 /* Site search: the header's Search button, and the palette as a window near the top of the screen */
 .header-search{min-height:44px;gap:var(--space-8);padding-inline:var(--space-12);font-size:var(--fs-sm);font-weight:600;color:var(--ink);background:var(--surface);border-color:var(--line-strong);border-radius:4px;box-shadow:none}
 .header-search:hover{background:var(--tint);color:var(--ink)}
+.header-search-keys{display:inline-flex;align-items:center;gap:var(--space-4);font-weight:400;color:var(--text-quiet)}
 .header-search-key{font-family:var(--font-pixel);font-size:var(--pixel-sm);padding:0 var(--space-4);border:1px solid var(--line-strong);border-radius:2px;color:var(--text-quiet)}
-@media(max-width:1050px){.header-search-label,.header-search-key{display:none}.header-search{width:44px;padding:0}}
+@media(max-width:1050px){.header-search-label,.header-search-keys{display:none}.header-search{width:44px;padding:0}}
 @media(max-width:800px){.header-search{margin-left:auto}}
 .palette{position:fixed;z-index:50;left:50%;top:min(12vh,96px);translate:-50% 0;width:min(640px,calc(100% - 32px));max-height:min(72dvh,600px);display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:4px;box-shadow:var(--shadow-page-small);overflow:hidden}
 .palette:focus{outline:none}

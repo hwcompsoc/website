@@ -24,8 +24,8 @@ export const isMac=()=>typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(na
 export const shortcutLabel=()=>isMac()?'⌘K':'Ctrl K';
 const typing=(target:EventTarget|null)=>target instanceof HTMLElement&&(target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 
-// The header's way in: words and the shortcut on wide screens, the icon alone where the header is tight.
-export function SearchButton(){return <Button type="button" variant="outline" className="header-search" onClick={openPalette} aria-keyshortcuts="Control+K Meta+K"><Search aria-hidden="true" size={16}/><span className="header-search-label">Search</span><kbd className="header-search-key" aria-hidden="true">{shortcutLabel()}</kbd></Button>}
+// The header's way in: words and both shortcuts (/ or Ctrl K) on wide screens, the icon alone where the header is tight.
+export function SearchButton(){return <Button type="button" variant="outline" className="header-search" onClick={openPalette} aria-keyshortcuts="/ Control+K Meta+K"><Search aria-hidden="true" size={16}/><span className="header-search-label">Search</span><span className="header-search-keys" aria-hidden="true"><kbd className="header-search-key">/</kbd>or<kbd className="header-search-key">{shortcutLabel()}</kbd></span></Button>}
 
 // A page with its own search box marks it with data-page-search, and / goes there first; anywhere else, / opens the palette.
 function pageSearch(){return document.querySelector<HTMLInputElement>('[data-page-search]')}
