@@ -21,6 +21,10 @@ export function SectionHeading({label,title,action}:{label?:string;title:string;
 // A heading that rises out of its mask as it scrolls in.
 export function RevealHeading({children,id,as='h2'}:{children:string;id?:string;as?:'h2'|'h3'}){return <Reveal as={as} id={id} lines={[children]}/>}
 export function RouteLink({page,children,className=''}:{page:Page;children:ReactNode;className?:string}){return <a href={pagePath(page)} className={`text-link ${className}`}>{children}<ArrowRight size={16} aria-hidden="true"/></a>}
+// Search matches in a result, marked like `grep --color`: a static block in the select colour, so it never counts as a performing highlight.
+export function Highlight({text,query}:{text:string;query?:string}){const q=query?.trim().toLowerCase();if(!q)return <>{text}</>;const parts:ReactNode[]=[];const lower=text.toLowerCase();let at=0;
+ for(let i=lower.indexOf(q);i>=0;i=lower.indexOf(q,at)){if(i>at)parts.push(text.slice(at,i));parts.push(<mark key={i} className="match">{text.slice(i,i+q.length)}</mark>);at=i+q.length}
+ if(at<text.length)parts.push(text.slice(at));return <>{parts}</>}
 // Pages that shouldn't appear in search results.
 export function useNoindex(){useEffect(()=>{const meta=document.createElement('meta');meta.name='robots';meta.content='noindex';document.head.append(meta);return()=>meta.remove()},[])}
 // Our dialogs and the mobile menu are opened from code, not Radix triggers, and Radix doesn't hand focus back on its own here:

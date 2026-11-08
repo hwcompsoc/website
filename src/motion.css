@@ -53,6 +53,14 @@
 @keyframes cursor-bob{0%,80%,100%{transform:translateY(0)}90%{transform:translateY(-4px)}}
 .home-hero{overflow-x:clip}
 
+/* Photos that build in as they load (PixelImage.tsx): the wrapper keeps the cover's size and placeholder colour; the image fills it. */
+.pixel-image{display:block;width:100%;height:100%;object-fit:cover}
+
+/* Search matches (shared.tsx Highlight). Inside a row or card that is swept on hover, the mark turns into an underline so it doesn't vanish into the sweep. */
+mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color:var(--on-accent)}
+.board-row:is(:hover,:has(.board-open:focus-visible)) mark.match{background:none;text-decoration:underline;text-underline-offset:3px}
+@media(forced-colors:active){mark.match{forced-color-adjust:none;background:Highlight;color:HighlightText}}
+
 /* Header. Small-text highlights use --select-strong for contrast.
    Sweeps and highlights move smoothly; stepped timing is kept for pixels and characters (wipes, builds, flips, carets, ticks). */
 .header-inner nav>a{isolation:isolate}
