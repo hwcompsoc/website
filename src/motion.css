@@ -70,8 +70,6 @@ mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color
 .header-inner nav>a:not([aria-current])::after{content:'';position:absolute;left:0;right:0;bottom:8px;height:2px;background:var(--select);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-ui) var(--ease-enter)}
 .header-inner nav>a:not([aria-current]):is(:hover,:focus-visible)::after{transform:scaleX(1)}
 .scroll-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--select);transform-origin:left;pointer-events:none}
-.header-join svg{transition:transform var(--dur-hover) var(--ease-enter)}
-.header-join:is(:hover,:focus-visible) svg{transform:translate(2px,-2px)}
 .sheet-build{position:absolute;inset:0;z-index:60;pointer-events:none}
 
 /* Calendar menu: a pixel cover over the whole menu clears from the top left; links get the board-row selection sweep. */
@@ -132,7 +130,7 @@ mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color
 
 /* ---- Page choreography ---- */
 /* Arrows on links nudge the way they point, on hover or keyboard focus. :where() keeps this at zero specificity,
-   so places with their own arrow motion (Join button, journey links, board rows) keep it. */
+   so places with their own arrow motion (journey links, board rows) keep it. */
 :where(a)>:where(svg.lucide-arrow-right,svg.lucide-arrow-up-right){transition:transform var(--dur-hover) var(--ease-enter)}
 :where(a:is(:hover,:focus-visible))>:where(svg.lucide-arrow-right){transform:translateX(4px)}
 :where(a:is(:hover,:focus-visible))>:where(svg.lucide-arrow-up-right){transform:translate(2px,-2px)}
