@@ -13,8 +13,12 @@ function liveEvents():Plugin{
   config:()=>({server:{watch:{ignored:ours}}}),
   hotUpdate({file:changed}){if(ours(changed)||/\/public\/(event-covers|committee-photos|documents)\//.test(normalizePath(changed)))return []},
   configureServer(server){
+   // Only Supabase changing triggers a write, not the local files differing from it: `npm test` writes its own test content into the same
+   // files, and rewriting them mid-run made tests fail at random while the dev server was open. The first check always compares, so a stale copy still catches up.
+   let last='';
    const check=async()=>{try{
-    if(!saveContent(await fetchContent(4000)))return;
+    const content=await fetchContent(4000);const text=JSON.stringify(content);if(text===last)return;last=text;
+    if(!saveContent(content))return;
     for(const changed of generatedFiles())for(const module of server.moduleGraph.getModulesByFile(normalizePath(fileURLToPath(changed)))??[])server.moduleGraph.invalidateModule(module);
     server.ws.send({type:'custom',event:'live-events-changed'});
    }catch{/* Offline: carry on with the copy we have. */}};

@@ -162,15 +162,7 @@ Otherwise this page is well covered: building form, selected labels, sliding dot
 
 No gaps. It's the most complete page.
 
-## 3. Bigger ideas, if wanted later
-
-These fit the rules but need a decision first.
-
-- **Keyboard "/" to focus search** on Events and Resources, with a small `/` hint in the search box, as on GitHub. This is a real shortcut with a visible hint, not a hidden easter egg. Only listen when focus isn't in a field.
-- **Committee tree keyboard hint.** The status bar says `↑ ↓ to browse`. When the visitor first presses an arrow key, the hint could flash-select once to confirm it worked. It's a small reward for finding the shortcut.
-- **Event row "boarding" state.** For an event happening today, flip the board's category cell to `TODAY` when the page loads. This uses `FlipText` once and adds no live clock. It needs a date check at render time, not a ticking timer.
-
-## 4. Ideas left out on purpose
+## 3. Ideas left out on purpose
 
 These come up a lot for compsci sites, and each one breaks a rule in [MOTION-RULES.md](MOTION-RULES.md).
 
@@ -187,7 +179,7 @@ These come up a lot for compsci sites, and each one breaks a rule in [MOTION-RUL
 | Custom cursor trail | No ambient loops; the cursor set in `src/cursor.ts` already covers this |
 | Typing whole paragraphs | `Typed` is limited to about 60 characters, and body paragraphs don't animate |
 
-## 5. Suggested order
+## 4. Suggested order
 
 1. `::selection`, theme switch slide and Privacy marker slide. These are tiny CSS or `layoutId` changes with no new components.
 2. Remove the dead `animate-in` classes and `.avatar-build` (or reuse it), and add the overlay fades.
