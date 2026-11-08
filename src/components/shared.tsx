@@ -1,16 +1,21 @@
 import {type ReactNode,useEffect,useLayoutEffect,useRef} from 'react';
-import {ArrowRight,ArrowUpRight} from 'lucide-react';
+import {ArrowRight,ArrowUpRight,MessageCircle,Users} from 'lucide-react';
 import {Button} from './ui/button';
-import {pagePath,type Page,type View} from '../content';
+import {discordMembers,links,pagePath,type Page,type View} from '../content';
 import {Reveal} from '../motion/Reveal';
 import {Typed} from '../motion/Typed';
 import {Select} from '../motion/Select';
+import {FlipText} from '../motion/FlipText';
 
 export const asset=(name:string)=>`/website-assets/${name}`;
 export const external={target:'_blank',rel:'noopener noreferrer'} as const;
 export {titles} from '../content';
 export function External({href,children,className=''}:{href:string;children:ReactNode;className?:string}){return <a href={href} {...external} className={className}>{children}<ArrowUpRight size={16} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a>}
 export function LinkButton({href,children,secondary=false}:{href:string;children:ReactNode;secondary?:boolean}){return <Button asChild className={secondary?'site-button secondary':'site-button'}><a href={href} {...external}>{children}<ArrowUpRight size={16} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a></Button>}
+// The main way in, with the server's member count attached like a GitHub star counter, so it reads as proof at a glance.
+// The number flips in like the departures board. Without a count (Discord didn't answer at build time) it's a plain button.
+export function DiscordButton(){const button=<LinkButton href={links.discord}><MessageCircle aria-hidden="true"/>Join the Discord</LinkButton>;if(!discordMembers)return button;
+ return <span className="discord-join">{button}<span className="discord-count"><Users aria-hidden="true" size={16}/><FlipText value={discordMembers.toLocaleString('en-GB')}/><span className="sr-only"> people are on the Discord</span></span></span>}
 // Page intro as a window: the title bar types the page's path as the wipe uncovers. `sub` retypes only the end of the path.
 // The bar is decoration, so screen readers skip it.
 // `compact` is for pages people come to use rather than read, so the list starts sooner.

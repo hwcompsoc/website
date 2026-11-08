@@ -227,7 +227,7 @@ test('The footer stays compact: contact and legal links only, with invitations t
  const read=path=>readFileSync(new URL('../src/'+path,import.meta.url),'utf8');const footer=read('components/Footer.tsx');const site=read('Website.tsx');
  for(const required of ['mailto:${links.email}','href="/privacy"','links.membership','Affiliated to HW Union','Footer navigation'])assert.ok(footer.includes(required),required);
  for(const removed of ['links.discord','links.instagram','Come and say hello','RevealHeading','Accordion'])assert.ok(!footer.includes(removed),removed);
- assert.ok(site.indexOf('</main><Footer/>')>0);assert.ok(!site.includes('SayHello'));for(const page of ['pages/Join.tsx','pages/Events.tsx','pages/Resources.tsx','components/Hero.tsx'])assert.ok(read(page).includes('links.discord'),page);
+ assert.ok(site.indexOf('</main><Footer/>')>0);assert.ok(!site.includes('SayHello'));for(const page of ['pages/Join.tsx','pages/Events.tsx','pages/Resources.tsx','components/Hero.tsx']){const text=read(page);assert.ok(text.includes('links.discord')||text.includes('<DiscordButton/>'),page)}assert.ok(read('components/shared.tsx').includes('export function DiscordButton(){const button=<LinkButton href={links.discord}>'));
 });
 test('A missing build file is a real 404, and the page retries instead of staying blank',()=>{
  const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));const sends=new RegExp(`^${rewrites[0].source}$`);

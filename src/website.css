@@ -547,3 +547,10 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 .fetch-swatches>span{width:20px;height:12px}
 @media(max-width:800px){.about-story{grid-template-columns:1fr;gap:var(--space-40)}}
 @media(max-width:540px){.fetch-body{flex-direction:column;gap:var(--space-16)}.fetch-art{width:40px}}
+/* Discord button with its member count attached, GitHub-counter style: the button's right corners square off into a light segment. */
+.discord-join{display:inline-flex;align-items:stretch;max-width:100%}
+.discord-join>.site-button{border-top-right-radius:0;border-bottom-right-radius:0}
+.discord-count{display:inline-flex;align-items:center;gap:var(--space-8);padding:0 var(--space-16);border:1px solid var(--line-strong);border-left:0;border-radius:0 4px 4px 0;background:var(--tint-soft);color:var(--text);white-space:nowrap}
+.discord-count .flip{font-family:var(--font-pixel);font-size:var(--pixel-lg);line-height:1;color:var(--accent-text)}
+/* Phones: the pair spans the width with the label on one line; the count drops its icon to make room. */
+@media(max-width:540px){.discord-join{display:flex;width:100%}.discord-join>.site-button{flex:1;white-space:nowrap;gap:var(--space-8);padding-inline:var(--space-16)}.discord-count{padding:0 var(--space-12)}.discord-count>svg{display:none}}
