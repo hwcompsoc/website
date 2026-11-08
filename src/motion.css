@@ -1,5 +1,5 @@
 /* Motion component styles. Tokens mirror src/website/motion.ts. */
-:root{--dur-hover:.16s;--dur-ui:.28s;--dur-reveal:.6s;--ease-enter:cubic-bezier(.22,1,.36,1);--ease-move:cubic-bezier(.65,0,.35,1);--select:#00a1cc;--select-strong:#007e9f;--focus-ring:#007e9f;--control-line:#6b8fa2;--grid:8px}
+:root{--dur-instant:.12s;--dur-hover:.16s;--dur-ui:.28s;--dur-reveal:.6s;--ease-enter:cubic-bezier(.22,1,.36,1);--ease-move:cubic-bezier(.65,0,.35,1);--select:#00a1cc;--select-strong:#007e9f;--focus-ring:#007e9f;--control-line:#6b8fa2;--grid:8px}
 
 /* Real text selection uses the same block as the Select sweep. --select-strong, because selected text is usually small. */
 ::selection{background:var(--select-strong);color:var(--on-accent)}
@@ -150,8 +150,11 @@
 .resource-open::after{content:'';position:absolute;inset:0}
 .resource-card .eyebrow{font-size:var(--pixel-sm);letter-spacing:.04em}
 
-/* About avatars build in at their own size */
-.avatar-build{width:max-content}
+/* Overlays: the dim layer behind dialogs and the mobile menu fades in and out. Radix keeps it mounted until the closing animation ends. */
+.overlay-dim[data-state=open]{animation:overlay-in var(--dur-instant) linear both}
+.overlay-dim[data-state=closed]{animation:overlay-out var(--dur-instant) linear both}
+@keyframes overlay-in{from{opacity:0}to{opacity:1}}
+@keyframes overlay-out{from{opacity:1}to{opacity:0}}
 
 /* Partners form: the focused field's label is selected, fields use a block caret, the radio dot slides between options */
 .enquiry-form-shell [data-slot=field-label]{width:max-content;padding:1px var(--space-4);margin-inline:-4px;background:linear-gradient(var(--select-strong),var(--select-strong)) no-repeat left/0% 100%;transition:background-size var(--dur-ui) var(--ease-enter),color var(--dur-hover) ease .08s}
