@@ -26,5 +26,8 @@ export function useNoindex(){useEffect(()=>{const meta=document.createElement('m
 // Our dialogs and the mobile menu are opened from code, not Radix triggers, and Radix doesn't hand focus back on its own here:
 // remember what had focus when one opened (a row, card or button) and return to it on close, so keyboard users carry on from there.
 // Skipped when something else already took focus (picking a page in the menu moves focus to the new page's main).
+// A dialog that animates closed keeps focus until it unmounts, so this waits (up to about a second) for focus to leave it.
 export function useReturnFocus(open:boolean){const opener=useRef<HTMLElement|null>(null);
- useLayoutEffect(()=>{if(open){opener.current=document.activeElement as HTMLElement|null;return}const el=opener.current;opener.current=null;requestAnimationFrame(()=>{if(el?.isConnected&&(!document.activeElement||document.activeElement===document.body))el.focus({preventScroll:true})})},[open])}
+ useLayoutEffect(()=>{if(open){opener.current=document.activeElement as HTMLElement|null;return}const el=opener.current;opener.current=null;if(!el)return;let frame=0,tries=60;
+  const check=()=>{const active=document.activeElement;if(active?.closest('[data-state=closed]')&&tries-->0){frame=requestAnimationFrame(check);return}if(el.isConnected&&(!active||active===document.body))el.focus({preventScroll:true})};
+  frame=requestAnimationFrame(check);return()=>cancelAnimationFrame(frame)},[open])}

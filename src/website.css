@@ -248,7 +248,6 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 @media(max-width:800px){.quiet-actions{grid-column:2;justify-self:start;margin-left:0}}
 .calendar-menu ul{list-style:none;margin:0;padding:0}
 .calendar-menu li a{display:flex;align-items:center;justify-content:space-between;gap:var(--space-12);padding:var(--space-12);font-size:var(--fs-body);font-weight:600;color:var(--ink);text-decoration:none}
-.calendar-menu li a:is(:hover,:focus-visible){background:var(--tint)}
 .calendar-menu li svg{flex:none;width:16px;height:16px}
 .calendar-copy{display:grid;gap:var(--space-8);margin-top:var(--space-8);padding:var(--space-12) var(--space-12) var(--space-8);border-top:1px solid var(--line)}
 .calendar-copy label{font-size:var(--fs-sm);color:var(--text)}
