@@ -7,7 +7,7 @@
     "dev": "node scripts/fetch-events.mjs --optional && vite --host 127.0.0.1",
     "build": "node scripts/fetch-events.mjs && tsc --noEmit && vite build && node scripts/write-licenses.mjs && node scripts/write-pages.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test scripts/*.test.mjs",
+    "test": "node --import ./scripts/test-setup.mjs --test scripts/*.test.mjs",
     "logo": "node scripts/generate-logo.mjs",
     "pretest": "node scripts/fetch-events.mjs --empty",
     "events": "node scripts/fetch-events.mjs",

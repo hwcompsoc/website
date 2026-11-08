@@ -1,6 +1,6 @@
 // Safe to publish: the key only allows what the database's row level security allows.
 // The production project unless VITE_SUPABASE_URL and VITE_SUPABASE_KEY say otherwise (see .env.example). Vite supplies them in the browser, and scripts/load-env.mjs in Node.
-const env:Record<string,string|undefined>=import.meta.env??(globalThis as unknown as {process:{env:Record<string,string|undefined>}}).process.env;
+import {env} from './env.ts';
 if(!env.VITE_SUPABASE_URL!==!env.VITE_SUPABASE_KEY)throw new Error('Set both VITE_SUPABASE_URL and VITE_SUPABASE_KEY, or neither.');
 export const SUPABASE_URL=env.VITE_SUPABASE_URL??'https://xirsiblrzrfahslrloya.supabase.co';
 export const SUPABASE_KEY=env.VITE_SUPABASE_KEY??'sb_publishable_WOE70jd-y4lmoZZJ3kIbhA_8NxjwQ-A';

@@ -5,6 +5,7 @@ import guides from './generated/guides.json' with {type:'json'};
 import documentRows from './generated/documents.json' with {type:'json'};
 import {readingMinutes} from './guide-format.ts';
 import {coverThumb} from './supabase-config.ts';
+import {resourcesSwitchedOn} from './env.ts';
 export const links={discord:'https://discord.gg/VwXhpb7mZW',instagram:'https://www.instagram.com/hwcompsoc',membership:'https://www.hwunion.com/societies/compsci/',email:'compsci.society@hw.ac.uk'};
 // What a browser tab or shared link calls each page: the page and then the society, with the home page the other way round. A single event or guide names its section too. The headings on the pages themselves are in `titles`.
 const tabTitle=(name:string)=>`${name} | HW CompSoc`;
@@ -42,9 +43,10 @@ export const initials=(name:string)=>name.split(' ').filter(Boolean).map(w=>w[0]
 export type LiveGuide={slug:string;title:string;category:string;kind:string;description:string;body:string;status:string;reviewed_on:string|null};
 export const liveGuide=(row:LiveGuide)=>({id:row.slug,title:row.title,category:row.category,description:row.description,type:row.kind,minutes:`${readingMinutes(row.body)} min`,body:row.body,reviewed:row.reviewed_on?new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',month:'long',year:'numeric'}).format(new Date(`${row.reviewed_on}T00:00:00Z`)):''});
 export type Resource=ReturnType<typeof liveGuide>;
-export const resources=(guides as LiveGuide[]).map(liveGuide);
-// The pages the menus link to. Resources stays out of them until there's a guide to find.
-export const menuPages=pages.filter(p=>p.id!=='resources'||resources.length>0);
+// Guides reach the site only while Resources is switched on (src/env.ts).
+export const resources=resourcesSwitchedOn?(guides as LiveGuide[]).map(liveGuide):[];
+// The pages the site has. Resources exists only while it's switched on and has a guide to find, so nothing links to an empty page, and its address is not found.
+export const sitePages=pages.filter(p=>p.id!=='resources'||resources.length>0);
 // Events are copied in from Supabase when the site builds.
 export type LiveEvent={slug:string;title:string;category:string;level:string;starts_at:string;ends_at:string;venue:string;description:string;signup_required:boolean;luma_url:string|null;status:string;cover_path?:string|null;cover_alt?:string;cost?:string|null;open_to?:string|null};
 const icsTime=(ms:number|string)=>new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g,'');
@@ -58,10 +60,10 @@ export function enquiryMail(org:string,email:string,format:string,message:string
 const segments=(path:string)=>path.toLowerCase().split('/').filter(Boolean);
 export const canonicalPath=(path:string)=>'/'+segments(path).join('/');
 export function route(path:string):{view:View;item:string}{const parts=segments(path);if(!parts.length)return {view:'home',item:''};
- const [first,item='',...rest]=parts;if(first==='privacy'&&!item)return {view:'privacy',item:''};const page=pages.find(p=>p.id===first&&p.id!=='home');if(!page||rest.length)return {view:'notfound',item:''};if(!item)return {view:page.id,item:''};
+ const [first,item='',...rest]=parts;if(first==='privacy'&&!item)return {view:'privacy',item:''};const page=sitePages.find(p=>p.id===first&&p.id!=='home');if(!page||rest.length)return {view:'notfound',item:''};if(!item)return {view:page.id,item:''};
  const found=(page.id==='events'&&events.some(e=>e.id===item))||(page.id==='resources'&&resources.some(r=>r.id===item));return found?{view:page.id,item}:{view:'notfound',item:''}}
 // Links shared before paths existed, such as `#events` or `#resources/support`.
-export function legacyPath(hash:string):string|null{const [id,param]=hash.slice(1).toLowerCase().split('/');const page=pages.find(p=>p.id===id);if(!page)return null;return page.id==='resources'&&param?`/resources?category=${encodeURIComponent(param)}`:pagePath(page.id)}
+export function legacyPath(hash:string):string|null{const [id,param]=hash.slice(1).toLowerCase().split('/');const page=sitePages.find(p=>p.id===id);if(!page)return null;return page.id==='resources'&&param?`/resources?category=${encodeURIComponent(param)}`:pagePath(page.id)}
 // Optimal string alignment: a swapped pair of letters ("abuot") counts as one typo.
 function typos(a:string,b:string){const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)] as number[]);for(let j=0;j<=b.length;j++)d[0][j]=j;
  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}
@@ -69,7 +71,7 @@ function typos(a:string,b:string){const d=Array.from({length:a.length+1},(_,i)=>
 // Allows about one typo per three letters of the part that could be wrong, so a long path doesn't match anything.
 const allowance=(part:string)=>Math.max(1,Math.floor(part.length/3));
 function closest(value:string,options:string[],limit:number){let best:string|null=null,score=limit+1;for(const option of options){const t=typos(value,option);if(t<score){best=option;score=t}}return best}
-const pagePaths=()=>[...pages.filter(p=>p.id!=='home').map(p=>pagePath(p.id)),'/privacy'];
+const pagePaths=()=>[...sitePages.filter(p=>p.id!=='home').map(p=>pagePath(p.id)),'/privacy'];
 // The real address closest to a wrong one, or null if nothing is close: first the whole path, then just its first part.
 export function suggestPath(path:string):string|null{const parts=segments(path);if(!parts.length)return null;if(parts.length===1&&['home','index','index.html'].includes(parts[0]))return '/';
  const whole=closest('/'+parts.join('/'),[...pagePaths(),...events.map(e=>`/events/${e.id}`),...resources.map(r=>`/resources/${r.id}`)],allowance(parts[parts.length-1]));return whole??closest('/'+parts[0],pagePaths(),allowance(parts[0]))}

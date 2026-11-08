@@ -230,3 +230,10 @@ test('A missing build file is a real 404, and the page retries instead of stayin
  for(const path of ['/','/about','/admin/documents','/events/some-talk','/assetsfolder'])assert.ok(sends.test(path),path);assert.ok(!sends.test('/assets/index-abc.js'));
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('hwcs-load-retries'));assert.ok(html.indexOf('hwcs-load-retries')<html.indexOf('type="module"'),'the retry has to be listening before the app loads');
 });
+test('Resources is left out of the site unless VITE_SHOW_RESOURCES is "true"',async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const probe=`const c=await import('./src/content.ts');const s=await import('./src/share.ts');console.log(JSON.stringify({resources:c.resources.length,pages:c.sitePages.map(p=>p.id),page:c.route('/resources').view,guide:c.route('/resources/git').view,legacy:c.legacyPath('#resources'),shared:s.sharePages().some(p=>p.path.startsWith('/resources'))}))`;
+ const run=(value)=>{const env={...process.env};delete env.VITE_SHOW_RESOURCES;if(value!==undefined)env.VITE_SHOW_RESOURCES=value;return JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',probe],{env,cwd:new URL('..',import.meta.url),encoding:'utf8'}))};
+ for(const value of [undefined,'false','1']){const off=run(value);assert.deepEqual(off,{resources:0,pages:['home','join','events','about','partners'],page:'notfound',guide:'notfound',legacy:null,shared:false},String(value))}
+ const on=run('true');assert.ok(on.resources>0);assert.ok(on.pages.includes('resources'));assert.equal(on.page,'resources');assert.equal(on.guide,'resources');assert.equal(on.shared,true);
+});

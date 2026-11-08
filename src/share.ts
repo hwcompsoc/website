@@ -1,5 +1,5 @@
 // What a link to each address shows when it's posted somewhere. Link previews don't run the app, so the build writes this into real pages.
-import {events,pagePath,pages,resources,eventTabTitle,guideTabTitle,tabTitles} from './content.ts';
+import {events,pagePath,sitePages,resources,eventTabTitle,guideTabTitle,tabTitles} from './content.ts';
 
 export type Share={path:string;title:string;description:string;image:string;imageAlt:string};
 const SITE_NAME='HW CompSoc';
@@ -11,7 +11,7 @@ const PRIVACY='What the HW CompSoc website stores and who it shares it with. If 
 const shorten=(text:string)=>{const flat=text.replace(/\s+/g,' ').trim();if(flat.length<=LENGTH)return flat;return flat.slice(0,LENGTH-1).replace(/\s+\S*$/,'')+'…'};
 
 export function sharePages(list=events):Share[]{return [
- ...pages.map(page=>({path:pagePath(page.id),title:tabTitles[page.id],description:descriptions[page.id],image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT})),
+ ...sitePages.map(page=>({path:pagePath(page.id),title:tabTitles[page.id],description:descriptions[page.id],image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT})),
  {path:'/privacy',title:tabTitles.privacy,description:PRIVACY,image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT},
  ...list.map(event=>({path:`/events/${event.id}`,title:eventTabTitle(event.title),description:shorten(`${event.cancelled?'Cancelled. ':''}${event.date}, ${event.time}, ${event.venue}. ${event.description}`),image:event.cover??DEFAULT_IMAGE,imageAlt:event.cover?event.coverAlt??'':DEFAULT_ALT})),
  ...resources.map(resource=>({path:`/resources/${resource.id}`,title:guideTabTitle(resource.title),description:shorten(resource.description),image:DEFAULT_IMAGE,imageAlt:DEFAULT_ALT})),

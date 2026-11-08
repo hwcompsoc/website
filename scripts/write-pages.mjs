@@ -2,6 +2,7 @@
 // and the calendar files, which need the site's address too.
 // Each one is the same app, which takes over as usual. Anything else falls through to index.html, as vercel.json says.
 import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import './load-env.mjs';
 import {sharePage,sharePages} from '../src/share.ts';
 import {calendar,calendarFeed,eventFilePath,FEED_PATH} from '../src/calendar.ts';
 import {events} from '../src/content.ts';
