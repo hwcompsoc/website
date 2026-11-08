@@ -11,6 +11,7 @@ import {FlipText} from '../motion/FlipText';
 import {Reveal} from '../motion/Reveal';
 import {Select} from '../motion/Select';
 import {Typed} from '../motion/Typed';
+import {Mascot} from '../components/Mascot';
 
 const MAX_SHOWN=32;
 // Milliseconds. With a suggestion the cursor presses at the start of the word and drags across it; "Go home" is a plain click.
@@ -52,7 +53,7 @@ export function NotFound(){const level=useMotionLevel();const fire=useClickBurst
  return <section className="page-intro not-found"><div className="wrap"><div className="intro-window nf-window" ref={box}>
   <div className="window-bar" aria-hidden="true"><span className="window-name"><Typed text={`~/compsoc${shown}: not found`} speed={.02} delay={.15} trigger="mount"/></span><span className="window-meta">error 404</span></div>
   <div className="intro-body nf-body">
-   <div className="nf-code" aria-hidden="true"><FlipText value="404" trigger="mount"/></div>
+   <div className="nf-side"><div className="nf-code" aria-hidden="true"><FlipText value="404" trigger="mount"/></div><Mascot mood="confused" align="center"/></div>
    <div className="nf-text"><Reveal as="h1" trigger="mount" delay={.15} lines={['File not found.']}/>
     <p>Nothing lives at <code className="nf-path">{shown}</code>. It may have moved, or there might be a typo in the address.</p>
     {suggestion&&<p className="nf-suggest">Did you mean <a href={suggestion} className="nf-suggest-link">{parts(suggestion).prefix}<span ref={target}><Select mode="persist" trigger="manual" play={clicked} driven={clip} className="select-strong">{parts(suggestion).word}</Select></span></a>?</p>}

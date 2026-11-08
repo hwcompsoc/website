@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 128 128" shape-rendering="crispEdges" role="img" aria-labelledby="title desc">
+  <title id="title">Byte — Dark Mode CRT Mascot</title>
+  <desc id="desc">A friendly pixel art CRT computer mascot on a transparent background, with cyan outlines for dark surfaces, with glowing cyan eyes, a smiling terminal face, a waving hand, and little cyan sneakers.</desc>
+  <style>
+    .mascot-float { animation: mascot-bob 3.6s ease-in-out infinite; }
+    .mascot-wave { transform-origin: 104px 62px; animation: mascot-wave 6s ease-in-out infinite; }
+    .mascot-eyes { transform-origin: 63px 53px; animation: mascot-blink 5.4s linear infinite; }
+    @keyframes mascot-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+    @keyframes mascot-wave { 0%, 12%, 28%, 100% { transform: rotate(0deg); } 16%, 24% { transform: rotate(9deg); } 20% { transform: rotate(-6deg); } }
+    @keyframes mascot-blink { 0%, 43%, 47%, 100% { transform: scaleY(1); } 45% { transform: scaleY(.08); } }
+    @media (prefers-reduced-motion: reduce) { .mascot-float, .mascot-wave, .mascot-eyes { animation: none; } }
+  </style>
+  <g class="mascot-float">
+  <!-- Pixel arms and gloves -->
+  <path d="M25 63H15v6H9v13h7v-9h13z" fill="#00A1CC"/>
+  <path d="M23 65h-6v6h-5v9h3V72h8z" fill="#004066"/>
+  <path d="M7 78h10v3h3v10h-3v3H7v-3H4V81h3z" fill="#00A1CC"/>
+  <path d="M8 81h8v3h2v5h-3v2H8v-3H7v-5h1z" fill="#FFFFFF"/>
+  <path d="M8 81h7v2H8zM7 84h2v4H7z" fill="#FFFFFF"/>
+  <g class="mascot-wave">
+  <path d="M101 62h10v-7h5V43h-7v10h-8z" fill="#00A1CC"/>
+  <path d="M103 56h8v-9h3v7h-2v6h-9z" fill="#004066"/>
+  <path d="M108 29h5v-7h6v4h5v6h3v12h-3v5h-15v-4h-5V34h4z" fill="#00A1CC"/>
+  <path d="M110 32h5v-7h2v10h3v-6h2v8h3v6h-4v3h-10v-4h-4v-6h3z" fill="#FFFFFF"/>
+  <path d="M110 33h3v7h-3zM115 25h2v9h-2zM120 29h2v7h-2z" fill="#FFFFFF"/>
+  <path d="M115 40h7v3h-7z" fill="#00A1CC"/>
+  </g>
+  <!-- Short legs and chunky sneakers -->
+  <path d="M40 89h14v18H40zM74 89h14v18H74z" fill="#00A1CC"/>
+  <path d="M44 92h6v13h-6zM78 92h6v13h-6z" fill="#004066"/>
+  <path d="M35 103h20v5h4v10H29v-10h6zM73 103h20v5h6v10H69v-10h4z" fill="#00A1CC"/>
+  <path d="M37 106h15v4h4v5H32v-5h5zM76 106h14v4h6v5H72v-5h4z" fill="#00A1CC"/>
+  <path d="M37 106h9v3h-9zM76 106h9v3h-9z" fill="#FFFFFF"/>
+  <path d="M32 113h24v2H32zM72 113h24v2H72z" fill="#FFFFFF"/>
+  <path d="M46 108h6v2h-6zM85 108h5v2h-5z" fill="#FFFFFF"/>
+  <!-- CRT cabinet -->
+  <path d="M29 18h68v3h6v5h4v57h-4v6h-6v4H29v-4h-6v-6h-4V29h4v-6h6z" fill="#00A1CC"/>
+  <path d="M29 23h68v3h5v56h-5v6H29v-4h-5V29h5z" fill="#004066"/>
+  <path d="M30 23h65v4H30zM25 29h5v49h-5z" fill="#FFFFFF"/>
+  <path d="M97 29h5v53h-5v6H30v-5h67z" fill="#000000"/>
+  <path d="M32 29h60v3h6v39h-4v6H32v-4h-5V35h5z" fill="#00A1CC"/>
+  <path d="M35 32h55v3h5v34h-4v5H34v-4h-4V37h5z" fill="#000000"/>
+  <path d="M36 35h53v3h3v30h-4v3H36v-3h-3V39h3z" fill="#004066"/>
+  <path d="M36 35h52v3H36zM33 40h3v24h-3z" fill="#00A1CC"/>
+  <!-- Little terminal prompt and code detail -->
+  <path d="M39 39h2v2h2v2h-2v2h-2v-2h2v-2h-2zM46 43h6v2h-6z" fill="#00A1CC"/>
+  <path d="M80 40h6v2h-6zM84 42h2v3h-2z" fill="#00A1CC"/>
+  <!-- Glowing pixel eyes -->
+  <g class="mascot-eyes">
+  <path d="M42 47h12v13H42zM71 47h12v13H71z" fill="#000000"/>
+  <path d="M44 47h8v2h2v9H42v-9h2zM73 47h8v2h2v9H71v-9h2z" fill="#FFFFFF"/>
+  <path d="M44 48h4v4h-4zM73 48h4v4h-4z" fill="#FFFFFF"/>
+  </g>
+  <!-- Blush and smile -->
+  <path d="M38 59h9v3h-9zM79 59h9v3h-9z" fill="#00A1CC"/>
+  <path d="M55 59h3v3h10v-3h3v5h-3v3H58v-3h-3z" fill="#00A1CC"/>
+  <path d="M59 63h8v2h-8z" fill="#FFFFFF"/>
+  <!-- Glass glint -->
+  <path d="M87 38h3v9h-3z" fill="#FFFFFF"/>
+  <!-- Front badge: tiny code brackets -->
+  <path d="M32 80h22v5H32z" fill="#000000"/>
+  <path d="M37 81h2v1h-2v1h2v1h-2v-1h-2v-1h2zM47 81h2v1h2v1h-2v1h-2v-1h2v-1h-2zM43 81h2v1h-1v2h-2v-1h1z" fill="#FFFFFF"/>
+  <!-- Power button and indicator -->
+  <path d="M83 80h4v4h-4z" fill="#000000"/>
+  <path d="M84 81h2v2h-2z" fill="#00A1CC"/>
+  <path d="M92 78h7v7h-7z" fill="#000000"/>
+  <path d="M94 79h3v4h-3z" fill="#00A1CC"/>
+  <!-- A few happy pixel sparkles -->
+  <path d="M15 19h3v4h4v3h-4v4h-3v-4h-4v-3h4z" fill="#00A1CC"/>
+  <path d="M105 91h3v4h4v3h-4v4h-3v-4h-4v-3h4z" fill="#00A1CC"/>
+  <path d="M94 9h3v3h-3zM5 59h3v3H5z" fill="#00A1CC"/>
+  </g>
+</svg>
+
+
+

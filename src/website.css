@@ -49,7 +49,7 @@ p,h1,h2,h3,h4,h5,h6,li,pre,code,blockquote,input:not([type=checkbox]):not([type=
 .site-header:not([data-scrolled]){border-bottom-color:transparent}
 .site-header[data-hidden]:not(:focus-within){transform:translateY(-100%)}
 @media(hover:hover){
-/* Touch screens: no backdrop blur. Phones re-blur everything moving underneath on every frame (scrolling, the page wipe),
+/* Touch screens: no backdrop blur. Phones re-blur everything moving underneath on every frame (scrolling, the page window),
    and at 94% white the blur is barely visible anyway. */
 .site-header{backdrop-filter:blur(12px)}}
 @media(hover:none){
@@ -555,3 +555,37 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 .discord-count .flip{font-family:var(--font-pixel);font-size:var(--pixel-lg);line-height:1;color:var(--accent-text)}
 /* Phones: the pair spans the width with the label on one line; the count drops its icon to make room. */
 @media(max-width:540px){.discord-join{display:flex;width:100%}.discord-join>.site-button{flex:1;white-space:nowrap;gap:var(--space-8);padding-inline:var(--space-16)}.discord-count{padding:0 var(--space-12)}.discord-count>svg{display:none}}
+/* Byte, the mascot (components/Mascot.tsx). The light artwork suits light surfaces and the dark one dark surfaces, including the footer's panel in both themes.
+   Sizes are whole fractions of the 128-unit artwork, so its pixels stay even. */
+.mascot{position:relative;display:inline-flex;flex:none}
+.mascot-button{display:block;padding:0;background:none;border:0;border-radius:4px;color:inherit}
+.mascot-sprite{display:block;width:128px;height:128px}
+.mascot-sm .mascot-sprite{width:64px;height:64px}
+.mascot-sprite>span,.mascot-sprite svg{display:block;width:100%;height:100%}
+.mascot-sprite svg{overflow:visible;user-select:none}
+.mascot-sprite .mascot-dark{display:none}
+:root[data-theme=dark] .mascot-light,.site-footer .mascot-light{display:none}
+:root[data-theme=dark] .mascot-dark,.site-footer .mascot-dark{display:block}
+/* The speech bubble sits above the monitor, lined up with whichever side has room, with a one-pixel-step tail. */
+.mascot-bubble{position:absolute;bottom:calc(100% + var(--space-8));left:0;z-index:5;width:max-content;max-width:min(240px,calc(100vw - 48px));padding:var(--space-8) var(--space-12);background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:4px;box-shadow:var(--shadow-hard);font-family:var(--font-pixel);font-size:var(--pixel-sm);line-height:1.6;text-align:left;white-space:normal}
+.mascot-bubble::after{content:'';position:absolute;top:100%;left:var(--space-24);width:8px;height:8px;background:var(--surface);border:1px solid var(--line-strong);border-top:0;border-left:0;transform:translateY(-4px) rotate(45deg)}
+.mascot[data-align=end] .mascot-bubble{left:auto;right:0}
+.mascot[data-align=end] .mascot-bubble::after{left:auto;right:var(--space-24)}
+.mascot[data-align=center] .mascot-bubble{left:50%;transform:translateX(-50%)}
+.mascot[data-align=center] .mascot-bubble::after{left:calc(50% - 4px)}
+.site-footer .mascot-bubble{--hard-shadow:#00000040}
+/* Where it sits */
+.nf-side{display:flex;flex-direction:column;align-items:center;gap:var(--space-16)}
+.site-empty .mascot{margin-bottom:var(--space-8)}
+.quiet-callout>.mascot{align-self:center}
+.palette-empty{display:flex;align-items:center;gap:var(--space-16)}
+.footer-main>.footer-nav{margin-left:auto}
+@media(max-width:800px){.nf-side{flex-direction:row;align-items:end;justify-content:space-between}.nf-side .mascot[data-align] .mascot-bubble{left:auto;right:0;transform:none}.nf-side .mascot[data-align] .mascot-bubble::after{left:auto;right:var(--space-24)}}
+@media(max-width:800px){:is(.site-empty,.nf-side) .mascot-sprite{width:96px;height:96px}}
+/* On phones the footer wraps, so Byte joins the logo's row rather than starting a row of its own. */
+@media(max-width:540px){.footer-mascot{order:1;margin-left:auto}.footer-main>.footer-nav{order:2}}
+/* Byte's other spots: beside the Join step's Discord button, in the Partners draft notice, and under a finished guide checklist. */
+.join-discord{display:flex;align-items:center;gap:var(--space-16);flex-wrap:wrap}
+.draft-ready-byte{display:flex;align-items:center;gap:var(--space-16)}
+.guide-byte{margin-top:var(--space-8)}
+.admin-boot-byte{display:flex;justify-content:center;margin:0 auto var(--space-12)}

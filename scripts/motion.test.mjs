@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {stepped,cellDelays,typedLength,motionLevel,dur,flip,flipFrame} from '../src/motion.ts';
+import {stepped,cellDelays,typedLength,motionLevel,dur,flip,flipFrame,insetsOf,insetsAt,pageChange,byte,byteRest} from '../src/motion.ts';
 test('Stepped easing snaps progress to discrete frames and always lands on 1',()=>{
  const s=stepped(4);assert.deepEqual([0,.24,.25,.6,.99,1].map(s),[0,0,.25,.5,.75,1]);
 });
@@ -33,4 +33,15 @@ test('Theme choice: an explicit choice wins, System follows the device, anything
 test('Motion level: ?motion=off wins, then reduced (param or OS), otherwise full',()=>{
  assert.equal(motionLevel('?motion=off',true),'off');assert.equal(motionLevel('?motion=reduced',false),'reduced');assert.equal(motionLevel('',true),'reduced');assert.equal(motionLevel('',false),'full');
  assert.ok(dur.hero<=1.2&&dur.reveal<=.6,'durations stay within the plan’s limits');
+});
+test('The page window grows from the clicked link to the screen under the header, all edges together',()=>{
+ const from=insetsOf({top:20,right:300,bottom:60,left:200},1000,800);assert.deepEqual(from,{top:20,right:700,bottom:740,left:200});
+ const to={top:72,right:0,bottom:0,left:0};assert.deepEqual(insetsAt(from,to,0),from);assert.deepEqual(insetsAt(from,to,1),to);
+ assert.deepEqual(insetsAt(from,to,.5),{top:46,right:350,bottom:370,left:100});
+ assert.ok(pageChange.out+pageChange.in+pageChange.settle<=.6,'a page change stays inside the 600ms limit');
+});
+test('Byte stops at a bob cycle end that misses the wave and the blink',()=>{
+ for(const elapsed of [0,.5,3.6,7.2,10,25,61.3]){const t=byteRest(elapsed);assert.ok(t>=elapsed-1e-9);assert.ok(Math.abs(t/byte.bob-Math.round(t/byte.bob))<1e-9,'on a bob cycle end');
+  const w=t%byte.wave,b=t%byte.blink;assert.ok(w<byte.waveMoves[0]||w>byte.waveMoves[1],'not mid-wave');assert.ok(b<byte.blinkMoves[0]||b>byte.blinkMoves[1],'not mid-blink')}
+ assert.equal(byteRest(0),0);
 });

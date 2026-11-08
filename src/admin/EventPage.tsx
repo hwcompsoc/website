@@ -2,6 +2,7 @@ import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import {AnimatePresence,m} from 'motion/react';
 import {ArrowLeft,ArrowUpRight,Check,ChevronDown,Download,Ellipsis,Pencil} from 'lucide-react';
 import {Button} from '../components/ui/button';
+import {Mascot} from '../components/Mascot';
 import {Input} from '../components/ui/input';
 import {Checkbox} from '../components/ui/checkbox';
 import {Popover,PopoverContent,PopoverTrigger} from '../components/ui/popover';
@@ -36,11 +37,13 @@ function SitePanel({event,phase,finish}:{event:AdminEvent;phase:SitePhase;finish
  const finalTitle=shown==='removing'?'Off the site':event.status==='cancelled'?'This event is cancelled':text&&shown==='updating'?'Live on the site':'Live on the site';
  const title=phase==='unknown'&&!finish?'Saved':finished?finalTitle:slow?'This is taking longer than usual':text?text.title:event.status==='cancelled'?'This event is cancelled':'Live on the site';
  const live=!busy&&phase!=='unknown'||finished;const mark=live&&shown!=='removing'&&event.status!=='cancelled';
+ // Byte cheers once the event has really just gone live (or a change to it has), and stays for the rest of this visit to the page.
+ const [cheer,setCheer]=useState(false);useEffect(()=>{if(stage==='done'&&mark)setCheer(true)},[stage,mark]);
  return <section className="admin-card admin-site" data-phase={live?'live':busy?'busy':undefined} aria-labelledby="site-title"><h2 id="site-title" role="status">{mark&&<span className="admin-step-mark" data-tick={finish?'':undefined} aria-hidden="true"><Check size={16}/></span>}{finished?<Typed key={title} text={title} caret={false} speed={.02} trigger="mount"/>:title}</h2>
   <AnimatePresence initial={false}>
    {showSteps&&<SiteSteps key="steps" text={text!} stage={stage} slow={slow} finished={finished} lastMark={lastMark} exitDuration={foldDuration(level)}/>}
    {!showSteps&&phase==='unknown'&&<m.div key="unknown" className="admin-site-fold"><p>We can’t check the public site right now. Changes usually appear within a few minutes.</p></m.div>}
-   {!showSteps&&phase!=='unknown'&&!(busy&&!stage)&&shown!=='removing'&&<m.div key="final" className="admin-site-fold" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} transition={fold}><p>{event.status==='cancelled'?'The site shows it as cancelled. Check Native and Luma show the same.':'If you change the date, time or venue, update Native and Luma too, and tell Amanda and Kevin.'}</p><External href={publicUrl}>View on the site</External></m.div>}
+   {!showSteps&&phase!=='unknown'&&!(busy&&!stage)&&shown!=='removing'&&<m.div key="final" className="admin-site-fold" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} transition={fold}><div className={cheer?'admin-site-byte':undefined}>{cheer&&<Mascot size="sm" tips="admin" line="It’s live! Nice work."/>}<div><p>{event.status==='cancelled'?'The site shows it as cancelled. Check Native and Luma show the same.':'If you change the date, time or venue, update Native and Luma too, and tell Amanda and Kevin.'}</p><External href={publicUrl}>View on the site</External></div></div></m.div>}
   </AnimatePresence></section>}
 
 export function EventPage({id}:{id:string}){const {data,error:loadError,loading,set}=useLoad(()=>loadEvent(id),id);const rows=useSiteRows(site=>!!data&&(!site||siteBusy(sitePhase(data,site))));const finish=useFinish(data?sitePhase(data,rows):'hidden');const [open,setOpen]=useState<StepId|null|undefined>(undefined);const [error,setError]=useState('');const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);const [confirm,setConfirm]=useState<Confirm|null>(null);const [menu,setMenu]=useState(false);

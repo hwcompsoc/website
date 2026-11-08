@@ -6,9 +6,14 @@ import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogT
 import {setLeaveCheck} from '../router';
 import {supabase} from '../supabase';
 import {removeFiles} from './files';
+import {Mascot} from '../components/Mascot';
 import {COVER_BUCKET,coverThumb} from '../supabase-config';
 import {badgeFor,checklist,editableFields,progress,sitePhase,type AdminEvent,type SitePhase,type SiteRow} from '../admin-rules';
 
+// An empty list, with Byte. Byte's own line suits the list: nothing added yet, nothing in this view, a search with no matches, or nothing left to finish.
+export function EmptyNote({kind='new',children}:{kind?:'new'|'none'|'search'|'done';children:ReactNode}){
+ const line=kind==='search'?'Hmm. Nothing matched that.':kind==='done'?'All caught up. Nice.':kind==='none'?'Nothing here right now.':'Nothing here yet. Add the first one!';
+ return <div className="admin-empty admin-empty-byte"><Mascot size="sm" tips="admin" mood={kind==='search'?'confused':'happy'} line={line}/><p>{children}</p></div>}
 export const useTitle=(title:string)=>useEffect(()=>{document.title=`${title} | CompSoc admin`},[title]);
 
 // Warns before unsaved work is lost: the browser's own warning for reloading or closing, and a question for links and Back inside the admin.

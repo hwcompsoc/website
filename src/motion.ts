@@ -1,6 +1,6 @@
 // Motion tokens for the visitor site. Components never hard-code timings.
 // Kept free of imports so scripts/motion.test.mjs can load it directly.
-export const dur={instant:.12,hover:.16,ui:.28,wipe:.45,reveal:.6,hero:1.2} as const;
+export const dur={instant:.12,hover:.16,ui:.28,reveal:.6,hero:1.2} as const;
 type Bezier=[number,number,number,number];
 export const ease:{enter:Bezier;move:Bezier;exit:Bezier}={enter:[.22,1,.36,1],move:[.65,0,.35,1],exit:[.4,0,1,1]};
 export const spring={
@@ -8,6 +8,8 @@ export const spring={
  soft:{type:'spring',stiffness:180,damping:24},
  layout:{type:'spring',stiffness:350,damping:34},
 } as const;
+// A page change: the old page fades as the window grows, the window lands on the new page, then the page fades in around it.
+export const pageChange={out:.12,in:.26,settle:.2} as const;
 export const stagger=.06,grid=8,selectColor='#00a1cc';
 export const typing={char:.028,pause:.12};
 export const flip={frame:.04,frames:3};// departures-board character cycling
@@ -39,3 +41,15 @@ export function cellDelays(cols:number,rows:number,order:CellOrder='diagonal',se
 
 // Characters typed so far after `elapsed` seconds, with a pause after punctuation.
 export function typedLength(text:string,elapsed:number,char=typing.char,pause=typing.pause){let t=0;for(let i=0;i<text.length;i++){t+=char;if(t>elapsed)return i;if(/[.,!?;:]/.test(text[i]))t+=pause}return text.length}
+
+// A window's edges as distances in from each side of the viewport, the form clip-path: inset() takes.
+export type Insets={top:number;right:number;bottom:number;left:number};
+export const insetsOf=(rect:{top:number;right:number;bottom:number;left:number},width:number,height:number):Insets=>({top:rect.top,right:width-rect.right,bottom:height-rect.bottom,left:rect.left});
+// The window part way through opening: every edge travels from `from` to `to` together, so it grows out of the link without skewing.
+export const insetsAt=(from:Insets,to:Insets,t:number):Insets=>({top:from.top+(to.top-from.top)*t,right:from.right+(to.right-from.right)*t,bottom:from.bottom+(to.bottom-from.bottom)*t,left:from.left+(to.left-from.left)*t});
+
+// Byte's idle loops, in seconds: a bob, a wave of the hand and a blink. They run only for a while, so to stop without a jump
+// they stop at the first bob cycle's end that also falls outside the wave and the blink.
+export const byte={bob:3.6,wave:6,waveMoves:[.72,1.68],blink:5.4,blinkMoves:[2.32,2.54],shown:7.2} as const;
+export function byteRest(elapsed:number){const inside=(t:number,period:number,[from,to]:readonly number[])=>{const at=t%period;return at>from-.05&&at<to+.05};
+ for(let t=Math.max(0,Math.ceil(elapsed/byte.bob-1e-9))*byte.bob;;t+=byte.bob)if(!inside(t,byte.wave,byte.waveMoves)&&!inside(t,byte.blink,byte.blinkMoves))return t}

@@ -6,6 +6,7 @@ import {DialogOverlay,DialogPortal} from './ui/dialog';
 import {Button} from './ui/button';
 import {Highlight,useReturnFocus} from './shared';
 import {Copied,useCopy} from './copy';
+import {Mascot} from './Mascot';
 import {grouped,search,type Entry} from '../search';
 import {links,pages,route,type Page} from '../content';
 import {go,underPage} from '../router';
@@ -74,7 +75,7 @@ export function CommandPalette(){const level=useMotionLevel();const [open,setOpe
       <span className="palette-hint" aria-hidden="true">{isCopy?copied?<Copied text="copied"/>:<Copy size={16}/>:entry.action==='theme-dark'?<Moon size={16}/>:entry.action==='theme-light'?<Sun size={16}/>:entry.external?<ArrowUpRight size={16}/>:<ArrowRight size={16}/>}</span>
      </div>})}
    </div>)}
-   {!flat.length&&<p className="palette-empty"><Typed text={`No results for “${query.trim().slice(0,40)}”`} caret={false} speed={.015} trigger="mount" key={query}/></p>}
+   {!flat.length&&<p className="palette-empty"><Mascot mood="confused" size="sm"/><Typed text={`No results for “${query.trim().slice(0,40)}”`} caret={false} speed={.015} trigger="mount" key={query}/></p>}
   </div>
   <div className="palette-status" aria-hidden="true"><span>↑ ↓ to move</span><span>enter to open</span><span>/ or {shortcutLabel()} to search</span></div>
   <p className="sr-only" role="status">{copied?'Email address copied.':open&&query.trim()?`${flat.length} ${flat.length===1?'result':'results'}`:''}</p>

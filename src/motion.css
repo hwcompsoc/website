@@ -21,20 +21,30 @@
 .reveal-line{display:block;overflow:hidden;padding-bottom:.1em;margin-bottom:-.1em}
 .reveal-inner{display:block}
 
-/* Pixel wipe and pixel build share the stepped cell animations */
-/* The wipe runs under the sticky header (z-index 30), so the nav highlight can be seen sliding the whole way. */
-.pixel-wipe{position:fixed;inset:0;z-index:25;display:grid;pointer-events:none}
-.pixel-wipe[data-phase=cover]{pointer-events:auto}
-/* Each cell flips at the end of its slot (delay + dur) over one frame (--flip). This replaces steps(1): Safari will not
+/* Page change (WindowOpen.tsx). The old page and footer fade out, stay hidden while the window lands, then fade in around it.
+   A freshly mounted page starts hidden without transitioning, since it has no earlier style to move from. */
+#main-content,.site-footer{transition:opacity .12s linear}
+body:is([data-page-change=out],[data-page-change=in]) :is(#main-content,.site-footer){opacity:0}
+body[data-page-change=settle] :is(#main-content,.site-footer){transition-duration:.2s}
+/* The window runs under the sticky header (z-index 30), so the nav highlight can be seen sliding the whole way. Every layer fills the
+   screen and is clipped to the window's current edges from script; the bar rides the top edge. While landing, the surface and border
+   take on the colours of the window it lands on (--wo-body, --wo-edge), and the bar fades if that window has none. */
+.window-open{position:fixed;inset:0;z-index:25;pointer-events:none}
+.window-open:is([data-phase=out],[data-phase=in]){pointer-events:auto}
+/* For the handover it sits behind the page (still above the page's background), so the page fades in over a solid window rather than two half-faded ones. */
+.window-open[data-phase=settle]{z-index:-1}
+.window-open>div{position:absolute;inset:0}
+.window-open-shadow{background:var(--tint)}
+.window-open-edge{background:var(--wo-edge,var(--line));transition:background-color .2s linear}
+.window-open-body{background:var(--wo-body,var(--surface));transition:background-color .2s linear}
+.window-open>.window-open-bar{inset:0 auto auto 0;width:100vw;height:auto;min-height:32px;flex-wrap:nowrap;justify-content:flex-start;padding-block:0;background-color:var(--surface);opacity:var(--wo-bar,1);transition:opacity .12s linear}
+/* Pixel builds flip each cell at the end of its slot (delay + dur) over one frame (--flip). This replaces steps(1): Safari will not
    run a steps() animation on the GPU, so the cells stuttered whenever the page was busy. */
-.pixel-wipe>span,.pixel-build-cover>span{--flip:.016s;transform:scale(1.02)}
-.pixel-wipe[data-phase=cover]>span{animation:pixel-on var(--flip) linear calc(var(--cell-delay) + var(--cell-dur) - var(--flip)) both}
-.pixel-wipe[data-phase=uncover]>span{animation:pixel-off var(--flip) linear calc(var(--cell-delay) + var(--cell-dur) - var(--flip)) both}
+.pixel-build-cover>span{--flip:.016s;transform:scale(1.02)}
 .pixel-build{position:relative}
 .pixel-build-cover{position:absolute;inset:0;z-index:1;display:grid;overflow:hidden;pointer-events:none}
 .pixel-build-cover[data-active]>span{animation:pixel-off var(--flip) linear calc(var(--cell-delay) + var(--cell-dur) - var(--flip)) both}
 /* Opacity, not visibility, so the flips run on the compositor. Builds remove their cover when done, so cells left unpainted by WebKit cannot linger. */
-@keyframes pixel-on{from{opacity:0}to{opacity:1}}
 @keyframes pixel-off{from{opacity:1}to{opacity:0}}
 
 /* Click burst: square pixels thrown out from the pointer in three frames */
@@ -62,7 +72,7 @@ mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color
 @media(forced-colors:active){mark.match{forced-color-adjust:none;background:Highlight;color:HighlightText}}
 
 /* Header. Small-text highlights use --select-strong for contrast.
-   Sweeps and highlights move smoothly; stepped timing is kept for pixels and characters (wipes, builds, flips, carets, ticks). */
+   Sweeps and highlights move smoothly; stepped timing is kept for pixels and characters (builds, flips, carets, ticks). */
 .header-inner nav>a{isolation:isolate}
 .nav-select{position:absolute;inset:9px -8px;z-index:-1;background:var(--select-strong)}
 .nav-label{position:relative}
@@ -267,3 +277,15 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 .selection-link button{display:inline-flex;align-items:center;gap:var(--space-8);min-height:32px;padding:0 var(--space-12);background:var(--panel);color:var(--on-accent);border:1px solid var(--button-line);border-radius:4px;box-shadow:var(--shadow-hard);font-family:var(--font-pixel);font-size:var(--pixel-sm);white-space:nowrap;cursor:var(--site-pointer,pointer)}
 .selection-link button:hover{background:var(--button-hover)}
 .selection-link button:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+/* Mascot press: a three-frame hop on hold keyframes, then its bubble fades in over one instant. */
+.mascot-sprite[data-hop]{animation:mascot-hop .28s linear both}
+@keyframes mascot-hop{0%,24.9%{transform:translateY(0)}25%,49.9%{transform:translateY(-8%)}50%,74.9%{transform:translateY(-12%)}75%,99.9%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+.mascot-bubble{animation:overlay-in var(--dur-instant) linear both}
+/* Byte's loops (components/Mascot.tsx), only while data-lively is set; the component stops them at a rest point so nothing jumps.
+   Periods match `byte` in motion.ts. The bob and wave travel, so they're smooth; transform-origins are in the artwork's 128-unit grid. */
+.mascot[data-lively] .mascot-float{animation:mascot-bob 3.6s ease-in-out infinite}
+.mascot[data-lively] .mascot-wave{transform-origin:104px 62px;animation:mascot-wave 6s ease-in-out infinite}
+.mascot[data-lively] .mascot-eyes{transform-origin:63px 53px;animation:mascot-blink 5.4s linear infinite}
+@keyframes mascot-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes mascot-wave{0%,12%,28%,100%{transform:rotate(0deg)}16%,24%{transform:rotate(9deg)}20%{transform:rotate(-6deg)}}
+@keyframes mascot-blink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
