@@ -108,6 +108,11 @@ mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color
 .board-venue{display:block;font-size:var(--fs-sm);color:var(--text-quiet)}
 .board-level{font-size:var(--pixel-sm);color:var(--text);text-align:right}
 .board-sample{display:block;margin-top:var(--space-4);font-size:var(--pixel-sm);letter-spacing:.8px;text-transform:uppercase;color:var(--text-quiet)}
+/* A status that's about now (On now, Today, Tomorrow) is boxed, so it stands out from the quiet tags; the border keeps it in forced colours. */
+.board-status[data-live]{width:fit-content;margin-left:auto;padding:0 var(--space-4);border:1px solid currentColor;color:var(--accent-text)}
+/* Tags wrap as whole tags on phones, where they sit in a line after the level. */
+.board-sample{white-space:nowrap}
+@media(max-width:1050px){.board-status[data-live]{margin-left:var(--space-8)}}
 .board-arrow{width:16px;transition:transform var(--dur-hover) var(--ease-enter)}
 /* Restates the transform transition, which the white-text rule above would otherwise replace. */
 .board-row:is(:hover,:has(.board-open:focus-visible)) .board-arrow{transform:translateX(4px);transition:transform var(--dur-hover) var(--ease-enter),color var(--dur-hover) ease .08s}

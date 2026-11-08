@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {anchor,peopleOf,links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
+import {anchor,peopleOf,links,route,legacyPath,suggestPath,canonicalPath,pagePath,pages,events,resources,filterEvents,eventStatus,enquiryMail,liveEvent,liveCommittee,liveGuide,liveDocument} from '../src/content.ts';
 import {parseAnswer,parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
@@ -236,4 +236,20 @@ test('Resources is left out of the site unless VITE_SHOW_RESOURCES is "true"',as
  const run=(value)=>{const env={...process.env};delete env.VITE_SHOW_RESOURCES;if(value!==undefined)env.VITE_SHOW_RESOURCES=value;return JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',probe],{env,cwd:new URL('..',import.meta.url),encoding:'utf8'}))};
  for(const value of [undefined,'false','1']){const off=run(value);assert.deepEqual(off,{resources:0,pages:['home','join','events','about','partners'],page:'notfound',guide:'notfound',legacy:null,shared:false},String(value))}
  const on=run('true');assert.ok(on.resources>0);assert.ok(on.pages.includes('resources'));assert.equal(on.page,'resources');assert.equal(on.guide,'resources');assert.equal(on.shared,true);
+});
+test('Board status: cancelled first, then on now, today and tomorrow by UK date, and nothing further off or finished',()=>{
+ // 30 March 2027: the clocks went forward on the 28th, so UK dates are an hour ahead of UTC.
+ const row={slug:'s',title:'S',category:'Talk',level:'L',starts_at:'2027-03-30T17:30:00Z',ends_at:'2027-03-30T19:00:00Z',venue:'V',description:'D',signup_required:false,luma_url:null,status:'published'};
+ const at=(iso)=>Date.parse(iso);const e=liveEvent(row,at('2027-03-30T09:00:00Z'));
+ assert.equal(eventStatus(e,at('2027-03-30T09:00:00Z')),'Today');
+ assert.equal(eventStatus(e,at('2027-03-30T18:00:00Z')),'On now');
+ assert.equal(eventStatus(e,at('2027-03-30T19:00:00Z')),undefined);
+ assert.equal(eventStatus(e,at('2027-03-29T09:00:00Z')),'Tomorrow');
+ // 23:30 UTC on the 28th is already the 29th in the UK, so the 30th is tomorrow.
+ assert.equal(eventStatus(e,at('2027-03-28T23:30:00Z')),'Tomorrow');
+ assert.equal(eventStatus(e,at('2027-03-28T22:30:00Z')),undefined);
+ // An event late in the UK evening is still that UK day, though it's the next day in UTC.
+ const late=liveEvent({...row,starts_at:'2027-01-10T23:30:00Z',ends_at:'2027-01-11T01:00:00Z'},at('2027-01-10T09:00:00Z'));
+ assert.equal(eventStatus(late,at('2027-01-10T09:00:00Z')),'Today');
+ assert.equal(eventStatus(liveEvent({...row,status:'cancelled'}),at('2027-03-30T09:00:00Z')),'Cancelled');
 });

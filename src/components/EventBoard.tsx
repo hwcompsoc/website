@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {AnimatePresence,m} from 'motion/react';
 import {ArrowRight} from 'lucide-react';
-import {type Event} from '../content';
+import {eventStatus,type Event} from '../content';
 import {dur,ease} from '../motion';
 import {useMotionLevel} from '../motion/level';
 import {FlipText} from '../motion/FlipText';
@@ -19,15 +19,16 @@ export function EventBoard({events,onOpen,replay,search}:{events:Event[];onOpen:
  </m.li>)}</AnimatePresence></ul>;
 }
 
-// A row with no image keeps its place when others have one, so the titles line up.
+// A row with no image keeps its place when others have one, so the titles line up. The status (On now, Today, Tomorrow) is boxed like a
+// departures board and flips with the dates; it's worked out once on mount, so it never ticks.
 function EventRow({event:e,entering,replay,onOpen,holdCover,search}:{event:Event;entering:boolean;replay?:unknown;onOpen:(event:Event,origin:DOMRect)=>void;holdCover:boolean;search?:string}){
- const [built]=useState(!entering);const date=useRef<HTMLSpanElement>(null);const start=e.time.split('–')[0];
+ const [built]=useState(!entering);const [status]=useState(()=>eventStatus(e));const date=useRef<HTMLSpanElement>(null);const start=e.time.split('–')[0];
  return <PixelBuild className="board-row" cover="var(--surface)" cols={12} rows={1} duration={.3} trigger="mount" skip={built}>
   <span className="board-date" ref={date}><FlipText value={e.weekday} replay={replay}/> <FlipText value={e.day} replay={replay}/> <FlipText value={e.month} replay={replay}/></span>
   <span className="board-time"><FlipText value={start} replay={replay}/></span>
   <span className="board-cat"><Highlight text={e.category} query={search}/></span>
   <div className="board-main">{e.thumb?<PixelImage className="board-cover" src={e.thumb} alt="" width={96} height={54} lazy/>:holdCover&&<span className="board-cover board-cover-empty" aria-hidden="true"/>}<div className="board-text"><h3><button type="button" className="board-open" onClick={()=>onOpen(e,date.current!.getBoundingClientRect())}>{e.cancelled?<span className="board-struck"><Highlight text={e.title} query={search}/></span>:<Highlight text={e.title} query={search}/>}<span className="sr-only">, view details</span></button></h3><span className="board-venue">{e.venue}</span></div></div>
-  <span className="board-level">{e.level}{e.cancelled?<span className="board-sample">Cancelled</span>:e.luma&&!e.past&&<span className="board-sample">Sign-up needed</span>}</span>
+  <span className="board-level">{e.level}{status&&<span className="board-sample board-status" data-live={status!=='Cancelled'||undefined}><FlipText value={status} replay={replay}/></span>}{!e.cancelled&&e.luma&&!e.past&&<span className="board-sample">Sign-up needed</span>}</span>
   <ArrowRight className="board-arrow" aria-hidden="true"/>
  </PixelBuild>;
 }
