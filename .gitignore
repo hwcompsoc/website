@@ -6,6 +6,7 @@ qa
 scripts/qa
 LAUNCH-INFO.md
 MOTION-RULES.md
+RESOURCES-PLAN.md
 src/generated
 public/live-events.json
 public/live-committee.json
