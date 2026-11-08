@@ -1,6 +1,9 @@
 import {useEffect,useState,type ReactNode} from 'react';
 import {links} from '../content';
 import {titles,External,Intro} from '../components/shared';
+import {m} from 'motion/react';
+import {spring} from '../motion';
+import {useMotionLevel} from '../motion/level';
 
 // Plain facts about what the site does. If it starts collecting anything new, such as analytics, this has to change with it, and so does the date.
 // The order follows the usual format for privacy pages, and covers what the ICO says a notice must include. Headings and jump links come from one list so they can't drift apart.
@@ -9,7 +12,8 @@ const SECTIONS=[['who-we-are','Who we are'],['what-we-collect','What data we col
 type SectionId=typeof SECTIONS[number][0];
 function Heading({id}:{id:SectionId}){return <h2 id={id}>{SECTIONS.find(section=>section[0]===id)?.[1]}</h2>}
 function Email(){return <a className="text-link" href={`mailto:${links.email}`}>{links.email}</a>}
-const Contents=({here}:{here:SectionId})=><ol className="toc">{SECTIONS.map(([id,name])=><li key={id}><a href={`#${id}`} aria-current={id===here?'location':undefined}>{name}</a></li>)}</ol>;
+// The marker slides between sections. The list is drawn twice (beside the page and in the small-screen menu), so each copy has its own layoutId.
+function Contents({here,place}:{here:SectionId;place:string}){const level=useMotionLevel();return <ol className="toc">{SECTIONS.map(([id,name])=><li key={id}><a href={`#${id}`} aria-current={id===here?'location':undefined}>{id===here&&<m.span layoutId={`toc-${place}`} className="toc-marker" aria-hidden="true" transition={level==='full'?spring.layout:{duration:0}}/>}{name}</a></li>)}</ol>}
 function Out({href,children}:{href:string;children:ReactNode}){return <External href={href} className="text-link">{children}</External>}
 
 // Which section you're reading: the last heading above a line near the top of the screen. The last sections are too short to reach that line, so over the final screenful of scrolling the line slides to the bottom, giving each its turn.
@@ -22,10 +26,10 @@ function useCurrentSection(){const [here,setHere]=useState<SectionId>(SECTIONS[0
 
 export function Privacy(){const here=useCurrentSection();return <><Intro path="privacy" title={titles.privacy}>What this website stores and who it shares it with. The short version: if you’re just visiting, almost nothing.</Intro><div className="wrap"><section className="site-section privacy-content">
  <p className="privacy-updated">Last updated {UPDATED}</p>
- <nav className="privacy-contents" aria-labelledby="privacy-contents-label"><p className="privacy-contents-label" id="privacy-contents-label">On this page</p><Contents here={here}/></nav>
+ <nav className="privacy-contents" aria-labelledby="privacy-contents-label"><p className="privacy-contents-label" id="privacy-contents-label">On this page</p><Contents here={here} place="side"/></nav>
  <div className="privacy-body">
  <aside className="privacy-summary" aria-label="Summary"><h2>In short</h2><ul><li>No sign-in, analytics, adverts, tracking or cookies for visitors.</li><li>Three small settings stay in your own browser and never reach us.</li><li>Our hosting provider may keep short-term technical logs, such as IP addresses.</li><li>If you email us, we keep the email for 2 years.</li></ul></aside>
- <details className="privacy-contents-small"><summary>On this page</summary><nav aria-label="On this page"><Contents here={here}/></nav></details>
+ <details className="privacy-contents-small"><summary>On this page</summary><nav aria-label="On this page"><Contents here={here} place="menu"/></nav></details>
 
  <Heading id="who-we-are"/>
  <p>This website is run by the Heriot-Watt Computer Science Society (HW CompSoc), a student society affiliated to the Heriot-Watt University Student Union. We’re responsible for the personal data described on this page, and you can reach us at <Email/>.</p>

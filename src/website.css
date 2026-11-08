@@ -133,6 +133,7 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 .select-fill,.nav-select,.scroll-progress,.format-dot,.caret{forced-color-adjust:none}
 .header-inner nav>a[aria-current=page]{forced-color-adjust:none}
 .filter-indicator{outline:2px solid Highlight;outline-offset:-2px}
+.toc-marker{forced-color-adjust:none;background:Highlight}
 .cx-initials{border:1px solid CanvasText}.cx-row[data-selected]{outline:2px solid Highlight;outline-offset:-2px}}
 /* Contrast (WCAG 1.4.11): control edges and focus rings need 3:1 against what surrounds them. */
 .search-control input:not([aria-invalid=true]),.enquiry-form-shell :is(input,textarea):not([aria-invalid=true]),.checkbox-label [role=checkbox]{border-color:var(--control-line)}
@@ -186,7 +187,8 @@ div:has(>.site-header){display:flex;flex-direction:column;min-height:100dvh}
 /* Theme switch: matches the filter bar. The selected option shows by its edge, as the filter does. */
 .theme-switch{display:inline-flex;gap:2px;margin:0;padding:2px;border:0;border-radius:4px;background:var(--tint)}
 .theme-switch label{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-8);min-width:30px;height:30px;border-radius:4px;color:var(--ink);font-size:var(--fs-body);font-weight:600;cursor:var(--site-pointer,pointer)}
-.theme-switch label[data-active]{background:var(--surface);box-shadow:0 0 0 1px var(--control-line)}
+/* The active block is a sliding .filter-indicator (ThemeSwitch.tsx); the icon and label sit above it. */
+.theme-label{position:relative;display:inline-flex;align-items:center;gap:var(--space-8)}
 .theme-switch[data-labelled]{display:flex;margin:0 0 var(--space-20)}
 .theme-switch[data-labelled] label{flex:1;height:44px}
 @media(max-width:800px){.header-inner>.theme-switch{display:none}}
@@ -464,7 +466,10 @@ html{scrollbar-width:thin;scrollbar-color:var(--control-line) transparent}
 .privacy-content .toc a{display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:var(--space-8);align-items:baseline;min-height:32px;padding:var(--space-4) var(--space-8) var(--space-4) var(--space-12);border-left:2px solid var(--line);font-weight:400;line-height:1.35;color:var(--text)}
 .privacy-content .toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text)}
 .privacy-content .toc a:hover{color:var(--ink);text-decoration:underline}
-.privacy-content .toc a[aria-current]{border-left-color:var(--select-strong);font-weight:600;color:var(--ink)}
+.privacy-content .toc a[aria-current]{font-weight:600;color:var(--ink)}
+/* The current-section marker is one element that slides down the border as you scroll (Privacy.tsx). */
+.privacy-content .toc a{position:relative}
+.toc-marker{position:absolute;left:-2px;top:0;bottom:0;width:2px;background:var(--select-strong)}
 .privacy-content .toc a[aria-current]::before{color:var(--ink)}
 .privacy-contents-small .toc{padding-bottom:var(--space-8)}
 .privacy-content .privacy-contents-small .toc a{align-items:center;min-height:44px;margin-inline:var(--space-16) 0}

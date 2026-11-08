@@ -1,6 +1,9 @@
 /* Motion component styles. Tokens mirror src/website/motion.ts. */
 :root{--dur-hover:.16s;--dur-ui:.28s;--dur-reveal:.6s;--ease-enter:cubic-bezier(.22,1,.36,1);--ease-move:cubic-bezier(.65,0,.35,1);--select:#00a1cc;--select-strong:#007e9f;--focus-ring:#007e9f;--control-line:#6b8fa2;--grid:8px}
 
+/* Real text selection uses the same block as the Select sweep. --select-strong, because selected text is usually small. */
+::selection{background:var(--select-strong);color:var(--on-accent)}
+
 /* Select: white-on-cyan copy clipped over the real text */
 .select{position:relative;display:inline-block;max-width:100%}
 .select-fill{position:absolute;inset:0 -.08em;padding-inline:.08em;background:var(--select);color:var(--on-accent);pointer-events:none;user-select:none}
