@@ -5,6 +5,7 @@ import {anchor,peopleOf,links,route,legacyPath,suggestPath,canonicalPath,pagePat
 import {parseAnswer,parseGuide,parseInline,readingMinutes} from '../src/guide-format.ts';
 import {calendar,calendarFeed,eventCalendarLinks,eventFilePath,feedCalendarLinks} from '../src/calendar.ts';
 import {sharePage,sharePages,DEFAULT_IMAGE} from '../src/share.ts';
+import {entries,grouped,search} from '../src/search.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
 import {blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
@@ -252,4 +253,16 @@ test('Board status: cancelled first, then on now, today and tomorrow by UK date,
  const late=liveEvent({...row,starts_at:'2027-01-10T23:30:00Z',ends_at:'2027-01-11T01:00:00Z'},at('2027-01-10T09:00:00Z'));
  assert.equal(eventStatus(late,at('2027-01-10T09:00:00Z')),'Today');
  assert.equal(eventStatus(liveEvent({...row,status:'cancelled'}),at('2027-03-30T09:00:00Z')),'Cancelled');
+});
+test('Site search: best matches first, every word must match, and an empty search suggests pages, the next events and actions',()=>{
+ const e=(id,group,title,detail='',keywords='')=>({id,group,title,detail,keywords,href:'/'+id});
+ const list=[e('a','Events','Board games night','Thu','social'),e('b','People','Gita Night','Treasurer'),e('c','Pages','Nightly builds'),e('d','Questions','When are socials?','Most nights'),e('e','Events','Git workshop','Thu','beginner')];
+ assert.deepEqual(search('night',list).map(r=>r.id),['c','a','b','d'],'starts with, then a word starts with (groups in order), then only the details');
+ assert.deepEqual(search('git work',list).map(r=>r.id),['e']);
+ assert.deepEqual(search('  ',list).map(r=>r.id),['c','a','e'],'pages and the next events, with no people or questions');
+ assert.deepEqual(search('nothing like this',list),[]);
+ assert.deepEqual(grouped(search('night',list)).map(g=>g.group),['Pages','Events','People','Questions']);
+ const all=entries();assert.ok(all.some(r=>r.id==='page-privacy')&&!search('').some(r=>r.id==='page-privacy'),'Privacy can be found but isn’t suggested');
+ for(const r of all)assert.ok(r.href||r.action,r.id);
+ assert.ok(search('copy email').some(r=>r.action==='copy-email'));
 });
