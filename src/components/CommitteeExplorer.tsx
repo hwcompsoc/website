@@ -8,6 +8,7 @@ import {useMotionLevel} from '../motion/level';
 import {PixelBuild} from '../motion/PixelBuild';
 import {onRouteChange} from '../router';
 import {anchor,committee,committeePeople,initials,links,type Person} from '../content';
+import {Copied,CopyFlash,useCopy} from './copy';
 
 // The committee as a code editor: a file tree of people on the left, and whoever's selected open on the right. On phones the
 // profile opens in place under their name. Every person has their own address (`/about#kevin-paul-job`), and a role's address
@@ -21,9 +22,9 @@ const reach=(role:string)=>role==='Industry Liaison'?{href:'/partners#enquiry',l
 
 function Face({person,className}:{person:Person;className:string}){return person.photo?<img className={className} src={person.photo} alt="" width={200} height={200} loading="lazy"/>:<span className={`${className} cx-initials`} aria-hidden="true">{initials(person.name)}</span>}
 
-function CopyHandle({handle}:{handle:string}){const [copied,setCopied]=useState(false);const timer=useRef(0);useEffect(()=>()=>window.clearTimeout(timer.current),[]);
- async function copy(){try{await navigator.clipboard.writeText(handle);setCopied(true);window.clearTimeout(timer.current);timer.current=window.setTimeout(()=>setCopied(false),2000)}catch{/* The name is still on screen to select by hand. */}}
- return <button type="button" className="cx-handle" onClick={copy}><span className="sr-only">Copy Discord username </span>@{handle}<span className="cx-copied" aria-live="polite">{copied?' copied':''}</span></button>}
+// If copying fails, the name is still on screen to select by hand.
+function CopyHandle({handle}:{handle:string}){const {copy,count,copied}=useCopy();
+ return <button type="button" className="cx-handle" onClick={()=>copy(handle)}><span className="sr-only">Copy Discord username </span><CopyFlash text={`@${handle}`} count={count}/><span className="cx-copied" aria-live="polite">{copied&&<> <Copied text="copied"/></>}</span></button>}
 
 function Line({name,children}:{name:string;children:React.ReactNode}){return <div className="cx-line"><dt>{name}:</dt><dd>{children}</dd></div>}
 
