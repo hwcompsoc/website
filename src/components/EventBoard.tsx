@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,type KeyboardEvent} from 'react';
 import {AnimatePresence,m} from 'motion/react';
 import {ArrowRight} from 'lucide-react';
 import {eventStatus,type Event} from '../content';
@@ -11,12 +11,16 @@ import {PixelImage} from '../motion/PixelImage';
 
 // Departures board. Rows that leave collapse, rows that arrive open and build in pixel by pixel,
 // and dates/times flip whenever `replay` changes (the filter state). Each row opens its event from the date block. `search` marks matches in titles.
-export function EventBoard({events,onOpen,replay,search}:{events:Event[];onOpen:(event:Event,origin:DOMRect)=>void;replay?:unknown;search?:string}){
+// Like the committee explorer, the board moves with the keys once a row has focus: ↑ ↓ go between rows, Home and End to the ends,
+// and Enter opens (the row is a button). `hint` shows the keys under the board, on screens with a mouse.
+function moveFocus(event:KeyboardEvent<HTMLUListElement>){const rows=[...event.currentTarget.querySelectorAll<HTMLButtonElement>('.board-open')];const now=rows.indexOf(document.activeElement as HTMLButtonElement);if(now<0)return;
+ const next=event.key==='ArrowDown'?Math.min(now+1,rows.length-1):event.key==='ArrowUp'?Math.max(now-1,0):event.key==='Home'?0:event.key==='End'?rows.length-1:-1;if(next<0)return;event.preventDefault();rows[next].focus()}
+export function EventBoard({events,onOpen,replay,search,hint=false}:{events:Event[];onOpen:(event:Event,origin:DOMRect)=>void;replay?:unknown;search?:string;hint?:boolean}){
  const level=useMotionLevel();const settled=useRef(false);useEffect(()=>{settled.current=true},[]);
  const anyCover=events.some(e=>e.thumb);const transition=level==='full'?{duration:dur.ui,ease:ease.enter}:level==='reduced'?{duration:dur.instant}:{duration:0};
- return <ul className="event-board"><AnimatePresence initial={false}>{events.map(event=><m.li key={event.id} className="board-item" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} transition={transition}>
+ return <><ul className="event-board" onKeyDown={moveFocus}><AnimatePresence initial={false}>{events.map(event=><m.li key={event.id} className="board-item" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} transition={transition}>
   <EventRow event={event} entering={settled.current} replay={replay} onOpen={onOpen} holdCover={anyCover} search={search}/>
- </m.li>)}</AnimatePresence></ul>;
+ </m.li>)}</AnimatePresence></ul>{hint&&events.length>1&&<p className="board-keys" aria-hidden="true"><span>↑ ↓ to browse</span><span>enter to open</span><span>/ to search</span></p>}</>;
 }
 
 // A row with no image keeps its place when others have one, so the titles line up. The status (On now, Today, Tomorrow) is boxed like a

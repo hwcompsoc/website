@@ -246,3 +246,6 @@ body[data-motion=off] .logo-cursor{transform:none!important}
 .board-cover-empty{display:none}
 .board-main{gap:var(--space-12)}
 .board-main h3{font-size:var(--fs-subhead);margin-bottom:2px}}
+/* The board's keys, under it, only where there's a mouse and so probably a keyboard. Matches the committee explorer's status line. */
+.board-keys{display:none;gap:var(--space-16);margin:var(--space-12) 0 0;font-family:var(--font-pixel);font-size:var(--pixel-sm);color:var(--text-quiet)}
+@media(hover:hover) and (pointer:fine){.board-keys{display:flex}}
