@@ -51,9 +51,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'photos'|'money'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'photos'|'money'|'directory'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='photos'||a==='money'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='photos'||a==='money'||a==='directory'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -387,3 +387,12 @@ export function yearReport({year,claims,income,events,plans}:{year:string;claims
   ...(waiting.length?['','Still expected: '+waiting.map(i=>`${i.description} (${money(Number(i.amount))})`).join(', ')+'.']:[]),'','## Events','',...(rows.length?['| Event | Budget | Spent |','|---|---|---|',...rows.map(r=>`| ${r.title.replace(/\|/g,'/')} | ${r.approved===null?'None':money(r.approved)} | ${money(r.spent)} |`)]:['No event spending recorded.']),
   '','## Expense claims','',`${society.length} paid by the society, totalling ${money(sum(society))}.`,...(elsewhere.length?[`${elsewhere.length} paid back by companies or sponsors, totalling ${money(sum(elsewhere))}. These didn’t use society money.`]:[]),...(theirs.filter(c=>c.status!=='paid').length?[`${theirs.filter(c=>c.status!=='paid').length} not yet paid.`]:[]),''];
  return lines.join('\n')}
+
+// --- The help directory ---
+export type DirectoryKind='contact'|'link'|'login';
+export type DirectoryEntry={id?:string;kind:DirectoryKind;name:string;about:string;email:string|null;phone:string|null;url:string|null;holder_email:string|null;notes:string;organisation:string;updated_at?:string;updated_by?:string|null};
+export const directoryKinds:{id:DirectoryKind;label:string;single:string}[]=[{id:'contact',label:'Contacts',single:'contact'},{id:'link',label:'Links',single:'link'},{id:'login',label:'Logins',single:'login'}];
+export const blankEntry=(kind:DirectoryKind='contact'):DirectoryEntry=>({kind,name:'',about:'',email:null,phone:null,url:null,holder_email:null,notes:'',organisation:''});
+// Passwords don't belong here: anything that looks like one is refused, so a login entry stays safe to hand over.
+export function entryProblems(entry:DirectoryEntry){const problems:Problems={};if(!entry.name.trim())problems.name=entry.kind==='contact'?'Add their name.':'Say what it is.';if(entry.email?.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry.email.trim()))problems.email='Enter a full email address.';if(entry.url?.trim()&&!isLink(entry.url.trim()))problems.url='Paste the full address, starting https://';if(/\b(password|passcode|pwd)\s*(is|:|=)/i.test(entry.notes))problems.notes='Don’t put passwords here. Say where the password is kept instead.';return problems}
+export function directoryMatches(entry:DirectoryEntry,query:string,members:Member[]){const words=query.toLowerCase().split(/\s+/).filter(Boolean);if(!words.length)return true;const holder=members.find(m=>m.email===entry.holder_email);const text=[entry.name,entry.about,entry.organisation,entry.email,entry.notes,holder?personName(holder):''].join(' ').toLowerCase();return words.every(w=>text.includes(w))}

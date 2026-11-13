@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {blankClaim,claimProblems,claimEditable,claimAction,spentOn,yearReport,incomeProblems,postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {blankEntry,entryProblems,directoryMatches,blankClaim,claimProblems,claimEditable,claimAction,spentOn,yearReport,incomeProblems,postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -446,4 +446,13 @@ test('money: claims need a receipt and say who pays them back, each person sees 
  assert.match(report,/\| Board games \| £40 \| £45\.50 \|/);
  assert.match(report,/1 paid back by companies or sponsors, totalling £80\. These didn’t use society money\./);
  assert.deepEqual(Object.keys(incomeProblems({kind:'grant',description:'Grant',amount:'200',status:'applying',due_on:null})),['due_on'],'a grant application needs its deadline');
+});
+
+test('directory: entries need a name, passwords are refused, and search covers who holds a login', ()=>{
+ assert.deepEqual(Object.keys(entryProblems({...blankEntry('login'),name:'Instagram',notes:'Password: hunter2'})),['notes']);
+ assert.deepEqual(entryProblems({...blankEntry('login'),name:'Instagram',notes:'In the society password manager.'}),{},'mentioning where the password is kept is fine');
+ assert.deepEqual(Object.keys(entryProblems({...blankEntry(),email:'not-an-email',url:'example.com'})),['name','email','url']);
+ const members=[{email:'a@x',name:'Amanda Zhang',roles:[]}];
+ const login={...blankEntry('login'),name:'Instagram',holder_email:'a@x'};
+ assert.ok(directoryMatches(login,'amanda insta',members));assert.ok(!directoryMatches(login,'linkedin',members));assert.ok(directoryMatches(login,'',members));
 });

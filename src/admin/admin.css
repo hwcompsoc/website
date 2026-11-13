@@ -501,3 +501,7 @@
 .admin-money-table td[data-over]{color:var(--danger);font-weight:600}
 .admin-report{white-space:pre-wrap;max-height:480px;overflow:auto}
 .admin-page>.admin-actions+.admin-block{margin-top:var(--space-24)}
+.admin-entry{align-items:flex-start;flex-wrap:wrap;gap:var(--space-12)}
+.admin-entry-icon{margin-top:4px;color:var(--text-quiet)}
+.admin-entry .admin-row-main small{display:block}
+.admin-entry-notes{white-space:pre-wrap}
