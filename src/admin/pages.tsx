@@ -13,6 +13,7 @@ import {loadTeam} from './access';
 import {loadOpenTasks,TaskEditor,TaskRow} from './Tasks';
 import {isMine,personName,spaceProgress,spaceStage,stageLabel,todayInUk,type EventPlan,type Member,type Task} from '../admin-rules';
 import {loadPlans} from './EventSpace';
+import {EventsCalendar} from './Calendar';
 import {signOut} from './App';
 
 export function Login(){useTitle('Sign in');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');
@@ -61,11 +62,12 @@ const tabs:{id:EventTab;label:string}[]=[{id:'drafts',label:'Drafts'},{id:'upcom
 function EventCard({event,plan,members}:{event:AdminEvent;plan:EventPlan|null;members:Member[]}){const {done,total,next}=spaceProgress(event,plan);const stage=spaceStage(event,plan);const lead=members.find(m=>m.email===plan?.lead_email);
  return <li><a className="admin-event-card" href={`/admin/events/${event.id}`}><span className="admin-status" data-status={stage==='live'||stage==='done'?'published':stage==='cancelled'?'cancelled':stage==='write-up'?'busy':undefined}>{stageLabel[stage]}</span><b>{event.title}</b><small>{event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'No date yet'}{event.venue?` · ${event.venue}`:''}</small><span className="admin-card-bar" role="img" aria-label={`${done} of ${total} done`}><i style={{width:`${total?done/total*100:0}%`}}/></span><small className="admin-card-next">{stage==='cancelled'?'Cancelled':next?`Next: ${next.label}`:'Everything’s done'}{lead?` · Lead: ${personName(lead)}`:''}</small></a></li>}
 
-export function EventsList(){useTitle('Events');useSyncExternalStore(onRouteChange,()=>location.search);const {data,error,loading}=useLoad(loadEvents,'list');const plans=useLoad(loadPlans,'plans');const team=useLoad(loadTeam,'team');const [query,setQuery]=useState('');const now=Date.now();const rows=useSiteRows(site=>(data??[]).some(e=>siteBusy(sitePhase(e,site))));
+export function EventsList(){useTitle('Events');useSyncExternalStore(onRouteChange,()=>location.search);const calendar=new URLSearchParams(location.search).get('view')==='calendar';const {data,error,loading}=useLoad(loadEvents,'list');const plans=useLoad(loadPlans,'plans');const team=useLoad(loadTeam,'team');const [query,setQuery]=useState('');const now=Date.now();const rows=useSiteRows(site=>(data??[]).some(e=>siteBusy(sitePhase(e,site))));
  const grouped=useMemo(()=>Object.fromEntries(tabs.map(({id})=>[id,(data??[]).filter(e=>eventTab(e,now)===id)])) as Record<EventTab,AdminEvent[]>,[data]);
  const asked=new URLSearchParams(location.search).get('tab') as EventTab|null;const tab=tabs.some(t=>t.id===asked)?asked!:tabs.find(t=>grouped[t.id].length)?.id??'drafts';
  const list=grouped[tab].filter(e=>`${e.title} ${e.venue}`.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>tab==='past'?(b.starts_at??'').localeCompare(a.starts_at??''):(a.starts_at??'').localeCompare(b.starts_at??''));
- return <section className="admin-page admin-narrow"><header className="admin-head"><h1>Events</h1><NewButton/></header><Failure>{error}</Failure>{loading&&!data?<EventsSkeleton/>:data&&<>
+ return <section className={calendar?"admin-page":"admin-page admin-narrow"}><header className="admin-head"><h1>Events</h1><NewButton/></header><Failure>{error}</Failure><nav aria-label="View" className="admin-tabs admin-view-switch"><a href="/admin/events" aria-current={!calendar?'page':undefined}>List</a><a href="/admin/events?view=calendar" aria-current={calendar?'page':undefined}>Calendar</a></nav>
+  {calendar?<EventsCalendar/>:loading&&!data?<EventsSkeleton/>:data&&<>
   <div className="admin-tools"><nav aria-label="Event status" className="admin-tabs">{tabs.map(({id,label})=><a key={id} href={`/admin/events?tab=${id}`} aria-current={tab===id?'page':undefined}>{label}<span>{grouped[id].length}</span></a>)}</nav><div className="admin-search"><Search size={16} aria-hidden="true"/><Input aria-label="Search events" placeholder="Search" value={query} onChange={e=>setQuery(e.target.value)}/></div></div>
   {list.length?<ul className="admin-event-cards">{list.map(event=><EventCard key={event.id} event={event} plan={plans.data?.find(p=>p.event_id===event.id)??null} members={team.data?.members??[]}/>)}</ul>:<EmptyNote kind={query?'search':'none'}>{query?'No events match that search.':`No ${tabs.find(t=>t.id===tab)!.label.toLowerCase()} events.`}</EmptyNote>}</>}</section>}
 

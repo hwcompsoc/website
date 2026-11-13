@@ -427,3 +427,9 @@ export const blankNumbers=(term:string):TermNumbers=>({term,discord_members:null
 export const numberFields:{key:keyof Omit<TermNumbers,'term'|'notes'|'updated_at'>;label:string}[]=[{key:'discord_members',label:'Discord members'},{key:'instagram_followers',label:'Instagram followers'},{key:'linkedin_followers',label:'LinkedIn followers'},{key:'luma_signups',label:'Luma sign-ups'},{key:'website_visitors',label:'Website visitors'}];
 // What the admin already knows about a term: events that happened, and how many came to those with a post-event form.
 export function termEvents(term:string,events:AdminEvent[],plans:EventPlan[],now=Date.now()){const held=events.filter(e=>e.status==='published'&&e.starts_at&&termOf(e.starts_at)===term&&new Date(e.ends_at??e.starts_at).getTime()<now);const counts=held.map(e=>plans.find(p=>p.event_id===e.id)?.post_event.attendance).filter((n):n is number=>typeof n==='number');return {held:held.length,attendance:counts.reduce((a,b)=>a+b,0),counted:counts.length}}
+
+// --- The calendar ---
+// The weeks a month's grid shows, Monday to Sunday, including the days from the months either side that fill them out.
+export function monthGrid(month:string){const [y,m]=month.split('-').map(Number);const first=new Date(Date.UTC(y,m-1,1));const start=new Date(first.getTime()-((first.getUTCDay()+6)%7)*86400000);const last=new Date(Date.UTC(y,m,0));const weeks:string[][]=[];
+ for(let day=start;day<=last||weeks.at(-1)?.length!==7;){const week:string[]=[];for(let i=0;i<7;i++){week.push(day.toISOString().slice(0,10));day=new Date(day.getTime()+86400000)}weeks.push(week);if(day>last)break}
+ return weeks}
