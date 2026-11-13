@@ -51,9 +51,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'photos'|'money'|'directory'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'photos'|'money'|'directory'|'sponsors'|'handover'|'numbers'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='photos'||a==='money'||a==='directory'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='photos'||a==='money'||a==='directory'||a==='sponsors'||a==='handover'||a==='numbers'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -235,7 +235,7 @@ export function dueLabel(due:string|null,today:string){if(!due)return '';if(due<
 // Soonest first, undated last, then oldest first, so nothing new jumps above what's been waiting.
 export const byDue=(a:Task,b:Task)=>(a.due_on??'9999').localeCompare(b.due_on??'9999')||(a.created_at??'').localeCompare(b.created_at??'');
 export function taskProblems(task:Task){const problems:Problems={};if(!task.title.trim())problems.title='Say what needs doing.';if(task.link?.trim()&&!isLink(task.link.trim()))problems.link='Paste the full address, starting https://';return problems}
-export const taskKindLabel:Record<string,string>={action:'From minutes',post:'Social post','post-event':'After the event',budget:'Budget',claim:'Expense claim',deadline:'Deadline',handover:'Handover'};
+export const taskKindLabel:Record<string,string>={agm:'AGM',agenda:'Agenda',action:'From minutes',post:'Social post','post-event':'After the event',budget:'Budget',claim:'Expense claim',deadline:'Deadline',handover:'Handover'};
 
 // --- Meetings: actions and agendas ---
 export type MinutesAction={action:string;who:string;by:string};
@@ -396,3 +396,34 @@ export const blankEntry=(kind:DirectoryKind='contact'):DirectoryEntry=>({kind,na
 // Passwords don't belong here: anything that looks like one is refused, so a login entry stays safe to hand over.
 export function entryProblems(entry:DirectoryEntry){const problems:Problems={};if(!entry.name.trim())problems.name=entry.kind==='contact'?'Add their name.':'Say what it is.';if(entry.email?.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry.email.trim()))problems.email='Enter a full email address.';if(entry.url?.trim()&&!isLink(entry.url.trim()))problems.url='Paste the full address, starting https://';if(/\b(password|passcode|pwd)\s*(is|:|=)/i.test(entry.notes))problems.notes='Don’t put passwords here. Say where the password is kept instead.';return problems}
 export function directoryMatches(entry:DirectoryEntry,query:string,members:Member[]){const words=query.toLowerCase().split(/\s+/).filter(Boolean);if(!words.length)return true;const holder=members.find(m=>m.email===entry.holder_email);const text=[entry.name,entry.about,entry.organisation,entry.email,entry.notes,holder?personName(holder):''].join(' ').toLowerCase();return words.every(w=>text.includes(w))}
+
+// --- SU paperwork, the AGM and handover ---
+// The committee as the SU's forms ask for it: each role, who holds it and their email.
+export function committeeSummary(roles:Pick<Role,'key'|'name'|'position'>[],members:Member[]){const rows=[...roles].sort((a,b)=>a.position-b.position).flatMap(role=>members.filter(m=>m.roles.includes(role.key)).map(m=>({role:role.name,name:personName(m),email:m.email})));return {rows,text:rows.map(r=>`${r.role}: ${r.name} <${r.email}>`).join('\n')}}
+export const agmNoticeDate=(agm:string)=>addDays(agm,-14);
+// Everything an AGM sets off, from the notice two weeks before to each role's handover note afterwards.
+export function agmTasks(agm:string,today:string,roleKeys:string[]=['president','vice-president','secretary','treasurer','events','socials','industry-liaison','community']):Task[]{const on=(days:number)=>{const due=addDays(agm,days);return due<today?today:due};const day=fullDate(`${agm}T12:00:00Z`);const base={...blankTask(),kind:'agm',details:{agm}};
+ return [{...base,title:`Send the AGM notice to members (AGM on ${day})`,assignee_role:'secretary',due_on:on(-14),notes:'Most constitutions need two weeks’ notice. Say how to stand for a role and the deadline for nominations.'},
+  {...base,title:'Collect nominations for next year’s committee',assignee_role:'secretary',due_on:on(-7)},
+  {...base,title:'Prepare the year’s finances for the AGM',assignee_role:'treasurer',due_on:on(-3),details:{agm,href:'/admin/money?tab=report'}},
+  {...base,title:'Prepare the President’s report for the AGM',assignee_role:'president',due_on:on(-3)},
+  {...base,title:'Record the AGM results and update the committee',assignee_role:'secretary',due_on:on(2),notes:'Update the About page’s committee, and ask an Owner to give the new committee access and roles.',details:{agm,href:'/admin/committee'}},
+  ...roleKeys.map(key=>({...base,kind:'handover',title:'Finish your handover note for whoever takes over',assignee_role:key,due_on:on(14),details:{agm,href:'/admin/handover'}}))]}
+
+// --- Sponsors, handover notes and the numbers each term ---
+export type SponsorStatus='not-contacted'|'contacted'|'in-talks'|'approved';
+export type Sponsor={id?:string;name:string;status:SponsorStatus;contact_id:string|null;website:string|null;notes:string;follow_up_on:string|null;updated_at?:string};
+export const sponsorStatuses:{id:SponsorStatus;label:string}[]=[{id:'not-contacted',label:'Not contacted'},{id:'contacted',label:'Contacted'},{id:'in-talks',label:'In talks'},{id:'approved',label:'Approved'}];
+export const blankSponsor=():Sponsor=>({name:'',status:'not-contacted',contact_id:null,website:null,notes:'',follow_up_on:null});
+export function sponsorProblems(sponsor:Sponsor){const problems:Problems={};if(!sponsor.name.trim())problems.name='Add the company’s name.';if(sponsor.website?.trim()&&!isLink(sponsor.website.trim()))problems.website='Paste the full address, starting https://';return problems}
+
+export const HANDOVER_TEMPLATE=['## What the role does','','## Who to know','Contacts are in the Directory. Name the ones that matter most for this role.','','## Logins to pass on','Say which, and where they’re kept. Never the passwords themselves.','','## Through the year','The deadlines and jobs that come round every year, and roughly when.','','## How things are done','','## What I’d do differently',''].join('\n');
+
+export type Term=`${string} ${'Semester 1'|'Semester 2'|'Summer'}`;
+// Semester 1 runs September to December, Semester 2 January to May, and the summer June to August.
+export function termOf(iso:string):Term{const month=Number(iso.slice(5,7));return `${academicYear(iso)} ${month>=9?'Semester 1':month<=5?'Semester 2':'Summer'}` as Term}
+export type TermNumbers={term:string;discord_members:number|null;instagram_followers:number|null;linkedin_followers:number|null;luma_signups:number|null;website_visitors:number|null;notes:string;updated_at?:string};
+export const blankNumbers=(term:string):TermNumbers=>({term,discord_members:null,instagram_followers:null,linkedin_followers:null,luma_signups:null,website_visitors:null,notes:''});
+export const numberFields:{key:keyof Omit<TermNumbers,'term'|'notes'|'updated_at'>;label:string}[]=[{key:'discord_members',label:'Discord members'},{key:'instagram_followers',label:'Instagram followers'},{key:'linkedin_followers',label:'LinkedIn followers'},{key:'luma_signups',label:'Luma sign-ups'},{key:'website_visitors',label:'Website visitors'}];
+// What the admin already knows about a term: events that happened, and how many came to those with a post-event form.
+export function termEvents(term:string,events:AdminEvent[],plans:EventPlan[],now=Date.now()){const held=events.filter(e=>e.status==='published'&&e.starts_at&&termOf(e.starts_at)===term&&new Date(e.ends_at??e.starts_at).getTime()<now);const counts=held.map(e=>plans.find(p=>p.event_id===e.id)?.post_event.attendance).filter((n):n is number=>typeof n==='number');return {held:held.length,attendance:counts.reduce((a,b)=>a+b,0),counted:counts.length}}

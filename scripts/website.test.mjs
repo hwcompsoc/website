@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {blankEntry,entryProblems,directoryMatches,blankClaim,claimProblems,claimEditable,claimAction,spentOn,yearReport,incomeProblems,postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {agmTasks,agmNoticeDate,committeeSummary,sponsorProblems,blankSponsor,termOf,termEvents,blankEntry,entryProblems,directoryMatches,blankClaim,claimProblems,claimEditable,claimAction,spentOn,yearReport,incomeProblems,postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -455,4 +455,18 @@ test('directory: entries need a name, passwords are refused, and search covers w
  const members=[{email:'a@x',name:'Amanda Zhang',roles:[]}];
  const login={...blankEntry('login'),name:'Instagram',holder_email:'a@x'};
  assert.ok(directoryMatches(login,'amanda insta',members));assert.ok(!directoryMatches(login,'linkedin',members));assert.ok(directoryMatches(login,'',members));
+});
+
+test('SU, AGM, sponsors and numbers: the AGM sets off everyone’s tasks, and terms and events are counted the same way everywhere', ()=>{
+ const tasks=agmTasks('2027-03-20','2026-11-13',['secretary','treasurer']);
+ assert.deepEqual(tasks.map(t=>[t.assignee_role,t.due_on,t.kind]),[['secretary','2027-03-06','agm'],['secretary','2027-03-13','agm'],['treasurer','2027-03-17','agm'],['president','2027-03-17','agm'],['secretary','2027-03-22','agm'],['secretary','2027-04-03','handover'],['treasurer','2027-04-03','handover']]);
+ assert.equal(agmTasks('2026-11-20','2026-11-13')[0].due_on,'2026-11-13','a notice already overdue is due today');
+ assert.equal(agmNoticeDate('2027-03-20'),'2027-03-06');
+ const summary=committeeSummary([{key:'treasurer',name:'Treasurer',position:4},{key:'president',name:'President',position:1}],[{email:'n@x',name:'Nathan Walker',roles:['treasurer']},{email:'r@x',name:'Ryan Dawson',roles:['president']}]);
+ assert.equal(summary.text,'President: Ryan Dawson <r@x>\nTreasurer: Nathan Walker <n@x>');
+ assert.deepEqual(Object.keys(sponsorProblems({...blankSponsor(),website:'acme.com'})),['name','website']);
+ assert.equal(termOf('2026-11-13'),'2026-27 Semester 1');assert.equal(termOf('2027-02-01'),'2026-27 Semester 2');assert.equal(termOf('2027-07-01'),'2026-27 Summer');
+ const events=[{...blankEvent(),id:'a',status:'published',starts_at:'2026-10-01T17:00:00Z',ends_at:'2026-10-01T19:00:00Z'},{...blankEvent(),id:'b',status:'published',starts_at:'2026-11-01T17:00:00Z',ends_at:'2026-11-01T19:00:00Z'},{...blankEvent(),id:'c',status:'cancelled',starts_at:'2026-11-02T17:00:00Z',ends_at:'2026-11-02T19:00:00Z'}];
+ const plans=[{...blankPlan('a'),post_event:{attendance:30}}];
+ assert.deepEqual(termEvents('2026-27 Semester 1',events,plans,Date.parse('2026-11-13T00:00:00Z')),{held:2,attendance:30,counted:1});
 });

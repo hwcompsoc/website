@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState,useSyncExternalStore,type ChangeEvent,type FormEvent} from 'react';
 import {onRouteChange} from '../router';
 import {ActionsReview,Agenda,NextMeetingDate,recordMeeting,type Meeting} from './Meetings';
+import {Paperwork} from './Paperwork';
 import {Check,Download,ExternalLink,FileUp,HardDrive,LoaderCircle,Sparkles,X} from 'lucide-react';
 import {Skeleton} from '../components/ui/skeleton';
 import {Button} from '../components/ui/button';
@@ -23,10 +24,10 @@ function Writing({started,expected,onCancel}:{started:number;expected:number;onC
 const MinutesSkeleton=()=><div className="admin-form-block admin-minutes-sk" aria-hidden="true"><Skeleton className="admin-sk-h1"/>{[60,45,50].map(w=><Skeleton key={w} className="admin-sk-line" style={{width:`${w}%`}}/>)}{[1,2].map(n=><div key={n} className="admin-minutes-sk-item"><Skeleton className="admin-sk-h2"/><Skeleton className="admin-sk-line" style={{width:'90%'}}/><Skeleton className="admin-sk-line" style={{width:'75%'}}/></div>)}<Skeleton className="admin-sk-h2"/><Skeleton className="admin-sk-textarea"/></div>;
 
 // Writing minutes, and the next meeting's agenda, on one page.
-export function Minutes(){useTitle('Minutes');useSyncExternalStore(onRouteChange,()=>location.search);const tab=new URLSearchParams(location.search).get('tab')==='agenda'?'agenda':'write';
+export function Minutes(){useTitle('Minutes');useSyncExternalStore(onRouteChange,()=>location.search);const asked=new URLSearchParams(location.search).get('tab');const tab=asked==='agenda'||asked==='su'?asked:'write';
  return <section className="admin-page admin-narrow"><header className="admin-head"><h1>Minutes</h1></header>
-  <div className="admin-tools"><nav aria-label="Minutes" className="admin-tabs"><a href="/admin/minutes" aria-current={tab==='write'?'page':undefined}>Write minutes</a><a href="/admin/minutes?tab=agenda" aria-current={tab==='agenda'?'page':undefined}>Next meeting</a></nav></div>
-  {tab==='agenda'?<Agenda/>:<WriteMinutes/>}</section>}
+  <div className="admin-tools"><nav aria-label="Minutes" className="admin-tabs"><a href="/admin/minutes" aria-current={tab==='write'?'page':undefined}>Write minutes</a><a href="/admin/minutes?tab=agenda" aria-current={tab==='agenda'?'page':undefined}>Next meeting</a><a href="/admin/minutes?tab=su" aria-current={tab==='su'?'page':undefined}>SU and AGM</a></nav></div>
+  {tab==='agenda'?<Agenda/>:tab==='su'?<Paperwork/>:<WriteMinutes/>}</section>}
 
 // The transcript is never saved. The minutes are kept only when someone saves them to the society's Google Drive.
 function WriteMinutes(){const [title,setTitle]=useState('Committee meeting');const [date,setDate]=useState(()=>todayInUk());const [transcript,setTranscript]=useState('');const [minutes,setMinutes]=useState('');const [problems,setProblems]=useState<Problems>({});const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [confirm,setConfirm]=useState<Confirm|null>(null);const [saved,setSaved]=useState<{text:string;link:string}|null>(null);const [saving,setSaving]=useState(false);const [started,setStarted]=useState(0);const [notice,setNotice]=useState('');const [meeting,setMeeting]=useState<Meeting|null>(null);const request=useRef<AbortController|null>(null);const file=useRef<HTMLInputElement>(null);const result=useRef<HTMLElement>(null);
