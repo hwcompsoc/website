@@ -41,6 +41,12 @@ A short summary of the discussion, as a paragraph or bullet points.
 ## 2. Next agenda item
 …
 
+## Next meeting
+
+- Each thing the meeting agreed to come back to at the next meeting, one per line.
+
+If nothing was held over, write "Nothing carried forward." under the Next meeting heading instead of the list.
+
 ## Actions
 
 | Action | Who | By when |

@@ -183,9 +183,9 @@ export function minutesProblems({title,date,transcript}:{title:string;date:strin
  return problems}
 
 // Minutes are saved to Drive as HTML, which Drive turns into a Google Doc with real headings and a real table.
-// Only the Markdown the minutes use: headings, **bold**, bullet and numbered lists, tables and paragraphs.
+// Only the Markdown the minutes and agendas use: headings, **bold**, [links](https://…), bullet and numbered lists, tables and paragraphs.
 const escapeHtml=(text:string)=>text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const inlineHtml=(text:string)=>escapeHtml(text).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+const inlineHtml=(text:string)=>escapeHtml(text).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,'<a href="$2">$1</a>');
 export function minutesHtml(markdown:string,title:string){const out:string[]=[];let para:string[]=[];let list:'ul'|'ol'|''='';let table:string[][]|null=null;
  const endPara=()=>{if(para.length)out.push(`<p>${para.map(inlineHtml).join('<br>')}</p>`);para=[]};
  const endList=()=>{if(list)out.push(`</${list}>`);list=''};
@@ -237,3 +237,49 @@ export function dueLabel(due:string|null,today:string){if(!due)return '';if(due<
 export const byDue=(a:Task,b:Task)=>(a.due_on??'9999').localeCompare(b.due_on??'9999')||(a.created_at??'').localeCompare(b.created_at??'');
 export function taskProblems(task:Task){const problems:Problems={};if(!task.title.trim())problems.title='Say what needs doing.';if(task.link?.trim()&&!isLink(task.link.trim()))problems.link='Paste the full address, starting https://';return problems}
 export const taskKindLabel:Record<string,string>={action:'From minutes',post:'Social post','post-event':'After the event',budget:'Budget',claim:'Expense claim',deadline:'Deadline',handover:'Handover'};
+
+// --- Meetings: actions and agendas ---
+export type MinutesAction={action:string;who:string;by:string};
+const plain=(text:string)=>text.replace(/\*\*/g,'').trim();
+// The lines of a "## Heading" section, up to the next heading.
+function section(markdown:string,heading:RegExp){const lines=markdown.replace(/\r\n?/g,'\n').split('\n');const start=lines.findIndex(l=>/^#{1,3}\s/.test(l.trim())&&heading.test(l.trim().replace(/^#{1,3}\s*/,'')));if(start<0)return [];const rest=lines.slice(start+1);const end=rest.findIndex(l=>/^#{1,3}\s/.test(l.trim()));return (end<0?rest:rest.slice(0,end)).map(l=>l.trim()).filter(Boolean)}
+// The table the minutes end with: | Action | Who | By when |.
+export function minutesActions(markdown:string):MinutesAction[]{return section(markdown,/^actions$/i).filter(l=>/^\|.*\|$/.test(l)).map(l=>l.slice(1,-1).split('|').map(plain)).filter(cells=>cells[0]&&!cells.every(c=>/^:?-{2,}:?$/.test(c))&&!/^action$/i.test(cells[0])).map(([action,who='',by=''])=>({action,who,by}))}
+// What the meeting agreed to come back to, from the "Next meeting" list.
+export const carriedForward=(markdown:string)=>section(markdown,/^next meeting$/i).map(l=>l.match(/^[-*]\s+(.+)$/)?.[1]).filter((item):item is string=>!!item).map(plain);
+
+// Who an action's "Who" means: someone's full name, a role's name, or a first name only one person has. Anything else is left for the Secretary to choose.
+export function matchAssignee(who:string,members:Member[],roles:Pick<Role,'key'|'name'>[]):{assignee_email:string|null;assignee_role:string|null}{const none={assignee_email:null,assignee_role:null};if(/\band\b|,|&/i.test(who))return none;
+ const said=who.toLowerCase().replace(/[^a-z\s'-]/g,' ').replace(/\s+/g,' ').trim().replace(/^the /,'');if(!said)return none;
+ const full=members.find(m=>m.name?.toLowerCase().trim()===said);if(full)return {assignee_email:full.email,assignee_role:null};
+ const role=roles.find(r=>r.name.toLowerCase()===said||r.key===said.replace(/\s+/g,'-'));if(role)return {assignee_email:null,assignee_role:role.key};
+ if(said.includes(' '))return none;const first=members.filter(m=>m.name?.toLowerCase().split(' ')[0]===said);return first.length===1?{assignee_email:first[0].email,assignee_role:null}:none}
+
+const MONTHS=['january','february','march','april','may','june','july','august','september','october','november','december'];
+const DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+const monthOf=(word:string)=>word.length>=3?MONTHS.findIndex(m=>m.startsWith(word.slice(0,3))):-1;
+// A deadline as said in the meeting, as a date: "20 November", "20/11", "Friday", or a date. Anything vaguer gives no date.
+export function dueFromText(by:string,meeting:string):string|null{const said=by.toLowerCase().replace(/(\d)(st|nd|rd|th)\b/g,'$1').replace(/,/g,' ').replace(/\s+/g,' ').trim();if(!said||/not set|^tbc|^n\/?a$/.test(said))return null;
+ const [y0,m0,d0]=meeting.split('-').map(Number);const iso=(y:number,m:number,d:number)=>{const date=new Date(Date.UTC(y,m-1,d));return date.getUTCMonth()===m-1&&date.getUTCDate()===d?date.toISOString().slice(0,10):null};
+ const after=(y:number|undefined,m:number,d:number)=>{if(y)return iso(y<100?2000+y:y,m,d);const same=iso(y0,m,d);return same&&same<meeting?iso(y0+1,m,d):same};
+ let match=said.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(match)return iso(+match[1],+match[2],+match[3]);
+ match=said.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(match)return after(match[3]?+match[3]:undefined,+match[2],+match[1]);
+ match=said.match(/(\d{1,2}) ([a-z]+)(?: (\d{4}))?/);if(match&&monthOf(match[2])>=0)return after(match[3]?+match[3]:undefined,monthOf(match[2])+1,+match[1]);
+ match=said.match(/([a-z]+) (\d{1,2})(?: (\d{4}))?/);if(match&&monthOf(match[1])>=0)return after(match[3]?+match[3]:undefined,monthOf(match[1])+1,+match[2]);
+ const day=DAYS.findIndex(d=>new RegExp(`\\b${d}\\b`).test(said));if(day>=0){const start=new Date(Date.UTC(y0,m0-1,d0));const ahead=((day-start.getUTCDay()+7)%7)||7;return new Date(start.getTime()+ahead*86400000).toISOString().slice(0,10)}
+ return null}
+
+export type AgendaInput={title:string;date:string;last:{title:string;held_on:string;minutes_link:string|null}|null;actions:{title:string;who:string;due:string|null}[];carried:string[];items:{title:string;by:string}[];reports:{role:string;people:string}[];events:{title:string;when:string}[]};
+const longDay=(iso:string)=>fullDate(`${iso}T12:00:00Z`);
+// The next meeting's agenda, built from the last minutes, open actions, items people asked for, each role's report and what's coming up. Sections with nothing in them are left out.
+export function agendaMarkdown(input:AgendaInput){const sections:[string,string[]][]=[['Welcome and apologies',[]]];
+ if(input.last)sections.push(['Minutes of the last meeting',[`Approve the minutes of ${input.last.title}, ${longDay(input.last.held_on)}.${input.last.minutes_link?` [Read them](${input.last.minutes_link})`:''}`]]);
+ sections.push(['Actions from last time',input.actions.length?['| Action | Who | Due |','|---|---|---|',...input.actions.map(a=>`| ${a.title.replace(/\|/g,'/')} | ${a.who} | ${a.due?longDay(a.due):'Not set'} |`)]:['No open actions.']]);
+ if(input.carried.length)sections.push(['Carried forward',input.carried.map(item=>`- ${item}`)]);
+ if(input.items.length)sections.push(['Items raised',input.items.map(item=>`- ${item.title} (${item.by})`)]);
+ if(input.reports.length)sections.push(['Officer reports',input.reports.map(r=>`- ${r.role}${r.people?` (${r.people})`:''}`)]);
+ if(input.events.length)sections.push(['Coming up',input.events.map(e=>`- ${e.title}, ${e.when}`)]);
+ sections.push(['Any other business',[]],['Date of the next meeting',[]]);
+ return [`# ${input.title}`,'',`**Date:** ${longDay(input.date)}`,'',...sections.flatMap(([heading,body],i)=>[`## ${i+1}. ${heading}`,...(body.length?['',...body]:[]),''])].join('\n').trim()+'\n'}
+// A few days' notice: the agenda task falls due three days before the meeting, or today if that's already passed.
+export function agendaDue(meeting:string,today:string){const due=addDays(meeting,-3);return due<today?today:due}

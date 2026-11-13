@@ -1,5 +1,5 @@
 import {useMemo,useState,useSyncExternalStore,type FormEvent} from 'react';
-import {Check,ExternalLink,Hand,Plus} from 'lucide-react';
+import {ArrowRight,Check,ExternalLink,Hand,Plus} from 'lucide-react';
 import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Textarea} from '../components/ui/textarea';
@@ -44,10 +44,13 @@ export function TaskRow({task,members,roles,today,onOpen,onChange}:{task:Task;me
  async function update(next:Task){setBusy(true);setError('');try{onChange(await saveTask(next))}catch(failure){setError((failure as Error).message)}finally{setBusy(false)}}
  const canPickUp=task.status==='open'&&!task.assignee_email&&!!task.assignee_role&&access.roles.includes(task.assignee_role);
  const meta=[assigneeLabel(task,members,roles),taskKindLabel[task.kind]].filter(Boolean).join(' · ');
+ // Tasks the admin makes can point to where they're done, inside the admin.
+ const here=typeof task.details?.href==='string'&&task.details.href.startsWith('/admin/')?task.details.href:null;
  return <li className="admin-task" data-done={done||undefined} data-cancelled={task.status==='cancelled'||undefined}>
   <button type="button" className="admin-task-tick" aria-pressed={done} disabled={busy||task.status==='cancelled'} aria-label={done?`Mark “${task.title}” as not done`:`Mark “${task.title}” as done`} onClick={()=>update({...task,status:done?'open':'done'})}>{done&&<Check size={16} aria-hidden="true"/>}</button>
   <span className="admin-row-main"><button type="button" className="admin-task-title" onClick={onOpen}><b>{task.title}</b></button><small>{meta}{task.status==='cancelled'?' · No longer needed':''}</small>{error&&<small className="admin-field-error" role="alert">{error}</small>}</span>
   {task.link&&<a className="admin-task-link" href={task.link} target="_blank" rel="noopener noreferrer" aria-label={`Open the link for “${task.title}” (opens in a new tab)`}><ExternalLink size={16} aria-hidden="true"/></a>}
+  {here&&task.status==='open'&&<a className="admin-task-link" href={here} aria-label={`Go to where “${task.title}” is done`}><ArrowRight size={16} aria-hidden="true"/></a>}
   {canPickUp&&<Button type="button" variant="outline" size="sm" disabled={busy} onClick={()=>update({...task,assignee_email:access.email})}><Hand aria-hidden="true"/>I’ll do it</Button>}
   {task.status==='open'&&task.due_on&&<span className="admin-task-due" data-due={group}>{dueLabel(task.due_on,today)}</span>}</li>}
 

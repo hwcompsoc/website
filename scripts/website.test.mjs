@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -344,4 +344,42 @@ test('tasks: yours includes your roles’ tasks until someone picks them up, and
  assert.deepEqual(Object.keys(taskProblems(task({title:' '}))),['title']);
  assert.deepEqual(Object.keys(taskProblems(task({link:'example.com'}))),['link']);
  assert.equal(adminRoute('/admin/tasks').name,'tasks');
+});
+
+test('minutes: actions and carried-forward items are read back out, and names and dates are matched where they’re clear', ()=>{
+ const minutes='# Committee meeting\n\n## 1. Budget\nTalked about it.\n\n## Next meeting\n\n- Freshers’ fair plans\n- **Hoodie** order\n\n## Actions\n\n| Action | Who | By when |\n|---|---|---|\n| Book the room | Divine Halim | 20 November |\n| Send the **budget** | Treasurer | Friday |\n| Ask the SU | Ryan and Thomas | Not set |\n';
+ assert.deepEqual(minutesActions(minutes),[{action:'Book the room',who:'Divine Halim',by:'20 November'},{action:'Send the budget',who:'Treasurer',by:'Friday'},{action:'Ask the SU',who:'Ryan and Thomas',by:'Not set'}]);
+ assert.deepEqual(carriedForward(minutes),['Freshers’ fair plans','Hoodie order']);
+ assert.deepEqual(carriedForward('## Next meeting\n\nNothing carried forward.\n\n## Actions\n\nNo actions recorded.'),[]);
+ assert.deepEqual(minutesActions('## Actions\n\nNo actions recorded.'),[]);
+ const members=[{email:'d@x',name:'Divine Halim',roles:['events']},{email:'r@x',name:'Ryan Dawson',roles:['president']},{email:'r2@x',name:'Raymond Shell',roles:['events']}];
+ const roles=[{key:'treasurer',name:'Treasurer'},{key:'events',name:'Events Organiser'}];
+ assert.deepEqual(matchAssignee('Divine Halim',members,roles),{assignee_email:'d@x',assignee_role:null});
+ assert.deepEqual(matchAssignee('divine',members,roles),{assignee_email:'d@x',assignee_role:null});
+ assert.deepEqual(matchAssignee('The Treasurer',members,roles),{assignee_email:null,assignee_role:'treasurer'});
+ assert.deepEqual(matchAssignee('Ryan and Thomas',members,roles),{assignee_email:null,assignee_role:null},'two people is left for the Secretary');
+ assert.deepEqual(matchAssignee('R',members,roles),{assignee_email:null,assignee_role:null});
+ assert.equal(dueFromText('20 November','2026-11-13'),'2026-11-20');
+ assert.equal(dueFromText('November 20th','2026-11-13'),'2026-11-20');
+ assert.equal(dueFromText('3 January','2026-11-13'),'2027-01-03','a date already gone this year means next year');
+ assert.equal(dueFromText('20/11','2026-11-13'),'2026-11-20');
+ assert.equal(dueFromText('Friday','2026-11-13'),'2026-11-20','the meeting was on a Friday, so it means next Friday');
+ assert.equal(dueFromText('Monday','2026-11-13'),'2026-11-16');
+ assert.equal(dueFromText('Not set','2026-11-13'),null);
+ assert.equal(dueFromText('next meeting','2026-11-13'),null);
+ assert.equal(dueFromText('31/02','2026-11-13'),null);
+ assert.equal(agendaDue('2026-11-27','2026-11-13'),'2026-11-24');
+ assert.equal(agendaDue('2026-11-14','2026-11-13'),'2026-11-13');
+});
+
+test('agendas: built from the last minutes, open actions, items people added, role reports and events, leaving out empty sections', ()=>{
+ const text=agendaMarkdown({title:'Committee meeting',date:'2026-11-27',last:{title:'Committee meeting',held_on:'2026-11-13',minutes_link:'https://docs.google.com/d/1'},actions:[{title:'Book the room',who:'Divine Halim',due:'2026-11-20'}],carried:['Hoodie order'],items:[],reports:[{role:'Treasurer',people:'Nathan Walker'}],events:[]});
+ assert.match(text,/^# Committee meeting\n\n\*\*Date:\*\* Friday 27 November 2026/);
+ assert.match(text,/## 2\. Minutes of the last meeting\n\nApprove the minutes of Committee meeting, Friday 13 November 2026\. \[Read them\]\(https:\/\/docs\.google\.com\/d\/1\)/);
+ assert.match(text,/\| Book the room \| Divine Halim \| Friday 20 November 2026 \|/);
+ assert.match(text,/## 4\. Carried forward\n\n- Hoodie order/);
+ assert.doesNotMatch(text,/Items raised|Coming up/);
+ assert.match(text,/## 5\. Officer reports\n\n- Treasurer \(Nathan Walker\)/);
+ assert.match(text,/## 7\. Date of the next meeting\n$/);
+ assert.match(minutesHtml('See [the doc](https://docs.google.com/d/1) and [this](javascript:alert(1))','x'),/<a href="https:\/\/docs\.google\.com\/d\/1">the doc<\/a> and \[this\]\(javascript:alert\(1\)\)/,'only https links become links');
 });
