@@ -486,3 +486,6 @@
 .admin-rows a.admin-chip{display:inline-flex;flex-wrap:nowrap;gap:var(--space-4);padding:2px var(--space-8);color:var(--on-accent)}
 .admin-rows a.admin-chip:hover{background:var(--select-strong);text-decoration:underline}
 .admin-rows a.admin-chip>svg{margin-left:0;color:inherit}
+.admin-photo-row{flex-wrap:wrap;gap:var(--space-8)}
+.admin-photo-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-8)}
+.admin-inline-notice{margin:0}

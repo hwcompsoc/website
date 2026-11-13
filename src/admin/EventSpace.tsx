@@ -9,6 +9,7 @@ import {NOTHING_NEEDED,budgetLabel,budgetProblems,budgetTotal,eventFolder,fullDa
 import {useAccess} from './access';
 import {drive} from './Drive';
 import {TaskRow} from './Tasks';
+import {UploadPhotos,openFolder} from './Photos';
 import {Failure,Field,fieldProps,friendly,useLeaveWarning} from './ui';
 
 export async function loadPlan(eventId:string){const {data,error}=await supabase.from('event_plans').select('*').eq('event_id',eventId).maybeSingle();if(error)throw new Error(friendly(error));return data as EventPlan|null}
@@ -99,8 +100,8 @@ export function SpaceAfter({event,plan,members,onSaved}:{event:AdminEvent;plan:E
     {canEdit&&<div className="admin-actions"><Button type="submit" className="site-button" disabled={busy||driveBusy}><HardDrive aria-hidden="true"/>{busy||driveBusy?'Saving…':submitted?'Update and save to Drive':'Submit and save to Drive'}</Button>{plan.post_event_link&&<a className="text-link" href={plan.post_event_link} target="_blank" rel="noopener noreferrer">Open the write-up<ExternalLink size={16} aria-hidden="true"/><span className="sr-only"> (opens in a new tab)</span></a>}</div>}</form>{status}</Card>
   <Card id="photos" title="Photos"><p className="admin-quiet">Photos go in the event’s folder in the society’s Drive, where the Social Media Managers can find them for the recap.</p><PhotosFolder event={event} plan={plan} onSaved={onSaved}/></Card></div>}
 
-// The event's Photos folder in Drive, made the first time someone opens it.
-export function PhotosFolder({event,plan,onSaved}:{event:AdminEvent;plan:EventPlan;onSaved:(p:EventPlan)=>void}){const [busy,setBusy]=useState(false);const [error,setError]=useState('');
- async function open(){setBusy(true);setError('');try{const {link}=await drive<{link:string}>({action:'folder',folder:`${eventFolder(event)}/Photos`});if(link!==plan.photos_link)onSaved(await savePlan(event.id!,{photos_link:link}));window.open(link,'_blank','noopener')}catch(failure){setError((failure as Error).message)}finally{setBusy(false)}}
- return <><div className="admin-actions">{plan.photos_link?<Button asChild variant="outline"><a href={plan.photos_link} target="_blank" rel="noopener noreferrer"><FolderOpen aria-hidden="true"/>Open the photos folder<span className="sr-only"> (opens in a new tab)</span></a></Button>:<Button type="button" variant="outline" disabled={busy} onClick={open}><FolderOpen aria-hidden="true"/>{busy?'Making the folder…':'Make the photos folder'}</Button>}</div><Failure>{error}</Failure></>}
+// The event's Photos folder in Drive, made the first time someone opens it or adds a photo. Anyone on the committee can add photos.
+export function PhotosFolder({event,plan,onSaved}:{event:AdminEvent;plan:EventPlan;onSaved:(p:EventPlan)=>void}){const access=useAccess();const [busy,setBusy]=useState(false);const [error,setError]=useState('');const folder=`${eventFolder(event)}/Photos`;
+ async function open(){setBusy(true);setError('');try{const link=await openFolder(folder);if(access.create_events&&link!==plan.photos_link)onSaved(await savePlan(event.id!,{photos_link:link}))}catch(failure){setError((failure as Error).message)}finally{setBusy(false)}}
+ return <><div className="admin-actions"><UploadPhotos folder={folder}/><Button type="button" variant="outline" disabled={busy} onClick={open}><FolderOpen aria-hidden="true"/>{busy?'Opening…':'Open the photos folder'}<span className="sr-only"> (opens Google Drive in a new tab)</span></Button></div><Failure>{error}</Failure></>}
 
