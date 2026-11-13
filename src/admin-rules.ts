@@ -52,9 +52,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -210,3 +210,30 @@ export function driveKind(mimeType:string):DriveKind{const google=mimeType.match
  if(/wordprocessingml|msword|opendocument\.text/.test(mimeType))return 'doc';if(/spreadsheetml|ms-excel|text\/csv/.test(mimeType))return 'sheet';if(/presentationml|ms-powerpoint/.test(mimeType))return 'slides';
  return 'file'}
 export const driveKindLabel:Record<DriveKind,string>={folder:'Folder',doc:'Document',sheet:'Spreadsheet',slides:'Slides',form:'Form',pdf:'PDF',image:'Image',video:'Video',file:'File'};
+
+// --- Roles and tasks ---
+// What each role can see and do. The database enforces the same rules, so it has the final say.
+export type Role={key:string;name:string;position:number;sees:string[];create_events:boolean;finances:boolean;content_calendar:boolean;sponsors:boolean};
+export type Member={email:string;name:string|null;owner?:boolean;roles:string[]};
+export type TaskStatus='open'|'done'|'cancelled';
+export type Task={id?:string;title:string;notes:string;assignee_email:string|null;assignee_role:string|null;due_on:string|null;status:TaskStatus;kind:string;event_id:string|null;link:string|null;details:Record<string,unknown>;created_by?:string|null;created_at?:string;done_by?:string|null;done_at?:string|null};
+export const blankTask=(assignee_email:string|null=null):Task=>({title:'',notes:'',assignee_email,assignee_role:null,due_on:null,status:'open',kind:'task',event_id:null,link:null,details:{}});
+export const ROLE_PERMISSIONS=[{key:'create_events',label:'Create and edit events'},{key:'finances',label:'See and approve finances'},{key:'content_calendar',label:'See the content calendar'},{key:'sponsors',label:'Manage sponsors'}] as const;
+export const personName=(member:Pick<Member,'email'|'name'>)=>member.name?.trim()||member.email;
+export const taskEditable=(task:Task)=>({title:task.title.trim(),notes:task.notes,assignee_email:task.assignee_email,assignee_role:task.assignee_role,due_on:task.due_on||null,status:task.status,kind:task.kind,event_id:task.event_id,link:task.link?.trim()||null,details:task.details});
+
+// Yours: given to you, or given to one of your roles and not yet picked up by anyone.
+export const isMine=(task:Task,email:string,roles:string[])=>task.assignee_email===email||(!task.assignee_email&&!!task.assignee_role&&roles.includes(task.assignee_role));
+export function assigneeLabel(task:Task,members:Member[],roles:Role[]){const person=members.find(m=>m.email===task.assignee_email);const role=roles.find(r=>r.key===task.assignee_role);
+ if(task.assignee_email)return person?personName(person):task.assignee_email;if(role)return `Anyone in ${role.name}`;return 'Nobody yet'}
+
+const addDays=(iso:string,days:number)=>{const [y,m,d]=iso.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+days)).toISOString().slice(0,10)};
+export type DueGroup='overdue'|'week'|'later'|'none';
+export const dueGroups:{id:DueGroup;label:string}[]=[{id:'overdue',label:'Overdue'},{id:'week',label:'Due in the next 7 days'},{id:'later',label:'Later'},{id:'none',label:'No due date'}];
+export function dueGroup(due:string|null,today:string):DueGroup{if(!due)return 'none';if(due<today)return 'overdue';return due<=addDays(today,6)?'week':'later'}
+const dayName=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'}).format(new Date(`${iso}T12:00:00Z`));
+export function dueLabel(due:string|null,today:string){if(!due)return '';if(due<today)return `Overdue, was due ${dayName(due)}`;if(due===today)return 'Due today';if(due===addDays(today,1))return 'Due tomorrow';return `Due ${dayName(due)}`}
+// Soonest first, undated last, then oldest first, so nothing new jumps above what's been waiting.
+export const byDue=(a:Task,b:Task)=>(a.due_on??'9999').localeCompare(b.due_on??'9999')||(a.created_at??'').localeCompare(b.created_at??'');
+export function taskProblems(task:Task){const problems:Problems={};if(!task.title.trim())problems.title='Say what needs doing.';if(task.link?.trim()&&!isLink(task.link.trim()))problems.link='Paste the full address, starting https://';return problems}
+export const taskKindLabel:Record<string,string>={action:'From minutes',post:'Social post','post-event':'After the event',budget:'Budget',claim:'Expense claim',deadline:'Deadline',handover:'Handover'};

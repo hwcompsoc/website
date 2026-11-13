@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -320,4 +320,28 @@ test('the minutes progress moves from sending to reading to writing, paced by th
  assert.equal(minutesStage(5,40),1);
  assert.equal(minutesStage(20,40),2);
  assert.equal(minutesStage(3,10),1,'reading always shows for a moment, even for a short meeting');
+});
+
+test('tasks: yours includes your roles’ tasks until someone picks them up, and overdue comes first', ()=>{
+ const task=(fields)=>({...blankTask(),title:'Do it',...fields});
+ assert.ok(isMine(task({assignee_email:'a@x'}),'a@x',[]));
+ assert.ok(isMine(task({assignee_role:'socials'}),'a@x',['socials']),'a role task nobody has picked up is everyone in the role’s');
+ assert.ok(!isMine(task({assignee_role:'socials',assignee_email:'b@x'}),'a@x',['socials']),'once picked up, it’s theirs');
+ assert.ok(!isMine(task({assignee_role:'events'}),'a@x',['socials']));
+ const members=[{email:'a@x',name:'Amanda Zhang',roles:['socials']}],roles=[{key:'socials',name:'Social Media Manager'}];
+ assert.equal(assigneeLabel(task({assignee_email:'a@x'}),members,roles),'Amanda Zhang');
+ assert.equal(assigneeLabel(task({assignee_role:'socials'}),members,roles),'Anyone in Social Media Manager');
+ assert.equal(assigneeLabel(task({}),members,roles),'Nobody yet');
+ assert.equal(dueGroup('2026-11-12','2026-11-13'),'overdue');
+ assert.equal(dueGroup('2026-11-19','2026-11-13'),'week');
+ assert.equal(dueGroup('2026-11-20','2026-11-13'),'later');
+ assert.equal(dueGroup(null,'2026-11-13'),'none');
+ assert.equal(dueLabel('2026-11-13','2026-11-13'),'Due today');
+ assert.equal(dueLabel('2026-11-14','2026-11-13'),'Due tomorrow');
+ assert.equal(dueLabel('2026-11-10','2026-11-13'),'Overdue, was due Tue 10 Nov');
+ const sorted=[task({due_on:null,created_at:'1'}),task({due_on:'2026-11-20'}),task({due_on:'2026-11-01'})].sort(byDue).map(t=>t.due_on);
+ assert.deepEqual(sorted,['2026-11-01','2026-11-20',null]);
+ assert.deepEqual(Object.keys(taskProblems(task({title:' '}))),['title']);
+ assert.deepEqual(Object.keys(taskProblems(task({link:'example.com'}))),['link']);
+ assert.equal(adminRoute('/admin/tasks').name,'tasks');
 });
