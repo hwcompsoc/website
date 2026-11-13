@@ -407,3 +407,58 @@
 .admin-review-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-12)}
 .admin-review-fields .admin-field{margin:0}
 @media(max-width:560px){.admin-review-fields .admin-two{grid-template-columns:1fr}}
+
+/* Events: one card per event */
+.admin-event-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--space-16);margin:0;padding:0;list-style:none}
+.admin-event-card{display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-8);height:100%;padding:var(--space-16) var(--space-20);border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);text-decoration:none;min-width:0;overflow-wrap:anywhere}
+.admin-event-card:hover{border-color:var(--line-strong);background:var(--tint)}
+.admin-event-card:hover b{text-decoration:underline}
+.admin-event-card b{font-size:var(--fs-body);line-height:1.4}
+.admin-event-card small{font-size:var(--fs-sm);color:var(--text-quiet)}
+.admin-card-bar{display:block;width:100%;height:6px;margin-top:auto;border-radius:3px;background:var(--line);overflow:hidden}
+.admin-card-bar i{display:block;height:100%;background:var(--select-strong)}
+.admin-card-next{color:var(--text)}
+
+/* The event's own space */
+.admin-space-tabs{margin-bottom:var(--space-24);width:fit-content;max-width:100%}
+.admin-space-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:var(--space-20);align-items:start}
+.admin-space-side,.admin-space-stack{display:flex;flex-direction:column;gap:var(--space-20);min-width:0}
+.admin-space-stack{max-width:760px}
+.admin-space-card{min-width:0}
+.admin-space-card .admin-block-head{margin-bottom:var(--space-8)}
+.admin-space-card h2{font-size:var(--fs-subhead)}
+.admin-space-card form{display:flex;flex-direction:column;gap:var(--space-12)}
+.admin-space-card form.admin-two{display:grid}
+.admin-space-card form.admin-two .admin-actions{grid-column:1/-1}
+.admin-space-card .admin-field{margin:0}
+.admin-space-steps{margin:0;padding:0;list-style:none}
+.admin-space-steps li{display:flex;align-items:center;gap:var(--space-12);min-height:48px;padding:var(--space-4) 0;border-bottom:1px solid var(--line)}
+.admin-space-steps li:last-child{border-bottom:0}
+.admin-space-steps li .admin-row-main{flex:1;min-width:0;color:var(--ink)}
+.admin-space-steps li[data-done] .admin-row-main{color:var(--text-quiet)}
+.admin-space-steps .admin-step-mark{flex:none}
+.admin-space-steps .text-link{min-height:44px}
+.admin-space-facts{display:grid;grid-template-columns:auto 1fr;gap:var(--space-8) var(--space-16);margin:0;font-size:var(--fs-body)}
+.admin-space-facts dt{color:var(--text-quiet)}
+.admin-space-facts dd{margin:0;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+.admin-space-facts ul{margin:0;padding-left:1.2em}
+.admin-table-scroll{overflow-x:auto}
+.admin-budget{width:100%;border-collapse:collapse;font-size:var(--fs-body)}
+.admin-budget th{text-align:left;font-size:var(--fs-sm);font-weight:600;color:var(--text-quiet);padding:0 var(--space-8) var(--space-8) 0}
+.admin-budget td{padding:0 var(--space-8) var(--space-8) 0;vertical-align:top}
+.admin-budget td:last-child,.admin-budget th:last-child{width:44px;padding-right:0}
+.admin-budget tfoot th,.admin-budget tfoot td{padding-top:var(--space-8);border-top:1px solid var(--line);font-size:var(--fs-body);color:var(--ink)}
+.admin-budget-total{font-weight:700;font-variant-numeric:tabular-nums}
+.admin-run{min-width:520px}
+.admin-run td:first-child{width:130px}
+.admin-decide{margin-top:var(--space-20);padding-top:var(--space-16);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:var(--space-12)}
+.admin-decide h3{margin:0;font-size:var(--fs-body)}
+.admin-decide .admin-field{margin:0}
+.admin-req-list{margin:0 0 var(--space-12);padding:0;list-style:none}
+.admin-req-list li{display:flex;align-items:center;gap:var(--space-8);min-height:48px;border-bottom:1px solid var(--line)}
+.admin-req-list .admin-check{flex:1;min-width:0}
+.admin-space-card form.admin-req-add{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;align-items:end;gap:var(--space-12)}
+@media(max-width:900px){.admin-space-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.admin-space-card form.admin-req-add{grid-template-columns:1fr}.admin-space-card form.admin-two{grid-template-columns:1fr}}
+.admin-space-card>.admin-quiet{margin:0 0 var(--space-16)}
+.admin-space-card>.admin-button-ghost,.admin-space-card>button{align-self:flex-start}

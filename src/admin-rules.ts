@@ -35,7 +35,6 @@ export function missingSteps(event:AdminEvent){const missing:string[]=[];
  if(!event.cover_alt?.trim())missing.push('Describe the image');
  if(!isLink(event.native_url)&&!event.native_skipped)missing.push('Create it on Native and paste the link, or skip it');
  if(event.signup_required&&!isLink(event.luma_url))missing.push('Create it on Luma and paste the link');
- if(!event.socials_sent)missing.push('Send the details to Amanda and Kevin');
  return missing}
 
 // Offset of UK time from UTC at a moment, in milliseconds.
@@ -44,7 +43,7 @@ function ukOffset(ms:number){const parts=Object.fromEntries(new Intl.DateTimeFor
 export function ukInputToIso(value:string){if(!value)return null;const match=value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);if(!match)return null;const [,y,mo,d,h,mi]=match.map(Number);const wall=Date.UTC(y,mo-1,d,h,mi);return new Date(wall-ukOffset(wall-ukOffset(wall))).toISOString()}
 export function isoToUkInput(iso:string|null){if(!iso)return '';const ms=new Date(iso).getTime();return new Date(ms+ukOffset(ms)).toISOString().slice(0,16)}
 
-// Everything Amanda and Kevin need in one message.
+// Everything the Social Media Managers need for a post, in one message.
 export function eventDetailsText(event:AdminEvent,site=''){const when=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(iso));
  return [event.title,event.starts_at?`When: ${when(event.starts_at)}`:'',event.venue?`Where: ${event.venue}`:'',event.description,event.luma_url?`Sign up: ${event.luma_url}`:'',event.slug?`Website: ${site}/events/${event.slug}`:'',event.square_path?`Square image: ${coverUrl(event.square_path)}`:''].filter(Boolean).join('\n')}
 
@@ -62,10 +61,10 @@ export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLo
 export const safeNext=(next:string|null)=>next&&/^\/admin(\/|\?|$)/.test(next)&&!next.includes('//')&&!next.startsWith('/admin/login')&&!next.startsWith('/admin/set-password')?next:'/admin';
 
 export const statusLabel={draft:'Draft',published:'Live',cancelled:'Cancelled'} as const;
-export type StepId='details'|'native'|'luma'|'socials';
+export type StepId='details'|'native'|'luma';
 export function detailsMissing(event:AdminEvent){const missing:string[]=[];if(!event.title.trim())missing.push('A title');if(!event.slug)missing.push('A web address');if(!event.starts_at)missing.push('A date and start time');if(!event.ends_at)missing.push('An end time');if(!event.venue.trim())missing.push('A venue');if(!event.description.trim())missing.push('A description');if(!event.cover_path)missing.push('A landscape image');if(!event.square_path)missing.push('A square image');if(!event.cover_alt?.trim())missing.push('A description of the image');return missing}
 // The steps that get an event live. Luma only appears when the event needs sign-up.
-export function checklist(event:AdminEvent){const steps:{id:StepId;label:string;done:boolean}[]=[{id:'details',label:'Finish the event details',done:!detailsMissing(event).length},{id:'native',label:'Create it on Native',done:isLink(event.native_url)||!!event.native_skipped}];if(event.signup_required)steps.push({id:'luma',label:'Create it on Luma',done:isLink(event.luma_url)});steps.push({id:'socials',label:'Tell Amanda and Kevin',done:event.socials_sent});return steps}
+export function checklist(event:AdminEvent){const steps:{id:StepId;label:string;done:boolean}[]=[{id:'details',label:'Finish the event details',done:!detailsMissing(event).length},{id:'native',label:'Create it on Native',done:isLink(event.native_url)||!!event.native_skipped}];if(event.signup_required)steps.push({id:'luma',label:'Create it on Luma',done:isLink(event.luma_url)});return steps}
 export const progress=(event:AdminEvent)=>{const steps=checklist(event);return {done:steps.filter(step=>step.done).length,total:steps.length}};
 export const nextStep=(event:AdminEvent)=>checklist(event).find(step=>!step.done)?.label??null;
 
@@ -283,3 +282,49 @@ export function agendaMarkdown(input:AgendaInput){const sections:[string,string[
  return [`# ${input.title}`,'',`**Date:** ${longDay(input.date)}`,'',...sections.flatMap(([heading,body],i)=>[`## ${i+1}. ${heading}`,...(body.length?['',...body]:[]),''])].join('\n').trim()+'\n'}
 // A few days' notice: the agenda task falls due three days before the meeting, or today if that's already passed.
 export function agendaDue(meeting:string,today:string){const due=addDays(meeting,-3);return due<today?today:due}
+
+// --- The event space: planning, the day itself, and afterwards ---
+export type BudgetLine={item:string;amount:string};
+export type Requirement={item:string;kind:'tech'|'equipment'|'catering'|'accessibility'|'other';done:boolean};
+export type RunSheetRow={time:string;what:string;who:string};
+export type PostEvent={attendance?:number|null;went_well?:string;went_badly?:string;run_again?:'yes'|'no'|'maybe'|'';notes?:string;submitted_at?:string;submitted_by?:string};
+export type BudgetStatus='none'|'pending'|'approved'|'sent-back';
+export type EventPlan={event_id:string;lead_email:string|null;budget_lines:BudgetLine[];budget_status:BudgetStatus;budget_approved:number|string|null;budget_note:string;budget_decided_by:string|null;budget_decided_at:string|null;venue_status:'not-booked'|'requested'|'confirmed'|'not-needed';venue_reference:string;requirements:Requirement[];risk_status:'not-started'|'drafted'|'done'|'not-needed';risk_link:string|null;run_sheet:RunSheetRow[];post_event:PostEvent;post_event_link:string|null;photos_link:string|null;updated_at?:string};
+export const blankPlan=(event_id:string):EventPlan=>({event_id,lead_email:null,budget_lines:[],budget_status:'none',budget_approved:null,budget_note:'',budget_decided_by:null,budget_decided_at:null,venue_status:'not-booked',venue_reference:'',requirements:[],risk_status:'not-started',risk_link:null,run_sheet:[],post_event:{},post_event_link:null,photos_link:null});
+// What organisers can change. The budget decision is the Treasurer's, and the database only lets them make it.
+export const planEditable=(plan:EventPlan)=>({lead_email:plan.lead_email,budget_lines:plan.budget_lines.filter(l=>l.item.trim()||l.amount.trim()).map(l=>({item:l.item.trim(),amount:l.amount.trim()})),venue_status:plan.venue_status,venue_reference:plan.venue_reference.trim(),requirements:plan.requirements.filter(r=>r.item.trim()).map(r=>({...r,item:r.item.trim()})),risk_status:plan.risk_status,risk_link:plan.risk_link?.trim()||null,run_sheet:plan.run_sheet.filter(r=>r.time.trim()||r.what.trim()).map(r=>({time:r.time.trim(),what:r.what.trim(),who:r.who.trim()})),post_event:plan.post_event,post_event_link:plan.post_event_link,photos_link:plan.photos_link});
+export const money=(amount:number)=>`£${amount.toFixed(2).replace(/\.00$/,'')}`;
+const amountOf=(text:string)=>{const value=Number(text.replace(/[£,\s]/g,''));return Number.isFinite(value)?value:NaN};
+export const budgetTotal=(lines:BudgetLine[])=>lines.reduce((sum,line)=>sum+(amountOf(line.amount)||0),0);
+export function budgetProblems(lines:BudgetLine[]){const problems:Problems={};lines.forEach((line,i)=>{if(!line.item.trim()&&!line.amount.trim())return;if(!line.item.trim())problems[`item-${i}`]='Say what it’s for.';const value=amountOf(line.amount);if(!line.amount.trim()||Number.isNaN(value)||value<0)problems[`amount-${i}`]='Enter an amount in pounds, like 25 or 12.50.'});return problems}
+export const budgetLabel:Record<BudgetStatus,string>={none:'Not sent yet',pending:'Waiting for the Treasurer',approved:'Approved','sent-back':'Sent back'};
+export const venueLabel:Record<EventPlan['venue_status'],string>={'not-booked':'Not booked yet',requested:'Requested',confirmed:'Confirmed','not-needed':'No booking needed'};
+export const riskLabel:Record<EventPlan['risk_status'],string>={'not-started':'Not started',drafted:'Drafted',done:'Done and saved','not-needed':'Not needed'};
+export const requirementKinds:{id:Requirement['kind'];label:string}[]=[{id:'tech',label:'Tech'},{id:'equipment',label:'Equipment'},{id:'catering',label:'Catering'},{id:'accessibility',label:'Accessibility'},{id:'other',label:'Other'}];
+export const NOTHING_NEEDED='Nothing extra needed';
+
+export type SpaceTab='overview'|'details'|'planning'|'day'|'after';
+export const spaceTabs:{id:SpaceTab;label:string}[]=[{id:'overview',label:'Overview'},{id:'details',label:'Details'},{id:'planning',label:'Planning'},{id:'day',label:'On the day'},{id:'after',label:'After'}];
+export type SpaceStep={id:string;label:string;done:boolean;tab:SpaceTab};
+// One list of everything an event needs, in the order it usually happens, each pointing at the tab where it's done.
+export function spaceChecklist(event:AdminEvent,plan:EventPlan|null,now=Date.now()):SpaceStep[]{const p=plan??blankPlan(event.id??'');const started=!!event.starts_at&&new Date(event.starts_at).getTime()<=now;
+ const steps:SpaceStep[]=[{id:'details',label:'Add the details and both images',done:!detailsMissing(event).length,tab:'details'},{id:'lead',label:'Choose a lead organiser',done:!!p.lead_email,tab:'planning'},{id:'native',label:event.native_skipped?'Native skipped':'Create it on Native',done:isLink(event.native_url)||!!event.native_skipped,tab:'details'}];
+ if(event.signup_required)steps.push({id:'luma',label:'Create it on Luma',done:isLink(event.luma_url),tab:'details'});
+ steps.push({id:'budget',label:p.budget_status==='pending'?'Wait for the Treasurer to approve the budget':p.budget_status==='sent-back'?'Change the budget and send it again':'Get the budget approved',done:p.budget_status==='approved',tab:'planning'},
+  {id:'venue',label:p.venue_status==='not-needed'?'No venue booking needed':p.venue_status==='requested'?'Get the venue booking confirmed':'Book the venue',done:p.venue_status==='confirmed'||p.venue_status==='not-needed',tab:'planning'},
+  {id:'requirements',label:'Sort the requirements',done:p.requirements.length>0&&p.requirements.every(r=>r.done),tab:'planning'},
+  {id:'risk',label:p.risk_status==='not-needed'?'No risk assessment needed':'Save the risk assessment',done:p.risk_status==='done'||p.risk_status==='not-needed',tab:'planning'},
+  {id:'published',label:event.status==='cancelled'?'Cancelled':'Publish it on the site',done:event.status!=='draft',tab:'details'},
+  {id:'run-sheet',label:'Write the run sheet',done:p.run_sheet.length>0,tab:'day'});
+ if(started||p.post_event.submitted_at)steps.push({id:'post-event',label:'Fill in the post-event form',done:!!p.post_event.submitted_at,tab:'after'});
+ return steps}
+export function spaceProgress(event:AdminEvent,plan:EventPlan|null,now=Date.now()){const steps=spaceChecklist(event,plan,now);return {done:steps.filter(s=>s.done).length,total:steps.length,next:steps.find(s=>!s.done)??null}}
+export type SpaceStage='planning'|'live'|'write-up'|'done'|'cancelled';
+export function spaceStage(event:AdminEvent,plan:EventPlan|null,now=Date.now()):SpaceStage{if(event.status==='cancelled')return 'cancelled';if(event.status==='draft')return 'planning';const ended=!!event.ends_at&&new Date(event.ends_at).getTime()<now;if(!ended)return 'live';return plan?.post_event.submitted_at?'done':'write-up'}
+export const stageLabel:Record<SpaceStage,string>={planning:'Planning',live:'Live','write-up':'Write-up due',done:'Done',cancelled:'Cancelled'};
+// Academic years run from August: an event in November 2026 is in 2026-27.
+export function academicYear(iso:string){const [y,m]=iso.slice(0,7).split('-').map(Number);const start=m>=8?y:y-1;return `${start}-${String((start+1)%100).padStart(2,'0')}`}
+// Where an event's files go in the society's Drive: Events / 2026-27 / 2026-11-26 Rust workshop.
+export const eventFolder=(event:AdminEvent)=>`Events/${academicYear(event.starts_at??new Date().toISOString())}/${(event.starts_at??'').slice(0,10)} ${event.title.replace(/[/\\]/g,'-').trim()}`.replace(/\/ /,'/');
+export function postEventMarkdown(event:AdminEvent,post:PostEvent,lead:string){const when=event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'';const again={yes:'Yes',no:'No',maybe:'Maybe, with changes','':'Not said'}[post.run_again??''];
+ return [`# ${event.title}: after the event`,'',`**When:** ${when}`,`**Where:** ${event.venue}`,`**Lead organiser:** ${lead||'Not set'}`,`**People who came:** ${post.attendance??'Not counted'}`,`**Run it again?** ${again}`,'','## What went well','',post.went_well?.trim()||'Nothing noted.','','## What didn’t go well','',post.went_badly?.trim()||'Nothing noted.','',...(post.notes?.trim()?['## Notes','',post.notes.trim(),'']:[])].join('\n')}

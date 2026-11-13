@@ -11,7 +11,8 @@ import {EventsSkeleton,OverviewSkeleton} from './skeletons';
 import {useAccess} from './access';
 import {loadTeam} from './access';
 import {loadOpenTasks,TaskEditor,TaskRow} from './Tasks';
-import {isMine,todayInUk,type Task} from '../admin-rules';
+import {isMine,personName,spaceProgress,spaceStage,stageLabel,todayInUk,type EventPlan,type Member,type Task} from '../admin-rules';
+import {loadPlans} from './EventSpace';
 import {signOut} from './App';
 
 export function Login(){useTitle('Sign in');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');
@@ -48,13 +49,17 @@ export function Overview(){useTitle('Overview');const access=useAccess();const {
   <section className="admin-block" aria-labelledby="coming"><div className="admin-block-head"><h2 id="coming">Coming up</h2><a className="text-link" href="/admin/events?tab=upcoming">All upcoming<ArrowRight size={16} aria-hidden="true"/></a></div>{coming.length?<ul className="admin-rows">{coming.map(event=><li key={event.id}><a href={`/admin/events/${event.id}`}><span className="admin-row-date">{shortDate(event.starts_at)}</span><span className="admin-row-main"><b>{event.title}</b><small>{event.venue}</small></span><Status event={event} rows={rows}/><ArrowRight size={16} aria-hidden="true"/></a></li>)}</ul>:<EmptyNote>Nothing live yet. Start with “New event”.</EmptyNote>}</section></>}</section>}
 
 const tabs:{id:EventTab;label:string}[]=[{id:'drafts',label:'Drafts'},{id:'upcoming',label:'Upcoming'},{id:'past',label:'Past'},{id:'cancelled',label:'Cancelled'}];
-export function EventsList(){useTitle('Events');useSyncExternalStore(onRouteChange,()=>location.search);const {data,error,loading}=useLoad(loadEvents,'list');const [query,setQuery]=useState('');const now=Date.now();const rows=useSiteRows(site=>(data??[]).some(e=>siteBusy(sitePhase(e,site))));
+// One card per event: where it's up to, how much is done and what's next. The card opens the event's own space.
+function EventCard({event,plan,members}:{event:AdminEvent;plan:EventPlan|null;members:Member[]}){const {done,total,next}=spaceProgress(event,plan);const stage=spaceStage(event,plan);const lead=members.find(m=>m.email===plan?.lead_email);
+ return <li><a className="admin-event-card" href={`/admin/events/${event.id}`}><span className="admin-status" data-status={stage==='live'||stage==='done'?'published':stage==='cancelled'?'cancelled':stage==='write-up'?'busy':undefined}>{stageLabel[stage]}</span><b>{event.title}</b><small>{event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'No date yet'}{event.venue?` · ${event.venue}`:''}</small><span className="admin-card-bar" role="img" aria-label={`${done} of ${total} done`}><i style={{width:`${total?done/total*100:0}%`}}/></span><small className="admin-card-next">{stage==='cancelled'?'Cancelled':next?`Next: ${next.label}`:'Everything’s done'}{lead?` · Lead: ${personName(lead)}`:''}</small></a></li>}
+
+export function EventsList(){useTitle('Events');useSyncExternalStore(onRouteChange,()=>location.search);const {data,error,loading}=useLoad(loadEvents,'list');const plans=useLoad(loadPlans,'plans');const team=useLoad(loadTeam,'team');const [query,setQuery]=useState('');const now=Date.now();const rows=useSiteRows(site=>(data??[]).some(e=>siteBusy(sitePhase(e,site))));
  const grouped=useMemo(()=>Object.fromEntries(tabs.map(({id})=>[id,(data??[]).filter(e=>eventTab(e,now)===id)])) as Record<EventTab,AdminEvent[]>,[data]);
  const asked=new URLSearchParams(location.search).get('tab') as EventTab|null;const tab=tabs.some(t=>t.id===asked)?asked!:tabs.find(t=>grouped[t.id].length)?.id??'drafts';
  const list=grouped[tab].filter(e=>`${e.title} ${e.venue}`.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>tab==='past'?(b.starts_at??'').localeCompare(a.starts_at??''):(a.starts_at??'').localeCompare(b.starts_at??''));
  return <section className="admin-page admin-narrow"><header className="admin-head"><h1>Events</h1><NewButton/></header><Failure>{error}</Failure>{loading&&!data?<EventsSkeleton/>:data&&<>
   <div className="admin-tools"><nav aria-label="Event status" className="admin-tabs">{tabs.map(({id,label})=><a key={id} href={`/admin/events?tab=${id}`} aria-current={tab===id?'page':undefined}>{label}<span>{grouped[id].length}</span></a>)}</nav><div className="admin-search"><Search size={16} aria-hidden="true"/><Input aria-label="Search events" placeholder="Search" value={query} onChange={e=>setQuery(e.target.value)}/></div></div>
-  {list.length?<ul className="admin-rows">{list.map(event=><li key={event.id}><a href={`/admin/events/${event.id}`}><span className="admin-row-date">{shortDate(event.starts_at)}</span><span className="admin-row-main"><b>{event.title}</b><small>{event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'No date yet'}</small></span>{event.status==='draft'?<Progress event={event}/>:<Status event={event} rows={rows}/>}<ArrowRight size={16} aria-hidden="true"/></a></li>)}</ul>:<EmptyNote kind={query?'search':'none'}>{query?'No events match that search.':`No ${tabs.find(t=>t.id===tab)!.label.toLowerCase()} events.`}</EmptyNote>}</>}</section>}
+  {list.length?<ul className="admin-event-cards">{list.map(event=><EventCard key={event.id} event={event} plan={plans.data?.find(p=>p.event_id===event.id)??null} members={team.data?.members??[]}/>)}</ul>:<EmptyNote kind={query?'search':'none'}>{query?'No events match that search.':`No ${tabs.find(t=>t.id===tab)!.label.toLowerCase()} events.`}</EmptyNote>}</>}</section>}
 
 // Your name is what the committee sees on tasks. Saving reloads, so the rest of the admin picks it up.
 function NameForm(){const access=useAccess();const [name,setName]=useState(access.name??'');const [busy,setBusy]=useState(false);const [error,setError]=useState('');

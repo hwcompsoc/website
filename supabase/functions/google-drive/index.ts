@@ -86,6 +86,17 @@ async function saveDoc(name:string,html:string,path:string){const found=await wi
  const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name:name.trim(),mimeType:'application/vnd.google-apps.document',parents:[folder]})}\r\n--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n--${boundary}--`;
  const file=await google(token,'upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{type:`multipart/related; boundary=${boundary}`,body});return {id:file.id,link:file.webViewLink}}
 
+// A folder's link, making it first if it isn't there, such as an event's Photos folder.
+async function openFolder(path:string){const found=await withRoot();const token=await accessToken(found.refresh_token);const id=await folderAt(token,found,path);const folder=await get(token,id,'id,webViewLink');return {id,link:folder.webViewLink}}
+
+// Photos and receipts go straight from the browser to Google, so big files never pass through here. This starts a resumable
+// upload into the folder and hands back where to send the file. Google only accepts it from the page that asked.
+const UPLOAD_TYPES=/^(image\/(jpeg|png|webp|heic|heif|gif)|application\/pdf)$/;const UPLOAD_MAX=25*1024*1024;const ORIGIN=/^(https:\/\/[a-z0-9.-]+|http:\/\/(127\.0\.0\.1|localhost):\d{2,5})$/;
+async function uploadUrl(path:string,name:string,type:string,size:number,origin:string){if(!name.trim()||name.length>200)throw new Refused('The file needs a name.');if(!UPLOAD_TYPES.test(type))throw new Refused('Only photos and PDFs can be uploaded here.');if(!(size>0&&size<=UPLOAD_MAX))throw new Refused('That file is too big. The limit is 25 MB.');if(!ORIGIN.test(origin))throw new Refused('Upload from the admin.');
+ const found=await withRoot();const token=await accessToken(found.refresh_token);const folder=await folderAt(token,found,path);
+ const response=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':type,'X-Upload-Content-Length':String(size),Origin:origin},body:JSON.stringify({name:name.trim(),parents:[folder]})});
+ const url=response.headers.get('Location');if(!response.ok||!url){console.error(JSON.stringify({status:response.status}));throw new Error('Google Drive refused the upload.')}return {url}}
+
 // --- Owners: connecting ---
 const encoder=new TextEncoder();
 async function sign(text:string){const key=await crypto.subtle.importKey('raw',encoder.encode(CLIENT_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);return btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC',key,encoder.encode(text))))).replace(/[+/=]/g,c=>c==='+'?'-':c==='/'?'_':'')}
@@ -123,7 +134,7 @@ Deno.serve(async request=>{
   const {data:member,error:failure}=await admin.from('committee_members').select('role').eq('email',actor).maybeSingle();if(failure)throw failure;if(!member)throw new Refused('This is only for the committee.',403);
   const input=await request.json();const text=(key:string)=>String(input[key]??'');const action=text('action');
   const forOwners:Record<string,()=>Promise<unknown>>={'connect-url':()=>connectUrl(actor,text('redirect')),connect:()=>connect(actor,text('code'),text('state'),text('redirect')),folders:folderChoices,'choose-folder':()=>chooseRoot(text('folder')),disconnect};
-  const forEveryone:Record<string,()=>Promise<unknown>>={status,list:()=>list(text('folder')),search:()=>find(text('query')),'save-minutes':()=>saveDoc(text('name'),text('html'),'Minutes'),'save-doc':()=>saveDoc(text('name'),text('html'),text('folder'))};
+  const forEveryone:Record<string,()=>Promise<unknown>>={status,list:()=>list(text('folder')),search:()=>find(text('query')),'save-minutes':()=>saveDoc(text('name'),text('html'),'Minutes'),'save-doc':()=>saveDoc(text('name'),text('html'),text('folder')),folder:()=>openFolder(text('folder')),'upload-url':()=>uploadUrl(text('folder'),text('name'),text('type'),Number(input.size),text('origin'))};
   if(forOwners[action]&&member.role!=='owner')throw new Refused('Only an Owner can do this.',403);
   const run=forOwners[action]??forEveryone[action];if(!run)throw new Refused('Unknown action.');
   const result=await run();

@@ -11,7 +11,7 @@ type Status={configured:boolean;connected:boolean;account:string|null;root:{id:s
 type DriveFile={id:string;name:string;mimeType:string;modified:string|null;link:string|null};
 type Listing={trail:{id:string;name:string}[];files:DriveFile[]};
 // Everything goes through a server function, which holds the society's Google connection.
-export const drive=<T,>(body:Record<string,string>)=>callFunction<T>('google-drive',body);
+export const drive=<T,>(body:Record<string,string|number>)=>callFunction<T>('google-drive',body);
 const redirect=()=>`${location.origin}/admin/drive`;
 const icons:Record<DriveKind,LucideIcon>={folder:Folder,doc:FileText,sheet:Sheet,slides:Presentation,form:FileText,pdf:FileText,image:ImageIcon,video:Video,file:FileIcon};
 const changed=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',day:'numeric',month:'short',year:'numeric'}).format(new Date(iso));
