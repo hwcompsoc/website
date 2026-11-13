@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {blankClaim,claimProblems,claimEditable,claimAction,spentOn,yearReport,incomeProblems,postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -420,4 +420,30 @@ test('social posts: the words follow the event, and a post is done once every pl
  assert.equal(platformProblem({state:'posted',link:'instagram.com/p/1'}),'Paste the full link to the post, starting https://');
  assert.equal(weekStart('2026-11-13'),'2026-11-09');assert.equal(weekStart('2026-11-09'),'2026-11-09');
  assert.equal(weekLabel('2026-11-09','2026-11-13'),'This week');assert.equal(weekLabel('2026-11-16','2026-11-13'),'Next week');assert.equal(weekLabel('2026-11-23','2026-11-13'),'Week of Mon 23 Nov');
+});
+
+test('money: claims need a receipt and say who pays them back, each person sees only their next step, and the year report adds up', ()=>{
+ const claim={...blankClaim('2026-11-13'),description:'Pizza',amount:'45.50',receipt_link:'https://drive.google.com/x'};
+ assert.deepEqual(claimProblems(claim),{});
+ assert.deepEqual(Object.keys(claimProblems({...claim,receipt_link:null,payer:'company',payer_name:''})),['payer_name','receipt']);
+ assert.equal(claimEditable({...claim,amount:'£1,045.50'}).amount,1045.5);
+ const c=(status,claimant='a@x')=>({...claim,status,claimant_email:claimant});
+ assert.equal(claimAction(c('submitted'),'t@x',true),'approve');
+ assert.equal(claimAction(c('submitted','t@x'),'t@x',true),null,'nobody approves their own claim');
+ assert.equal(claimAction(c('approved'),'t@x',true),'submit-to-su');
+ assert.equal(claimAction(c('sent-back'),'a@x',false),'resubmit');
+ assert.equal(claimAction(c('tracking'),'a@x',false),'mark-sent');
+ assert.equal(claimAction(c('sent'),'a@x',false),'mark-paid');
+ assert.equal(claimAction(c('sent'),'t@x',true),null,'only the claimant knows when they’ve been paid');
+ const event={...blankEvent(),id:'e1',title:'Board games',starts_at:'2026-11-19T17:00:00Z',status:'published'};
+ const plans=[{...blankPlan('e1'),budget_lines:[{item:'Pizza',amount:'50'}],budget_status:'approved',budget_approved:'40.00'}];
+ const claims=[{...c('paid'),amount:45.5,spent_on:'2026-11-19',event_id:'e1'},{...c('sent-back'),amount:10,spent_on:'2026-11-19',event_id:'e1'},{...c('tracking'),payer:'company',payer_name:'Acme',amount:80,spent_on:'2026-11-20',event_id:null}];
+ assert.equal(spentOn('e1',claims),45.5,'sent-back claims don’t count');
+ const income=[{kind:'membership',description:'Fees',amount:'300',status:'received',received_on:'2026-10-01',due_on:null,event_id:null},{kind:'grant',description:'SU grant',amount:'200',status:'expected',due_on:'2027-01-10',received_on:null,event_id:null},{kind:'tickets',description:'Old',amount:'99',status:'received',received_on:'2026-07-01',due_on:null,event_id:null}];
+ const report=yearReport({year:'2026-27',claims,income,events:[event],plans});
+ assert.match(report,/\*\*Money in:\*\* £300\n\*\*Paid out by the society:\*\* £45\.50\n\*\*Balance for the year:\*\* £254\.50/);
+ assert.match(report,/Still expected: SU grant \(£200\)\./);
+ assert.match(report,/\| Board games \| £40 \| £45\.50 \|/);
+ assert.match(report,/1 paid back by companies or sponsors, totalling £80\. These didn’t use society money\./);
+ assert.deepEqual(Object.keys(incomeProblems({kind:'grant',description:'Grant',amount:'200',status:'applying',due_on:null})),['due_on'],'a grant application needs its deadline');
 });

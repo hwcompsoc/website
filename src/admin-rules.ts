@@ -51,9 +51,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'photos'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'photos'|'money'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='photos'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='photos'||a==='money'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -351,3 +351,39 @@ export function postText(event:AdminEvent,post:PostKind,site=''){const day=(iso:
 // The calendar shows posts by week, starting on Monday.
 export function weekStart(iso:string){const [y,m,d]=iso.split('-').map(Number);const date=new Date(Date.UTC(y,m-1,d));const back=(date.getUTCDay()+6)%7;return new Date(date.getTime()-back*86400000).toISOString().slice(0,10)}
 export function weekLabel(monday:string,today:string){const thisWeek=weekStart(today);if(monday===thisWeek)return 'This week';if(monday===addDays(thisWeek,7))return 'Next week';if(monday===addDays(thisWeek,-7))return 'Last week';return `Week of ${dayName(monday)}`}
+
+// --- Money: expense claims, income and the year's report ---
+export type ClaimStatus='submitted'|'sent-back'|'approved'|'tracking'|'sent'|'paid';
+export type Payer='su'|'company'|'sponsor';
+export type Claim={id?:string;claimant_email?:string;description:string;amount:number|string;spent_on:string;payer:Payer;payer_name:string;event_id:string|null;receipt_link:string|null;status?:ClaimStatus;note?:string;decided_by?:string|null;decided_at?:string|null;paid_at?:string|null;created_at?:string};
+export const payerLabel:Record<Payer,string>={su:'The SU or the society',company:'An outside company',sponsor:'A sponsor'};
+export const claimStatusLabel:Record<ClaimStatus,string>={submitted:'Waiting for approval','sent-back':'Sent back',approved:'Approved, to submit to the SU',tracking:'To send to whoever pays',sent:'Sent, waiting for payment',paid:'Paid'};
+export const blankClaim=(today:string):Claim=>({description:'',amount:'',spent_on:today,payer:'su',payer_name:'',event_id:null,receipt_link:null});
+export function claimProblems(claim:Claim){const problems:Problems={};if(!claim.description.trim())problems.description='Say what it was for.';const amount=Number(String(claim.amount).replace(/[£,\s]/g,''));if(!String(claim.amount).trim()||!Number.isFinite(amount)||amount<=0)problems.amount='Enter the amount in pounds, like 12.50.';if(!/^\d{4}-\d{2}-\d{2}$/.test(claim.spent_on))problems.spent_on='Choose the date you paid.';if(claim.payer!=='su'&&!claim.payer_name.trim())problems.payer_name='Say who’s paying it back.';if(!claim.receipt_link)problems.receipt='Add the receipt, as a PDF or a photo.';return problems}
+export const claimEditable=(claim:Claim)=>({description:claim.description.trim(),amount:Number(String(claim.amount).replace(/[£,\s]/g,'')),spent_on:claim.spent_on,payer:claim.payer,payer_name:claim.payer==='su'?'':claim.payer_name.trim(),event_id:claim.event_id,receipt_link:claim.receipt_link});
+// What the person looking can do next with a claim, if anything.
+export function claimAction(claim:Claim,me:string,canApprove:boolean):'approve'|'submit-to-su'|'resubmit'|'mark-sent'|'mark-paid'|null{const mine=claim.claimant_email===me;
+ if(claim.status==='submitted')return canApprove&&!mine?'approve':null;if(claim.status==='approved')return canApprove&&!mine?'submit-to-su':null;if(claim.status==='sent-back')return mine?'resubmit':null;if(claim.status==='tracking')return mine?'mark-sent':null;if(claim.status==='sent')return mine?'mark-paid':null;return null}
+// Money spent on an event: its claims, except any sent back.
+export const spentOn=(eventId:string,claims:Claim[])=>claims.filter(c=>c.event_id===eventId&&c.status!=='sent-back').reduce((sum,c)=>sum+Number(c.amount),0);
+
+export type IncomeKind='membership'|'tickets'|'sponsorship'|'grant'|'other';
+export type IncomeStatus='applying'|'expected'|'received'|'declined';
+export type Income={id?:string;kind:IncomeKind;description:string;amount:number|string;status:IncomeStatus;due_on:string|null;received_on:string|null;event_id:string|null;created_at?:string};
+export const incomeKindLabel:Record<IncomeKind,string>={membership:'Membership',tickets:'Tickets',sponsorship:'Sponsorship',grant:'Grant',other:'Other'};
+export const incomeStatusLabel:Record<IncomeStatus,string>={applying:'Applying',expected:'Expected',received:'Received',declined:'Declined'};
+export function incomeProblems(income:Income){const problems:Problems={};if(!income.description.trim())problems.description='Say what it’s for.';const amount=Number(String(income.amount).replace(/[£,\s]/g,''));if(!String(income.amount).trim()||!Number.isFinite(amount)||amount<0)problems.amount='Enter the amount in pounds.';if(income.status==='applying'&&!income.due_on)problems.due_on='Add the application deadline.';return problems}
+
+// The year runs from August, like the committee's.
+export const inAcademicYear=(iso:string|null|undefined,year:string)=>!!iso&&academicYear(iso)===year;
+export function yearReport({year,claims,income,events,plans}:{year:string;claims:Claim[];income:Income[];events:AdminEvent[];plans:EventPlan[]}){
+ const theirs=claims.filter(c=>inAcademicYear(c.spent_on,year)&&c.status!=='sent-back');const society=theirs.filter(c=>c.payer==='su');const elsewhere=theirs.filter(c=>c.payer!=='su');
+ const got=income.filter(i=>i.status==='received'&&inAcademicYear(i.received_on??i.due_on,year));const waiting=income.filter(i=>i.status==='expected'&&inAcademicYear(i.due_on??i.created_at,year));
+ const sum=(list:{amount:number|string}[])=>list.reduce((t,x)=>t+Number(x.amount),0);
+ const byKind=(Object.keys(incomeKindLabel) as IncomeKind[]).map(kind=>({kind,total:sum(got.filter(i=>i.kind===kind))})).filter(k=>k.total>0);
+ const yearEvents=events.filter(e=>e.status!=='draft'&&inAcademicYear(e.starts_at,year)).sort((a,b)=>(a.starts_at??'').localeCompare(b.starts_at??''));
+ const rows=yearEvents.map(e=>{const plan=plans.find(p=>p.event_id===e.id);return {title:e.title,approved:plan?.budget_status==='approved'?Number(plan.budget_approved??0):null,spent:spentOn(e.id!,society)}}).filter(r=>r.approved!==null||r.spent>0);
+ const lines=[`# Finances for ${year}`,'',`**Money in:** ${money(sum(got))}`,`**Paid out by the society:** ${money(sum(society))}`,`**Balance for the year:** ${money(sum(got)-sum(society))}`,'','## Money in','',...(byKind.length?['| Kind | Amount |','|---|---|',...byKind.map(k=>`| ${incomeKindLabel[k.kind]} | ${money(k.total)} |`)]:['Nothing received yet.']),
+  ...(waiting.length?['','Still expected: '+waiting.map(i=>`${i.description} (${money(Number(i.amount))})`).join(', ')+'.']:[]),'','## Events','',...(rows.length?['| Event | Budget | Spent |','|---|---|---|',...rows.map(r=>`| ${r.title.replace(/\|/g,'/')} | ${r.approved===null?'None':money(r.approved)} | ${money(r.spent)} |`)]:['No event spending recorded.']),
+  '','## Expense claims','',`${society.length} paid by the society, totalling ${money(sum(society))}.`,...(elsewhere.length?[`${elsewhere.length} paid back by companies or sponsors, totalling ${money(sum(elsewhere))}. These didn’t use society money.`]:[]),...(theirs.filter(c=>c.status!=='paid').length?[`${theirs.filter(c=>c.status!=='paid').length} not yet paid.`]:[]),''];
+ return lines.join('\n')}

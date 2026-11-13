@@ -489,3 +489,15 @@
 .admin-photo-row{flex-wrap:wrap;gap:var(--space-8)}
 .admin-photo-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-8)}
 .admin-inline-notice{margin:0}
+
+/* Money */
+.admin-claim-row{flex-wrap:wrap;gap:var(--space-8)}
+.admin-claim-row .admin-row-main small{display:block}
+.admin-claim-reason{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-8);margin-top:var(--space-8)}
+.admin-claim-reason input{flex:1 1 220px;min-width:0}
+.admin-label{display:block;margin-bottom:var(--space-8);font-size:var(--fs-body);font-weight:600;color:var(--ink)}
+.admin-money-table{min-width:520px}
+.admin-money-table td,.admin-money-table th{padding:var(--space-8) var(--space-12);border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.admin-money-table td[data-over]{color:var(--danger);font-weight:600}
+.admin-report{white-space:pre-wrap;max-height:480px;overflow:auto}
+.admin-page>.admin-actions+.admin-block{margin-top:var(--space-24)}
