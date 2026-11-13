@@ -52,9 +52,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'help'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='help'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -153,3 +153,56 @@ export const readableSize=(bytes:number)=>bytes<1024*1024?`${Math.max(1,Math.rou
 export type SiteDocument={title:string;approved_on:string;file_path:string};
 const shownDocuments=(rows:SiteDocument[])=>JSON.stringify(rows.map(row=>[row.title,row.approved_on,row.file_path]));
 export const documentPhase=(saved:SiteDocument[]|undefined,site:SiteDocument[]|null):SitePhase=>phaseFrom(saved?shownDocuments(saved):null,site&&shownDocuments(site));
+
+// Meeting minutes. A Teams transcript repeats who's speaking and when on every line, which is most of its length, so it's
+// cut down to one "Name: what they said" line per turn before it's sent. The server function checks the same limit.
+export const TRANSCRIPT_MAX=120000;
+const CLOCK=String.raw`(?:\d+:)?\d{1,2}:\d{2}(?:\.\d+)?`;
+const STAMP=new RegExp(String.raw`^${CLOCK}(?:\s*-->\s*${CLOCK}.*)?$`);
+// "Name   0:03", "Name 1:02:03", "Name 0:00:03.120 --> 0:00:05.440" or "Name 3 minutes 5 seconds".
+const HEADER=new RegExp(String.raw`^(.{1,80}?)\s+(?:${CLOCK}(?:\s*-->\s*${CLOCK})?|(?:\d+ hours? ?)?(?:\d+ minutes? ?)?(?:\d+ seconds?)?)$`);
+export function cleanTranscript(raw:string){const lines=raw.replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim());
+ // Only treat "words then a time" as a speaker line if that speaker comes up more than once, or Teams' wide gap separates the
+ // name from the time, so "Meet at 5:30" stays a sentence.
+ const named=new Map<string,number>();for(const line of lines){const who=line.match(HEADER)?.[1];if(who&&/\d/.test(line.slice(who.length)))named.set(who,(named.get(who)??0)+1)}
+ const turns:{who:string;said:string}[]=[];let speaker='';let note=false;
+ const add=(who:string,said:string)=>{said=said.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();if(!said)return;const last=turns.at(-1);if(last&&who&&last.who===who)last.said+=` ${said}`;else turns.push({who,said})};
+ for(const line of lines){if(!line){note=false;continue}if(note||line==='WEBVTT')continue;if(/^NOTE\b/.test(line)){note=true;continue}
+  if(STAMP.test(line)||/^\d+$/.test(line)||/^[0-9a-f-]{36}\/\d+-\d+$/i.test(line))continue;
+  const voice=line.match(/^<v\s+([^>]+)>(.*)$/);if(voice){speaker='';add(voice[1].trim(),voice[2]);continue}
+  const header=line.match(HEADER);if(header&&((named.get(header[1])??0)>1||/^(?: {2,}|	)/.test(line.slice(header[1].length)))){speaker=header[1];continue}
+  add(speaker,line)}
+ return turns.map(turn=>turn.who?`${turn.who}: ${turn.said}`:turn.said).join('\n')}
+export function minutesProblems({title,date,transcript}:{title:string;date:string;transcript:string}){const problems:Problems={};
+ if(!title.trim())problems.title='Name the meeting.';if(!/^\d{4}-\d{2}-\d{2}$/.test(date))problems.date='Choose the date of the meeting.';
+ if(!transcript.trim())problems.transcript='Paste the transcript, or open the file from Teams.';else if(transcript.length>TRANSCRIPT_MAX)problems.transcript='That’s longer than about two hours of meeting. Split it in two and do each half separately.';
+ return problems}
+
+// Minutes are saved to Drive as HTML, which Drive turns into a Google Doc with real headings and a real table.
+// Only the Markdown the minutes use: headings, **bold**, bullet and numbered lists, tables and paragraphs.
+const escapeHtml=(text:string)=>text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const inlineHtml=(text:string)=>escapeHtml(text).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+export function minutesHtml(markdown:string,title:string){const out:string[]=[];let para:string[]=[];let list:'ul'|'ol'|''='';let table:string[][]|null=null;
+ const endPara=()=>{if(para.length)out.push(`<p>${para.map(inlineHtml).join('<br>')}</p>`);para=[]};
+ const endList=()=>{if(list)out.push(`</${list}>`);list=''};
+ const endTable=()=>{if(!table)return;const [head,...rows]=table;out.push(`<table border="1" cellpadding="6" style="border-collapse:collapse"><tr>${head.map(cell=>`<th>${inlineHtml(cell)}</th>`).join('')}</tr>${rows.map(row=>`<tr>${row.map(cell=>`<td>${inlineHtml(cell)}</td>`).join('')}</tr>`).join('')}</table>`);table=null};
+ for(const raw of markdown.replace(/\r\n?/g,'\n').split('\n')){const line=raw.trim();
+  if(!line){endPara();endList();endTable();continue}
+  if(/^\|.*\|$/.test(line)){endPara();endList();const cells=line.slice(1,-1).split('|').map(cell=>cell.trim());if(!cells.every(cell=>/^:?-{2,}:?$/.test(cell)))(table??=[]).push(cells);continue}
+  endTable();
+  const heading=line.match(/^(#{1,3})\s+(.+)$/);if(heading){endPara();endList();const level=heading[1].length;out.push(`<h${level}>${inlineHtml(heading[2])}</h${level}>`);continue}
+  const item=line.match(/^[-*]\s+(.+)$/)??line.match(/^\d+[.)]\s+(.+)$/);
+  if(item){endPara();const kind=/^[-*]/.test(line)?'ul':'ol';if(list!==kind){endList();out.push(`<${kind}>`);list=kind}out.push(`<li>${inlineHtml(item[1])}</li>`);continue}
+  endList();para.push(line)}
+ endPara();endList();endTable();
+ return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body>${out.join('')}</body></html>`}
+// Dated first, so they sort in order in the Minutes folder.
+export const minutesDocName=(date:string,title:string)=>`${date} ${title.trim().replace(/\s+/g,' ')}`;
+
+export type DriveKind='folder'|'doc'|'sheet'|'slides'|'form'|'pdf'|'image'|'video'|'file';
+export function driveKind(mimeType:string):DriveKind{const google=mimeType.match(/^application\/vnd\.google-apps\.(\w+)$/)?.[1];
+ if(google)return google==='folder'?'folder':google==='document'?'doc':google==='spreadsheet'?'sheet':google==='presentation'?'slides':google==='form'?'form':'file';
+ if(mimeType==='application/pdf')return 'pdf';if(mimeType.startsWith('image/'))return 'image';if(mimeType.startsWith('video/'))return 'video';
+ if(/wordprocessingml|msword|opendocument\.text/.test(mimeType))return 'doc';if(/spreadsheetml|ms-excel|text\/csv/.test(mimeType))return 'sheet';if(/presentationml|ms-powerpoint/.test(mimeType))return 'slides';
+ return 'file'}
+export const driveKindLabel:Record<DriveKind,string>={folder:'Folder',doc:'Document',sheet:'Spreadsheet',slides:'Slides',form:'Form',pdf:'PDF',image:'Image',video:'Video',file:'File'};

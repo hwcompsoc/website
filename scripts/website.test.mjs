@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -37,7 +37,7 @@ test('The form explains exactly what stands between an event and going live',()=
 });
 test('Admin routes and the return address after sign-in',()=>{
  const id='3647cf31-c4d8-467e-88a9-cd3b12d256b6';const name=path=>adminRoute(path).name;
- assert.equal(name('/admin/documents'),'documents');assert.equal(name('/admin/help'),'help');assert.equal(name('/admin/help/x'),'notfound');assert.equal(name('/admin/guides'),'guides');assert.equal(name('/admin/guides/new'),'guide');assert.equal(name('/admin/guides/'+id),'guide');assert.equal(adminRoute('/admin/guides/'+id).id,id);assert.equal(name('/admin/guides/nope'),'notfound');assert.equal(name('/admin/guides/'+id+'/x'),'notfound');assert.equal(name('/admin/faqs'),'faqs');assert.equal(name('/admin/faqs/x'),'notfound');assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
+ assert.equal(name('/admin/documents'),'documents');assert.equal(name('/admin/minutes'),'minutes');assert.equal(name('/admin/drive'),'drive');assert.equal(name('/admin/drive/x'),'notfound');assert.equal(name('/admin/minutes/x'),'notfound');assert.equal(name('/admin/help'),'help');assert.equal(name('/admin/help/x'),'notfound');assert.equal(name('/admin/guides'),'guides');assert.equal(name('/admin/guides/new'),'guide');assert.equal(name('/admin/guides/'+id),'guide');assert.equal(adminRoute('/admin/guides/'+id).id,id);assert.equal(name('/admin/guides/nope'),'notfound');assert.equal(name('/admin/guides/'+id+'/x'),'notfound');assert.equal(name('/admin/faqs'),'faqs');assert.equal(name('/admin/faqs/x'),'notfound');assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
  for(const bad of ['/admin/nope','/admin/events/nope','/admin/events/'+id+'/nope','/admin/events/new/x','/admin/login/x'])assert.equal(name(bad),'notfound',bad);
  assert.equal(safeNext('/admin/events?tab=past'),'/admin/events?tab=past');for(const bad of [null,'','https://evil.example','//evil.example','/events','/administrator','/admin//evil.example','/admin/login','/admin/set-password'])assert.equal(safeNext(bad),'/admin',String(bad));
 });
@@ -284,4 +284,31 @@ test('Passage links: short selections whole, long ones by their first and last w
  assert.equal(textFragment(long),'#:~:text=Whether%20you%20want%20to,start%20is%20the%20community.');
  assert.equal(textFragment('   '),'');
  assert.equal(passageLink('https://x.test','/events/git','no preparation'),'https://x.test/events/git#:~:text=no%20preparation');
+});
+
+test('meeting transcripts are cut down to one line per turn', ()=>{
+ const vtt='WEBVTT\r\n\r\n0e2b5f1c-1111-2222-3333-444455556666/12-0\r\n00:00:03.120 --> 00:00:05.440\r\n<v Alex Smith>Welcome, everyone.</v>\r\n\r\n0e2b5f1c-1111-2222-3333-444455556666/13-0\r\n00:00:05.440 --> 00:00:07.000\r\n<v Alex Smith>First, the budget.</v>\r\n\r\n00:00:07.000 --> 00:00:09.000\r\n<v Sam Lee>We have £200 left.</v>\r\n\r\nNOTE\r\nignored note\r\n\r\n';
+ assert.equal(cleanTranscript(vtt),'Alex Smith: Welcome, everyone. First, the budget.\nSam Lee: We have £200 left.');
+ const copied='Alex Smith   0:03\nWelcome, everyone.\n\nSam Lee   0:07\nLet’s meet at 5:30\n\nAlex Smith   1:02:03\nSounds good.';
+ assert.equal(cleanTranscript(copied),'Alex Smith: Welcome, everyone.\nSam Lee: Let’s meet at 5:30\nAlex Smith: Sounds good.');
+ const spoken='Alex Smith 3 minutes 5 seconds\nHello.\nSam Lee 4 minutes\nHi.\nAlex Smith 5 minutes 2 seconds\nBye.\nSam Lee 6 minutes\nBye.';
+ assert.equal(cleanTranscript(spoken),'Alex Smith: Hello.\nSam Lee: Hi.\nAlex Smith: Bye.\nSam Lee: Bye.');
+ assert.equal(cleanTranscript('Plain notes\n\nMeet at 5:30'),'Plain notes\nMeet at 5:30');
+ assert.equal(cleanTranscript('  \n '),'');
+ assert.deepEqual(minutesProblems({title:'AGM',date:'2026-11-12',transcript:'Hi'}),{});
+ assert.deepEqual(Object.keys(minutesProblems({title:' ',date:'',transcript:''})).sort(),['date','title','transcript']);
+ assert.ok(minutesProblems({title:'AGM',date:'2026-11-12',transcript:'x'.repeat(TRANSCRIPT_MAX+1)}).transcript);
+});
+
+test('minutes become a Google Doc with real headings, lists and tables', ()=>{
+ const html=minutesHtml('# Committee <meeting>\n\n**Date:** Thursday\n**Present:** Alex, Sam\n\n## 1. Budget\nWe have £200 & change.\n- One\n- Two\n\n1. First\n2. Second\n\n## Actions\n\n| Action | Who | By when |\n|---|---|---|\n| Book room | **Sam** | Not set |\n','A & B');
+ assert.match(html,/<title>A &amp; B<\/title>/);
+ assert.match(html,/<h1>Committee &lt;meeting&gt;<\/h1>/);
+ assert.match(html,/<p><b>Date:<\/b> Thursday<br><b>Present:<\/b> Alex, Sam<\/p>/);
+ assert.match(html,/<h2>1\. Budget<\/h2><p>We have £200 &amp; change\.<\/p><ul><li>One<\/li><li>Two<\/li><\/ul><ol><li>First<\/li><li>Second<\/li><\/ol>/);
+ assert.match(html,/<tr><th>Action<\/th><th>Who<\/th><th>By when<\/th><\/tr><tr><td>Book room<\/td><td><b>Sam<\/b><\/td><td>Not set<\/td><\/tr><\/table>/);
+ assert.doesNotMatch(html,/---/);
+ assert.equal(minutesDocName('2026-11-12','  Committee   meeting '),'2026-11-12 Committee meeting');
+ assert.equal(driveKind('application/vnd.google-apps.folder'),'folder');assert.equal(driveKind('application/vnd.google-apps.document'),'doc');assert.equal(driveKind('application/vnd.google-apps.spreadsheet'),'sheet');
+ assert.equal(driveKind('application/pdf'),'pdf');assert.equal(driveKind('image/png'),'image');assert.equal(driveKind('application/vnd.openxmlformats-officedocument.wordprocessingml.document'),'doc');assert.equal(driveKind('application/zip'),'file');
 });

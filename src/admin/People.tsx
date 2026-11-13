@@ -4,15 +4,14 @@ import {Button} from '../components/ui/button';
 import {Input} from '../components/ui/input';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
 import {Popover,PopoverContent,PopoverTrigger} from '../components/ui/popover';
-import {supabase} from '../supabase';
-import {ConfirmDialog,CopyButton,Failure,Field,fieldProps,useLoad,useTitle,type Confirm} from './ui';
+import {callFunction,ConfirmDialog,CopyButton,Failure,Field,fieldProps,useLoad,useTitle,type Confirm} from './ui';
 import {PeopleSkeleton} from './skeletons';
 
 type Person={email:string;role:'owner'|'member';status:'active'|'waiting'|'no-account'};
 const statusText={active:'',waiting:'Hasn’t chosen a password yet','no-account':'No account yet'};
 
 // Everything goes through a server function, because creating accounts needs a key that can't be in the browser.
-async function access<T>(body:Record<string,string>){const {data,error}=await supabase.functions.invoke('committee-access',{body});if(error){let message='That didn’t work. Check your connection and try again.';try{message=(await (error as {context:Response}).context.json()).error??message}catch{/* Not a reply from the function: keep the general message. */}throw new Error(message)}return data as T}
+const access=<T,>(body:Record<string,string>)=>callFunction<T>('committee-access',body);
 
 function Password({shown,onClose}:{shown:{email:string;password:string}|null;onClose:()=>void}){return <Dialog open={!!shown} onOpenChange={open=>{if(!open)onClose()}}><DialogContent className="website-dialog admin-confirm">{shown&&<><DialogHeader><DialogTitle>Temporary password</DialogTitle><DialogDescription>For {shown.email}. Send it to them privately. It won’t be shown again, and they’ll choose their own when they first sign in.</DialogDescription></DialogHeader><code className="admin-password-once">{shown.password}</code><DialogFooter><CopyButton label="Copy password" value={shown.password}/><Button className="site-button" onClick={onClose}>Done</Button></DialogFooter></>}</DialogContent></Dialog>}
 

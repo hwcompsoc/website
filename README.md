@@ -50,6 +50,34 @@ The committee manages events at `/admin`, a separate site in `src/admin` that lo
 
 Owners change who has access at `/admin/people`, which creates accounts and shows temporary passwords that people must change when they first sign in. It uses the `committee-access` edge function in `supabase/functions`, because creating accounts needs the secret key. There must always be an Owner, and nobody can change their own access, so to hand over, make the new person an Owner and let them remove you. If nobody can get in, set `role` to `owner` in the `committee_members` table in Supabase, then use `node scripts/committee-accounts.mjs`: it creates missing accounts, `--reset <email>` replaces a password, and `--remove-old` deletes accounts for people no longer on the list. It needs the Supabase secret key, so run it in your own terminal. The addresses aren't kept in this repository, because it's public.
 
+### Minutes
+
+`/admin/minutes` turns a Teams transcript into a first draft of a meeting's minutes. The browser strips the timestamps (`cleanTranscript` in `src/admin-rules.ts`), then the `generate-minutes` edge function checks the person is on the committee and asks Cloudflare Workers AI to write them. The transcript isn't stored, and the function logs who used it and how long the transcript was, never what it said. The minutes are kept only when someone saves them to Drive. Workers AI has a free daily allowance of 10,000 neurons, which is enough for several meetings a day. It resets at midnight UTC.
+
+To set it up, create an API token in Cloudflare with the Workers AI permission, then:
+
+```
+supabase functions deploy generate-minutes
+supabase secrets set CLOUDFLARE_ACCOUNT_ID=<account id> CLOUDFLARE_AI_TOKEN=<token>
+```
+
+To try a different model, set `MINUTES_MODEL` to its Workers AI name. It needs a context window of at least 32,000 tokens. Gemini's free tier isn't an option, because Google's terms only allow its paid tier for apps used in the UK.
+
+### Google Drive
+
+`/admin/drive` shows one folder of the society's Google account to the whole committee, and **Save to Drive** on the Minutes page saves minutes as Google Docs in a `Minutes` folder inside it. Drive is the only copy: the site keeps nothing. Everything goes through the `google-drive` edge function, which holds the connection in the `google_drive` table that only the secret key can read. It only lists, reads and creates, and refuses to show anything outside the chosen folder. It asks Google for full Drive access because the narrower permission can't add files to a folder the app didn't create.
+
+To set it up, signed in to Google as the society's account:
+
+1. In [Google Cloud](https://console.cloud.google.com), create a project and enable the **Google Drive API**.
+2. In **Google Auth Platform**, set it up as an **External** app. Under **Data access**, add the `https://www.googleapis.com/auth/drive` scope. Under **Audience**, choose **Publish app**. While it's in testing, Google ends the connection after 7 days. It doesn't need Google's review, because only the society's account uses it.
+3. Under **Clients**, create a **Web application** client with these redirect URIs: `https://<the site's address>/admin/drive` and `http://127.0.0.1:5173/admin/drive`.
+4. Add its ID and secret to Supabase, in each project that should use it: `supabase secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...`.
+5. Deploy the function with `supabase functions deploy google-drive --no-verify-jwt`, and apply the migration.
+6. An Owner opens `/admin/drive`, chooses **Connect Google Drive**, signs in as the society's account, clicks past the "unverified app" warning, and chooses the folder.
+
+If the society's Google password changes, Google may end the connection. The Drive page then asks an Owner to connect again.
+
 ### Resources switch
 
 The Resources page is switched off unless `VITE_SHOW_RESOURCES` is `true`. While it's off, the menus and Home leave it out, `/resources` and every guide's address show the not-found page, and the sitemap, link previews and the site's download leave the guides out. The admin still works as usual and says the page is off. To switch it on, add `VITE_SHOW_RESOURCES=true` in Vercel's environment variables for Production and redeploy, or put it in `.env.local` locally. Even when it's on, the page only appears once at least one guide is confirmed. Confirmed guides are still published in `live-guides.json` either way, so the admin can tell when a change has gone live.
