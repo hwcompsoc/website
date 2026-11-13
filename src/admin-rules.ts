@@ -157,6 +157,10 @@ export const documentPhase=(saved:SiteDocument[]|undefined,site:SiteDocument[]|n
 // Meeting minutes. A Teams transcript repeats who's speaking and when on every line, which is most of its length, so it's
 // cut down to one "Name: what they said" line per turn before it's sent. The server function checks the same limit.
 export const TRANSCRIPT_MAX=120000;
+// Roughly how long the AI takes, from the transcript's length: about 20 seconds, plus a second for every 2,000 characters.
+export const expectedMinutesSeconds=(characters:number)=>Math.round(20+characters/2000);
+// Which step the progress shows: sending for the first 2 seconds, then reading for about a third of the time, then writing.
+export const minutesStage=(seconds:number,expected:number)=>seconds<2?0:seconds<Math.max(4,expected*.35)?1:2;
 const CLOCK=String.raw`(?:\d+:)?\d{1,2}:\d{2}(?:\.\d+)?`;
 const STAMP=new RegExp(String.raw`^${CLOCK}(?:\s*-->\s*${CLOCK}.*)?$`);
 // "Name   0:03", "Name 1:02:03", "Name 0:00:03.120 --> 0:00:05.440" or "Name 3 minutes 5 seconds".

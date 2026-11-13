@@ -352,3 +352,20 @@
 .admin-drive-steps{margin:0 0 var(--space-20);padding-left:var(--space-20);display:grid;gap:var(--space-8);list-style:decimal;font-size:var(--fs-body);line-height:1.6}
 .admin-drive-owner{margin-top:var(--space-32)}
 .admin-drive-owner p{margin:0 0 var(--space-12);font-size:var(--fs-body);overflow-wrap:anywhere}
+
+/* Minutes: progress while the AI writes */
+.admin-writing{display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-12);max-width:600px;padding:var(--space-16);border:1px solid var(--line);border-radius:8px;background:var(--tint)}
+.admin-writing-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-16);width:100%;font-size:var(--fs-body);color:var(--ink)}
+.admin-writing-clock{font-family:var(--font-pixel);font-size:var(--pixel-sm);font-variant-numeric:tabular-nums;color:var(--text-quiet)}
+.admin-writing-steps{display:flex;flex-direction:column;gap:var(--space-8);margin:0;padding:0;list-style:none;font-size:var(--fs-body)}
+.admin-writing-steps li{display:flex;align-items:center;gap:var(--space-8);color:var(--text-quiet)}
+.admin-writing-steps li[data-state=done]{color:var(--text)}
+.admin-writing-steps li[data-state=now]{color:var(--ink);font-weight:600}
+.admin-writing-dot{display:inline-block;width:16px;height:16px;border:2px solid var(--line-strong);border-radius:50%}
+.admin-writing .admin-quiet{margin:0}
+.admin-spin{animation:admin-spin 1s linear infinite}
+@keyframes admin-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.admin-spin{animation:none}}
+.admin-minutes-sk{display:flex;flex-direction:column;gap:var(--space-8)}
+.admin-minutes-sk .admin-sk-h1{margin-bottom:var(--space-8)}
+.admin-minutes-sk-item{display:flex;flex-direction:column;gap:var(--space-8);margin-block:var(--space-12)}

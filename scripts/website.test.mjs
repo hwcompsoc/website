@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -311,4 +311,13 @@ test('minutes become a Google Doc with real headings, lists and tables', ()=>{
  assert.equal(minutesDocName('2026-11-12','  Committee   meeting '),'2026-11-12 Committee meeting');
  assert.equal(driveKind('application/vnd.google-apps.folder'),'folder');assert.equal(driveKind('application/vnd.google-apps.document'),'doc');assert.equal(driveKind('application/vnd.google-apps.spreadsheet'),'sheet');
  assert.equal(driveKind('application/pdf'),'pdf');assert.equal(driveKind('image/png'),'image');assert.equal(driveKind('application/vnd.openxmlformats-officedocument.wordprocessingml.document'),'doc');assert.equal(driveKind('application/zip'),'file');
+});
+
+test('the minutes progress moves from sending to reading to writing, paced by the transcript length', ()=>{
+ assert.equal(expectedMinutesSeconds(0),20);
+ assert.equal(expectedMinutesSeconds(120000),80);
+ assert.equal(minutesStage(0,40),0);
+ assert.equal(minutesStage(5,40),1);
+ assert.equal(minutesStage(20,40),2);
+ assert.equal(minutesStage(3,10),1,'reading always shows for a moment, even for a short meeting');
 });
