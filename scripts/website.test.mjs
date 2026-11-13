@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaDue,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -407,4 +407,17 @@ test('event space: one checklist across planning, the day and afterwards, with t
  assert.equal(eventFolder(event),'Events/2026-27/2026-11-26 Rust workshop');
  assert.equal(eventFolder({...event,title:'AI / ML night'}),'Events/2026-27/2026-11-26 AI - ML night','a slash in a title can’t make another folder');
  assert.ok(!checklist(event).some(s=>s.id==='socials'),'publishing no longer waits for the socials tick');
+});
+
+test('social posts: the words follow the event, and a post is done once every platform is posted or skipped', ()=>{
+ const event={...blankEvent(),title:'Rust workshop',slug:'rust',starts_at:'2026-11-26T17:00:00Z',ends_at:'2026-11-26T19:00:00Z',venue:'EM 2.50',description:'Learn Rust.',luma_url:'https://lu.ma/rust'};
+ assert.equal(postText(event,'announce','https://x.org'),'Rust workshop\nWhen: Thursday 26 November, 17:00–19:00\nWhere: EM 2.50\n\nLearn Rust.\n\nSign up: https://lu.ma/rust\nMore: https://x.org/events/rust');
+ assert.match(postText(event,'week'),/^One week to go: Rust workshop\n/);
+ assert.match(postText(event,'day'),/^Rust workshop is today!\nFrom 17:00–19:00 at EM 2\.50\./);
+ assert.match(postText(event,'cancelled'),/^Sorry, Rust workshop on Thursday 26 November is cancelled\./);
+ const none=platformsOf({details:{}});assert.deepEqual(Object.keys(none),['instagram','discord','linkedin']);assert.ok(!postFinished(none));
+ assert.ok(postFinished({instagram:{state:'posted'},discord:{state:'skipped'},linkedin:{state:'posted'}}));
+ assert.equal(platformProblem({state:'posted',link:'instagram.com/p/1'}),'Paste the full link to the post, starting https://');
+ assert.equal(weekStart('2026-11-13'),'2026-11-09');assert.equal(weekStart('2026-11-09'),'2026-11-09');
+ assert.equal(weekLabel('2026-11-09','2026-11-13'),'This week');assert.equal(weekLabel('2026-11-16','2026-11-13'),'Next week');assert.equal(weekLabel('2026-11-23','2026-11-13'),'Week of Mon 23 Nov');
 });

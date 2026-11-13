@@ -51,9 +51,9 @@ export const PASSWORD_MIN=12;
 export function passwordProblem(password:string){if(password.length<PASSWORD_MIN)return `Use at least ${PASSWORD_MIN} characters.`;if(/password|changeme|compsoc|qwerty|123456/i.test(password))return 'That’s too easy to guess. Try a few unrelated words.';return null}
 
 // Admin routes. Unknown addresses inside /admin get the admin's own "not found" page.
-export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
+export type AdminRoute={name:'login'|'set-password'|'overview'|'tasks'|'content'|'events'|'new'|'event'|'edit'|'account'|'people'|'committee'|'faqs'|'guides'|'guide'|'documents'|'minutes'|'drive'|'help'|'notfound';id?:string};
 export function adminRoute(pathname:string):AdminRoute{const parts=pathname.toLowerCase().split('/').filter(Boolean).slice(1);const [a,b,c,...rest]=parts;if(rest.length)return {name:'notfound'};
- if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
+ if(!a)return {name:'overview'};if(!b&&(a==='login'||a==='set-password'||a==='account'||a==='tasks'||a==='content'||a==='people'||a==='committee'||a==='faqs'||a==='documents'||a==='minutes'||a==='drive'||a==='help'))return {name:a};
  if(a==='guides'){if(!b)return {name:'guides'};if(b==='new'&&!c)return {name:'guide'};if(/^[0-9a-f-]{36}$/.test(b)&&!c)return {name:'guide',id:b}}
  if(a==='events'){if(!b)return {name:'events'};if(b==='new'&&!c)return {name:'new'};if(/^[0-9a-f-]{36}$/.test(b)){if(!c)return {name:'event',id:b};if(c==='edit')return {name:'edit',id:b}}}
  return {name:'notfound'}}
@@ -328,3 +328,26 @@ export function academicYear(iso:string){const [y,m]=iso.slice(0,7).split('-').m
 export const eventFolder=(event:AdminEvent)=>`Events/${academicYear(event.starts_at??new Date().toISOString())}/${(event.starts_at??'').slice(0,10)} ${event.title.replace(/[/\\]/g,'-').trim()}`.replace(/\/ /,'/');
 export function postEventMarkdown(event:AdminEvent,post:PostEvent,lead:string){const when=event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'';const again={yes:'Yes',no:'No',maybe:'Maybe, with changes','':'Not said'}[post.run_again??''];
  return [`# ${event.title}: after the event`,'',`**When:** ${when}`,`**Where:** ${event.venue}`,`**Lead organiser:** ${lead||'Not set'}`,`**People who came:** ${post.attendance??'Not counted'}`,`**Run it again?** ${again}`,'','## What went well','',post.went_well?.trim()||'Nothing noted.','','## What didn’t go well','',post.went_badly?.trim()||'Nothing noted.','',...(post.notes?.trim()?['## Notes','',post.notes.trim(),'']:[])].join('\n')}
+
+// --- Social posts and the content calendar ---
+export const PLATFORMS=[{id:'instagram',label:'Instagram'},{id:'discord',label:'Discord'},{id:'linkedin',label:'LinkedIn'}] as const;
+export type Platform=typeof PLATFORMS[number]['id'];
+export type PlatformState={state:'todo'|'posted'|'skipped';link?:string};
+export type PostKind='announce'|'week'|'day'|'recap'|'cancelled'|'other';
+export const postKindLabel:Record<PostKind,string>={announce:'Announcement',week:'One week to go',day:'On the day',recap:'Recap',cancelled:'Cancellation',other:'Post'};
+export function platformsOf(task:Pick<Task,'details'>):Record<Platform,PlatformState>{const given=(task.details?.platforms??{}) as Partial<Record<Platform,PlatformState>>;return Object.fromEntries(PLATFORMS.map(({id})=>[id,given[id]??{state:'todo'}])) as Record<Platform,PlatformState>}
+// A post is finished once every platform is posted or deliberately skipped.
+export const postFinished=(platforms:Record<Platform,PlatformState>)=>PLATFORMS.every(({id})=>platforms[id].state!=='todo');
+export function platformProblem(state:PlatformState){return state.state==='posted'&&state.link?.trim()&&!isLink(state.link.trim())?'Paste the full link to the post, starting https://':''}
+// Suggested words for each post, from the event as it is now, so a changed time or venue is always right.
+export function postText(event:AdminEvent,post:PostKind,site=''){const day=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',weekday:'long',day:'numeric',month:'long'}).format(new Date(iso));
+ const when=event.starts_at?`${day(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'';const page=event.slug?`${site}/events/${event.slug}`:'';const signup=event.luma_url?`Sign up: ${event.luma_url}`:'';
+ const lines=post==='week'?[`One week to go: ${event.title}`,when&&`When: ${when}`,event.venue&&`Where: ${event.venue}`,signup||page&&`More: ${page}`]
+  :post==='day'?[`${event.title} is today!`,event.starts_at&&`From ${timeRange(event.starts_at,event.ends_at)} at ${event.venue}.`,signup||page&&`More: ${page}`]
+  :post==='recap'?[`Thanks to everyone who came to ${event.title}!`,'[A line or two about how it went, and a few photos.]','Keep an eye on our events for what’s next.']
+  :post==='cancelled'?[`Sorry, ${event.title}${event.starts_at?` on ${day(event.starts_at)}`:''} is cancelled.`,'[A line on why, if you can say, and whether it’ll be rescheduled.]']
+  :[event.title,when&&`When: ${when}`,event.venue&&`Where: ${event.venue}`,'',event.description,'',signup,page&&`More: ${page}`];
+ return lines.map(line=>line||'').filter((line,i,all)=>!(line===''&&(i===0||all[i-1]===''))).join('\n').trim()}
+// The calendar shows posts by week, starting on Monday.
+export function weekStart(iso:string){const [y,m,d]=iso.split('-').map(Number);const date=new Date(Date.UTC(y,m-1,d));const back=(date.getUTCDay()+6)%7;return new Date(date.getTime()-back*86400000).toISOString().slice(0,10)}
+export function weekLabel(monday:string,today:string){const thisWeek=weekStart(today);if(monday===thisWeek)return 'This week';if(monday===addDays(thisWeek,7))return 'Next week';if(monday===addDays(thisWeek,-7))return 'Last week';return `Week of ${dayName(monday)}`}

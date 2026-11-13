@@ -6,7 +6,8 @@ import {Textarea} from '../components/ui/textarea';
 import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle} from '../components/ui/dialog';
 import {onRouteChange} from '../router';
 import {supabase} from '../supabase';
-import {assigneeLabel,blankTask,byDue,dueGroup,dueGroups,dueLabel,isMine,personName,taskEditable,taskKindLabel,taskProblems,todayInUk,type Member,type Problems,type Role,type Task} from '../admin-rules';
+import {PostPanel} from './Posts';
+import {platformsOf,postFinished,PLATFORMS,assigneeLabel,blankTask,byDue,dueGroup,dueGroups,dueLabel,isMine,personName,taskEditable,taskKindLabel,taskProblems,todayInUk,type Member,type Problems,type Role,type Task} from '../admin-rules';
 import {loadTeam,useAccess} from './access';
 import {ConfirmDialog,EmptyNote,Failure,Field,fieldProps,friendly,useLoad,useTitle,type Confirm} from './ui';
 import {PeopleSkeleton} from './skeletons';
@@ -28,11 +29,14 @@ export function TaskEditor({task,members,roles,onClose,onSaved}:{task:Task|null;
  const [shown,setShown]=useState(task);if(task!==shown){setShown(task);setDraft(task);setProblems({});setError('')}
  const edit=(fields:Partial<Task>)=>{setDraft(d=>d&&{...d,...fields});setProblems(p=>({...p,...Object.fromEntries(Object.keys(fields).map(k=>[k,'']))}))};
  async function run(work:()=>Promise<Task|null>){setBusy(true);setError('');try{onSaved(await work())}catch(failure){setError((failure as Error).message)}finally{setBusy(false)}}
- function submit(e:FormEvent){e.preventDefault();if(!draft)return;const found=taskProblems(draft);setProblems(found);if(Object.keys(found).length)return;run(()=>saveTask(draft))}
+ function submit(e:FormEvent){e.preventDefault();if(!draft)return;const found=taskProblems(draft);setProblems(found);if(Object.keys(found).length)return;
+  // A post is done once every platform is posted or skipped.
+  const finished=draft.kind==='post'&&draft.status==='open'&&postFinished(platformsOf(draft));run(()=>saveTask(finished?{...draft,status:'done'}:draft))}
  const canDelete=!!draft?.id&&(draft.created_by===access.email||access.sees_all);
- return <Dialog open={!!task} onOpenChange={open=>{if(!open&&!busy)onClose()}}><DialogContent className="website-dialog admin-task-dialog">{draft&&<form onSubmit={submit} noValidate><DialogHeader><DialogTitle>{draft.id?'Task':'New task'}</DialogTitle><DialogDescription>{draft.id&&taskKindLabel[draft.kind]?`${taskKindLabel[draft.kind]}. `:''}Everyone it’s for sees it on their dashboard.</DialogDescription></DialogHeader>
+ return <Dialog open={!!task} onOpenChange={open=>{if(!open&&!busy)onClose()}}><DialogContent className="website-dialog admin-task-dialog" data-wide={draft?.kind==='post'||undefined}>{draft&&<form onSubmit={submit} noValidate><DialogHeader><DialogTitle>{draft.id?'Task':'New task'}</DialogTitle><DialogDescription>{draft.id&&taskKindLabel[draft.kind]?`${taskKindLabel[draft.kind]}. `:''}Everyone it’s for sees it on their dashboard.</DialogDescription></DialogHeader>
   <Field id="task-title" label="What needs doing" error={problems.title}><Input {...fieldProps('task-title',problems.title)} maxLength={160} value={draft.title} onChange={e=>edit({title:e.target.value})}/></Field>
   <div className="admin-two"><Field id="task-who" label="For"><AssigneeSelect id="task-who" task={draft} members={members} roles={roles} onChange={next=>setDraft(next)}/></Field><Field id="task-due" label="Due"><Input id="task-due" type="date" value={draft.due_on??''} onChange={e=>edit({due_on:e.target.value||null})}/></Field></div>
+  {draft.kind==='post'&&<PostPanel task={draft} onChange={setDraft}/>}
   <Field id="task-notes" label="Notes" hint="Anything that helps: where to find things, who to ask."><Textarea {...fieldProps('task-notes',undefined,true)} rows={5} maxLength={4000} value={draft.notes} onChange={e=>edit({notes:e.target.value})}/></Field>
   <Field id="task-link" label="Link" error={problems.link}><Input {...fieldProps('task-link',problems.link)} type="url" placeholder="https://" value={draft.link??''} onChange={e=>edit({link:e.target.value})}/></Field>
   <Failure>{error}</Failure>
@@ -43,7 +47,8 @@ export function TaskRow({task,members,roles,today,onOpen,onChange}:{task:Task;me
  const done=task.status==='done';const group=dueGroup(task.due_on,today);
  async function update(next:Task){setBusy(true);setError('');try{onChange(await saveTask(next))}catch(failure){setError((failure as Error).message)}finally{setBusy(false)}}
  const canPickUp=task.status==='open'&&!task.assignee_email&&!!task.assignee_role&&access.roles.includes(task.assignee_role);
- const meta=[assigneeLabel(task,members,roles),taskKindLabel[task.kind]].filter(Boolean).join(' · ');
+ const posted=task.kind==='post'?PLATFORMS.filter(({id})=>platformsOf(task)[id].state!=='todo').length:0;
+ const meta=[assigneeLabel(task,members,roles),taskKindLabel[task.kind],task.kind==='post'&&task.status==='open'?`${posted} of ${PLATFORMS.length} platforms done`:''].filter(Boolean).join(' · ');
  // Tasks the admin makes can point to where they're done, inside the admin.
  const here=typeof task.details?.href==='string'&&task.details.href.startsWith('/admin/')?task.details.href:null;
  return <li className="admin-task" data-done={done||undefined} data-cancelled={task.status==='cancelled'||undefined}>
