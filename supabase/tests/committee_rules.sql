@@ -15,7 +15,7 @@ declare
   social constant text := 'rules-test-socials@example.invalid';
   member constant text := 'rules-test-member@example.invalid';
   passed text[] := '{}';
-  ev uuid; ev2 uuid; claim uuid; own uuid; company uuid; grant_id uuid; n int; t public.tasks%rowtype; c public.expense_claims%rowtype; p public.event_plans%rowtype; starts timestamptz := date_trunc('hour', now()) + interval '30 days 17 hours';
+  ev uuid; ev2 uuid; meet uuid; meet2 uuid; today date := (now() at time zone 'Europe/London')::date; claim uuid; own uuid; company uuid; grant_id uuid; n int; t public.tasks%rowtype; c public.expense_claims%rowtype; p public.event_plans%rowtype; starts timestamptz := date_trunc('hour', now()) + interval '30 days 17 hours';
 begin
   alter table public.events disable trigger events_rebuild_site;
 
@@ -50,7 +50,9 @@ begin
   reset role; perform set_config('request.jwt.claims', '', true);
   select count(*) into n from public.tasks where event_id = ev and kind = 'budget' and status = 'open' and assignee_role = 'treasurer';
   if n <> 1 then raise exception 'FAIL: sending a budget should give the Treasurer one task (got %)', n; end if;
-  passed := passed || 'sending a budget gives the Treasurer a task'::text;
+  select * into t from public.tasks where event_id = ev and kind = 'budget' and status = 'open';
+  if t.details ->> 'href' is distinct from '/admin/money?tab=budgets' then raise exception 'FAIL: the Treasurer''s budget task should open Money''s budgets (got %)', t.details ->> 'href'; end if;
+  passed := passed || 'sending a budget gives the Treasurer a task, which opens Money''s budgets'::text;
 
   perform set_config('request.jwt.claims', json_build_object('email', org, 'role', 'authenticated')::text, true); set local role authenticated;
   begin
@@ -275,6 +277,38 @@ begin
     raise exception using message = 'NO ERROR';
   exception when others then if sqlerrm = 'NO ERROR' then raise exception 'FAIL: the Treasurer wrote the President''s handover note'; end if; end;
   passed := passed || 'people write only their own role''s handover note'::text;
+
+  ------------------------------------------------------------------ Meetings and the Secretary's agenda task
+  perform set_config('request.jwt.claims', json_build_object('email', member, 'role', 'authenticated')::text, true); set local role authenticated;
+  insert into public.meetings (title, held_on) values ('Rules test meeting', today - 7) returning id into meet;
+  insert into public.meetings (title, held_on) values ('Rules test other meeting', today - 14) returning id into meet2;
+  update public.meetings set next_on = today + 10 where id = meet;
+  update public.meetings set next_on = today + 1 where id = meet2;
+  reset role; perform set_config('request.jwt.claims', '', true);
+  select * into t from public.tasks where kind = 'agenda' and status = 'open' and details ->> 'meeting' = meet::text;
+  if t.id is null or t.assignee_role is distinct from 'secretary' or t.due_on <> today + 7 then raise exception 'FAIL: setting the next meeting should give the Secretary a task three days before (got %, %)', t.assignee_role, t.due_on; end if;
+  select * into t from public.tasks where kind = 'agenda' and status = 'open' and details ->> 'meeting' = meet2::text;
+  if t.due_on is distinct from today then raise exception 'FAIL: a meeting less than three days away should make the agenda due today (got %)', t.due_on; end if;
+  passed := passed || 'setting the next meeting gives the Secretary an agenda task, due three days before'::text;
+
+  perform set_config('request.jwt.claims', json_build_object('email', member, 'role', 'authenticated')::text, true); set local role authenticated;
+  update public.meetings set next_on = today + 12 where id = meet;
+  reset role; perform set_config('request.jwt.claims', '', true);
+  select count(*) into n from public.tasks where kind = 'agenda' and status = 'open' and details ->> 'meeting' = meet::text and due_on = today + 9;
+  if n <> 1 then raise exception 'FAIL: moving the meeting should replace its agenda task with one due three days before the new date'; end if;
+  select count(*) into n from public.tasks where kind = 'agenda' and status = 'open' and details ->> 'meeting' in (meet::text, meet2::text);
+  if n <> 2 then raise exception 'FAIL: moving one meeting touched another''s agenda task (% open, expected 2)', n; end if;
+  passed := passed || 'moving a meeting moves only its own agenda task'::text;
+
+  perform set_config('request.jwt.claims', json_build_object('email', member, 'role', 'authenticated')::text, true); set local role authenticated;
+  update public.meetings set next_agenda_link = 'https://docs.google.com/document/d/rules-test' where id = meet;
+  update public.meetings set next_on = null where id = meet2;
+  reset role; perform set_config('request.jwt.claims', '', true);
+  select count(*) into n from public.tasks where kind = 'agenda' and status = 'done' and details ->> 'meeting' = meet::text;
+  if n <> 1 then raise exception 'FAIL: saving the agenda should complete its task (got % done)', n; end if;
+  select count(*) into n from public.tasks where kind = 'agenda' and status = 'open' and details ->> 'meeting' in (meet::text, meet2::text);
+  if n <> 0 then raise exception 'FAIL: clearing a meeting''s date should cancel its agenda task (% open)', n; end if;
+  passed := passed || 'saving the agenda completes the task, and clearing the date cancels it'::text;
 
   reset role; perform set_config('request.jwt.claims', '', true);
   raise exception 'PASSED: all % checks. Everything this test did has been undone. %', cardinality(passed), array_to_string(passed, '; ');

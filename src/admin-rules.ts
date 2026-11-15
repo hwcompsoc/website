@@ -283,8 +283,6 @@ export function agendaMarkdown(input:AgendaInput){const sections:[string,string[
  if(input.events.length)sections.push(['Coming up',input.events.map(e=>`- ${e.title}, ${e.when}`)]);
  sections.push(['Any other business',[]],['Date of the next meeting',[]]);
  return [`# ${input.title}`,'',`**Date:** ${longDay(input.date)}`,'',...sections.flatMap(([heading,body],i)=>[`## ${i+1}. ${heading}`,...(body.length?['',...body]:[]),''])].join('\n').trim()+'\n'}
-// A few days' notice: the agenda task falls due three days before the meeting, or today if that's already passed.
-export function agendaDue(meeting:string,today:string){const due=addDays(meeting,-3);return due<today?today:due}
 
 // --- The event space: planning, the day itself, and afterwards ---
 export type BudgetLine={item:string;amount:string};

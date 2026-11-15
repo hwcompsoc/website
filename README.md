@@ -103,7 +103,7 @@ The database's rules for all of this, who can see and do what and the tasks each
 
 **Before this goes live**, in this order:
 
-1. Run `supabase/tests/committee_rules.sql` on the test project and check it passes. Then apply the migrations from `20261114100000` to `20261114160000` to the production project with `supabase db push`, so they're recorded. They were run on the test project by hand, so its migration history doesn't list them, and a `db push` to the test project would try to run them again.
+1. Run `supabase/tests/committee_rules.sql` on the test project and check it passes. Then apply the migrations from `20261114100000` to `20261115100000` to the production project with `supabase db push`, so they're recorded. They were run on the test project by hand, so its migration history doesn't list them, and a `db push` to the test project would try to run them again.
 2. Straight away, give everyone their roles at `/admin/people`. Until then only Owners can create or edit events.
 3. Deploy the functions: `supabase functions deploy google-drive --no-verify-jwt`, `supabase functions deploy generate-minutes --no-verify-jwt` and `supabase functions deploy draft-risk-assessment --no-verify-jwt`.
 4. Deploy the site. The old "Tell Amanda and Kevin" step is gone: publishing now creates the social post tasks.

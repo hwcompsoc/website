@@ -5,7 +5,7 @@ import {Input} from '../components/ui/input';
 import {Textarea} from '../components/ui/textarea';
 import {Checkbox} from '../components/ui/checkbox';
 import {supabase} from '../supabase';
-import {agendaDue,agendaMarkdown,assigneeLabel,blankTask,dueFromText,fullDate,matchAssignee,minutesActions,minutesHtml,personName,timeRange,todayInUk,type Member,type Role,type Task} from '../admin-rules';
+import {agendaMarkdown,assigneeLabel,blankTask,dueFromText,fullDate,matchAssignee,minutesActions,minutesHtml,personName,timeRange,todayInUk,type Member,type Role,type Task} from '../admin-rules';
 import {loadTeam,useAccess} from './access';
 import {drive} from './Drive';
 import {AssigneeSelect} from './Tasks';
@@ -38,11 +38,9 @@ export function ActionsReview({markdown,meeting}:{markdown:string;meeting:Meetin
     <div className="admin-two"><Field id={`action-who-${i}`} label="For" hint={row.said}><AssigneeSelect id={`action-who-${i}`} describedBy={`action-who-${i}-hint`} task={row.task} members={members} roles={roles} onChange={task=>edit(i,{task})}/></Field><Field id={`action-due-${i}`} label="Due"><Input id={`action-due-${i}`} type="date" disabled={!row.include} value={row.task.due_on??''} onChange={e=>edit(i,{task:{...row.task,due_on:e.target.value||null}})}/></Field></div></div></li>)}</ol>
   <div className="admin-actions"><Button type="button" className="site-button" disabled={busy||!chosen.length} onClick={create}><ListChecks aria-hidden="true"/>{busy?'Creating…':chosen.length===1?'Create 1 task':`Create ${chosen.length} tasks`}</Button></div></div>}
 
-// The next meeting's date. Setting it gives the Secretary a task to send the agenda a few days before.
+// The next meeting's date. Setting it gives the Secretary a task to send the agenda a few days before: the database makes it.
 export function NextMeetingDate({meeting,onSaved}:{meeting:Meeting;onSaved:(meeting:Meeting)=>void}){const [date,setDate]=useState(meeting.next_on??'');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [done,setDone]=useState(false);
  async function submit(e:FormEvent){e.preventDefault();if(!date)return;setBusy(true);setError('');try{const {data,error:failure}=await supabase.from('meetings').update({next_on:date}).eq('id',meeting.id).select().single();if(failure)throw new Error(friendly(failure));
-   await supabase.from('tasks').update({status:'cancelled'}).eq('kind','agenda').eq('status','open');
-   await insertTasks([{...blankTask(),title:`Send the agenda for the meeting on ${fullDate(`${date}T12:00:00Z`)}`,assignee_role:'secretary',due_on:agendaDue(date,todayInUk()),kind:'agenda',notes:'Draft it on the Minutes page, under Next meeting. It fills itself in from the last minutes, open actions and anything people have asked to add.',details:{href:'/admin/minutes?tab=agenda'}}]);
    onSaved(data as Meeting);setDone(true)}catch(failure){setError((failure as Error).message)}finally{setBusy(false)}}
  return <form className="admin-link-form" onSubmit={submit} noValidate><Field id="next-meeting" label="Date of the next meeting" hint={done?'Saved. The Secretary has a task to send the agenda three days before.':'The Secretary gets a task to send the agenda three days before.'}><Input {...fieldProps('next-meeting',undefined,true)} type="date" min={todayInUk()} value={date} onChange={e=>{setDate(e.target.value);setDone(false)}}/></Field><Button type="submit" variant="outline" disabled={busy||!date||date===meeting.next_on}><CalendarPlus aria-hidden="true"/>{busy?'Saving…':'Set date'}</Button><Failure>{error}</Failure></form>}
 
@@ -70,8 +68,8 @@ export function Agenda(){const [version,setVersion]=useState(0);const data=useLo
    events:(events.data??[]).filter(e=>e.status==='published'&&e.starts_at&&new Date(e.starts_at).getTime()>=Date.now()&&new Date(e.starts_at).getTime()<=until).sort((a,b)=>a.starts_at!.localeCompare(b.starts_at!)).map(e=>({title:e.title,when:`${fullDate(e.starts_at!)}, ${timeRange(e.starts_at!,e.ends_at)}`}))}));setSaved(null)}
  async function save(){if(!data.data)return;setSaving(true);setError('');try{const {link}=await drive<{link:string}>({action:'save-doc',folder:'Agendas',name:`${when} ${title.trim()||'Committee meeting'} agenda`,html:minutesHtml(text,`${title.trim()} agenda`)});
    if(last){const {error:failure}=await supabase.from('meetings').update({next_on:when,next_agenda_link:link}).eq('id',last.id);if(failure)throw new Error(friendly(failure))}
-   if(data.data.items.length)await supabase.from('agenda_items').update({used:true}).in('id',data.data.items.map(i=>i.id));
-   await supabase.from('tasks').update({status:'done'}).eq('kind','agenda').eq('status','open');
+   // Saving the link also completes the Secretary's agenda task, in the database.
+   if(data.data.items.length){const {error:failure}=await supabase.from('agenda_items').update({used:true}).in('id',data.data.items.map(i=>i.id));if(failure)throw new Error(friendly(failure))}
    setSaved({text,link})}catch(failure){setError((failure as Error).message)}finally{setSaving(false)}}
  function download(){const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'}));link.download=`agenda-${when}.md`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)}
  if((data.loading&&!data.data)||(team.loading&&!team.data))return <PeopleSkeleton/>;
