@@ -326,6 +326,13 @@ export const stageLabel:Record<SpaceStage,string>={planning:'Planning',live:'Liv
 // Academic years run from August: an event in November 2026 is in 2026-27.
 export function academicYear(iso:string){const [y,m]=iso.slice(0,7).split('-').map(Number);const start=m>=8?y:y-1;return `${start}-${String((start+1)%100).padStart(2,'0')}`}
 // Where an event's files go in the society's Drive: Events / 2026-27 / 2026-11-26 Rust workshop.
+// On the SU's risk assessment form, R is L × S. It's worked out here from whatever L and S the draft or the organiser gave, so the
+// sum is never wrong. Rows where L or S isn't a whole number from 1 to 4 are left as they are, for the organiser to put right.
+export function fixRiskScores(markdown:string){let cols:{l:number;s:number;r:number}|null=null;
+ return markdown.split('\n').map(line=>{const row=line.trim();if(!/^\|.*\|$/.test(row)){cols=null;return line}const cells=row.slice(1,-1).split('|').map(c=>c.trim());
+  if(!cols){const at=(name:string)=>cells.findIndex(c=>c.replace(/\*/g,'')===name);const [l,s,r]=[at('L'),at('S'),at('R')];if(l>=0&&s>=0&&r>=0)cols={l,s,r};return line}
+  const likelihood=Number(cells[cols.l]),severity=Number(cells[cols.s]);if(![likelihood,severity].every(n=>Number.isInteger(n)&&n>=1&&n<=4))return line;
+  cells[cols.r]=String(likelihood*severity);return `| ${cells.join(' | ')} |`}).join('\n')}
 export const eventFolder=(event:AdminEvent)=>`Events/${academicYear(event.starts_at??new Date().toISOString())}/${(event.starts_at??'').slice(0,10)} ${event.title.replace(/[/\\]/g,'-').trim()}`.replace(/\/ /,'/');
 export function postEventMarkdown(event:AdminEvent,post:PostEvent,lead:string){const when=event.starts_at?`${fullDate(event.starts_at)}, ${timeRange(event.starts_at,event.ends_at)}`:'';const again={yes:'Yes',no:'No',maybe:'Maybe, with changes','':'Not said'}[post.run_again??''];
  return [`# ${event.title}: after the event`,'',`**When:** ${when}`,`**Where:** ${event.venue}`,`**Lead organiser:** ${lead||'Not set'}`,`**People who came:** ${post.attendance??'Not counted'}`,`**Run it again?** ${again}`,'','## What went well','',post.went_well?.trim()||'Nothing noted.','','## What didn’t go well','',post.went_badly?.trim()||'Nothing noted.','',...(post.notes?.trim()?['## Notes','',post.notes.trim(),'']:[])].join('\n')}

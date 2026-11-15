@@ -97,7 +97,7 @@ Tasks go to a person or to everyone in a role. Most are made by the database as 
 
 Files the admin makes go in the society's Drive: `Minutes`, `Agendas`, `Documents`, `Events/<year>/<date> <title>` (write-ups and risk assessments, with a `Photos` folder) and `Money/<year>/Receipts`. Photos and receipts go straight from the browser to Google: the `google-drive` function only starts each upload, so large files never pass through it.
 
-The `draft-risk-assessment` function drafts an event's risk assessment with Workers AI, using the same Cloudflare secrets as the minutes. Its layout is the `TEMPLATE` at the top of the function: change it to match the society's own template. Events reach the society's Google Calendar by subscribing it to the site's `/events.ics` feed (Other calendars, then From URL), which the admin's calendar view explains.
+The `draft-risk-assessment` function drafts an event's risk assessment with Workers AI, using the same Cloudflare secrets as the minutes. It follows the Students' Union's risk assessment form (Heriot-Watt's Risk Assessment Appendix 1, version 2). The function fills in the form's header, the scoring key and the review date itself, and the AI writes the task, the PPE and the hazards table. The admin works out each R as L × S, so a hazard's score is never a wrong sum. If the SU changes its form, change `instructions`, `SCORING` and `assemble` in the function. Events reach the society's Google Calendar by subscribing it to the site's `/events.ics` feed (Other calendars, then From URL), which the admin's calendar view explains.
 
 **Before this goes live**, in this order:
 
