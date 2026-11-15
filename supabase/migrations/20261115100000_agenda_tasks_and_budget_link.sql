@@ -1,6 +1,7 @@
 -- The Secretary's task to send the next agenda now belongs to its meeting and is kept in step here, rather than by the admin.
 -- The admin used to cancel or complete every open agenda task when one meeting changed, and ignored it if that failed.
 -- Also, the Treasurer's budget approval task now opens Money's budgets tab, where budgets are approved alongside each other.
+-- And deleting an income entry cancels its deadline task.
 
 -- Open agenda tasks made before this belong to the latest meeting, which is the only one the admin ever set a date for.
 update public.tasks set details = details || jsonb_build_object('meeting',
@@ -76,3 +77,16 @@ $$;
 update public.tasks set details = details || jsonb_build_object('href', '/admin/money?tab=budgets'),
     notes = 'Approve it, approve a lower amount, or send it back with a reason, on the Money page under Event budgets.'
   where kind = 'budget' and status = 'open' and assignee_role = 'treasurer';
+
+-- Income can now be deleted from the admin. Deleting an entry cancels its deadline task, rather than leaving it for the Treasurer.
+create function private.income_deleted() returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  update public.tasks set status = 'cancelled' where kind = 'deadline' and status = 'open' and details ->> 'income_id' = old.id::text;
+  return null;
+end;
+$$;
+create trigger income_deleted after delete on public.income
+  for each row execute function private.income_deleted();
+revoke all on function private.income_deleted() from public, anon, authenticated;

@@ -6,17 +6,20 @@ import {supabase} from '../supabase';
 import {agmNoticeDate,agmTasks,blankTask,committeeSummary,dueLabel,fullDate,todayInUk,type Task} from '../admin-rules';
 import {loadTeam} from './access';
 import {loadDirectory} from './Directory';
-import {CopyButton,EmptyNote,Failure,Field,fieldProps,friendly,useLoad} from './ui';
+import {CopyButton,EmptyNote,Failure,Field,fieldProps,friendly,useLoad,useTitle} from './ui';
 import {PeopleSkeleton} from './skeletons';
 
 async function loadDeadlines(){const {data,error}=await supabase.from('tasks').select('*').in('kind',['deadline','agm']).eq('status','open').order('due_on');if(error)throw new Error(friendly(error));return (data as Task[]).filter(t=>t.details?.su||t.kind==='agm')}
 async function addTasks(tasks:Task[]){const {error}=await supabase.from('tasks').insert(tasks.map(({id:_i,created_at:_c,created_by:_b,done_by:_d,done_at:_a,...t})=>t));if(error)throw new Error(friendly(error))}
 
 // SU paperwork and the AGM, for the Secretary. The re-affiliation form itself will be filled from here once it's added.
-export function Paperwork(){const [version,setVersion]=useState(0);const team=useLoad(loadTeam,'team');const directory=useLoad(loadDirectory,'paperwork-directory');const deadlines=useLoad(loadDeadlines,`deadlines-${version}`);
+// Its own page, so the Secretary's yearly paperwork isn't mixed in with each meeting's minutes.
+export function SuPage(){useTitle('SU and AGM');return <section className="admin-page admin-narrow"><header className="admin-head"><h1>SU and AGM</h1></header><Paperwork/></section>}
+
+function Paperwork(){const [version,setVersion]=useState(0);const team=useLoad(loadTeam,'team');const directory=useLoad(loadDirectory,'paperwork-directory');const deadlines=useLoad(loadDeadlines,`deadlines-${version}`);
  const [reaffiliation,setReaffiliation]=useState('');const [agm,setAgm]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');const today=todayInUk();
  async function run(tasks:Task[],message:string){setBusy(true);setError('');setNotice('');try{await addTasks(tasks);setNotice(message);setVersion(v=>v+1)}catch(f){setError((f as Error).message)}finally{setBusy(false)}}
- function setDeadline(e:FormEvent){e.preventDefault();if(!reaffiliation)return;run([{...blankTask(),title:'Re-affiliate the society with the SU',assignee_role:'secretary',due_on:reaffiliation,kind:'deadline',notes:'The committee’s details and the SU contacts are on the Minutes page, under SU and AGM.',details:{su:'reaffiliation',href:'/admin/minutes?tab=su'}}],'Deadline added. The Secretary has a task for it.');setReaffiliation('')}
+ function setDeadline(e:FormEvent){e.preventDefault();if(!reaffiliation)return;run([{...blankTask(),title:'Re-affiliate the society with the SU',assignee_role:'secretary',due_on:reaffiliation,kind:'deadline',notes:'The committee’s details and the SU contacts are on the SU and AGM page.',details:{su:'reaffiliation',href:'/admin/su'}}],'Deadline added. The Secretary has a task for it.');setReaffiliation('')}
  function setAgmDate(e:FormEvent){e.preventDefault();if(!agm)return;run(agmTasks(agm,today,(team.data?.roles??[]).map(r=>r.key)),`AGM tasks added, from the notice to the handover.`);setAgm('')}
  const members=team.data?.members??[];const roles=team.data?.roles??[];const summary=committeeSummary(roles,members);const su=(directory.data??[]).filter(e=>e.kind==='contact'&&/\b(su|union|students[’']? union)\b/i.test(`${e.organisation} ${e.about}`));
  if((team.loading&&!team.data)||(deadlines.loading&&!deadlines.data))return <PeopleSkeleton/>;

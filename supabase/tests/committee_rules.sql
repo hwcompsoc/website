@@ -258,6 +258,14 @@ begin
   if n <> 0 then raise exception 'FAIL: receiving the money should close the deadline task'; end if;
   passed := passed || 'a grant deadline becomes a task, closed when the money arrives'::text;
 
+  perform set_config('request.jwt.claims', json_build_object('email', treas, 'role', 'authenticated')::text, true); set local role authenticated;
+  insert into public.income (kind, description, amount, status, due_on) values ('grant', 'Rules test grant to delete', 50, 'applying', current_date + 7) returning id into grant_id;
+  delete from public.income where id = grant_id;
+  reset role; perform set_config('request.jwt.claims', '', true);
+  select count(*) into n from public.tasks where kind = 'deadline' and status = 'open' and details ->> 'income_id' = grant_id::text;
+  if n <> 0 then raise exception 'FAIL: deleting income should cancel its deadline task (% still open)', n; end if;
+  passed := passed || 'deleting income cancels its deadline task'::text;
+
   perform set_config('request.jwt.claims', json_build_object('email', member, 'role', 'authenticated')::text, true); set local role authenticated;
   begin
     insert into public.sponsors (name) values ('Not allowed Ltd');
