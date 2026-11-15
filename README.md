@@ -65,7 +65,7 @@ To try a different model, set `MINUTES_MODEL` to its Workers AI name. It needs a
 
 ### Google Drive
 
-`/admin/drive` shows one folder of the society's Google account to the whole committee, and **Save to Drive** on the Minutes page saves minutes as Google Docs in a `Minutes` folder inside it. Drive is the only copy: the site keeps nothing. Everything goes through the `google-drive` edge function, which holds the connection in the `google_drive` table that only the secret key can read. It only lists, reads and creates, and refuses to show anything outside the chosen folder. It asks Google for full Drive access because the narrower permission can't add files to a folder the app didn't create.
+`/admin/drive` shows one folder of the society's Google account to the whole committee, and the admin saves minutes, agendas, event write-ups, photos and receipts into folders inside it. Drive is the only copy: the site keeps nothing. Everything goes through the `google-drive` edge function, which holds the connection in the `google_drive` table that only the secret key can read. It only lists, reads and creates (folders, Google Docs, and uploads it starts for the browser), and refuses to show anything outside the chosen folder. It asks Google for full Drive access because the narrower permission can't add files to a folder the app didn't create.
 
 To set it up, signed in to Google as the society's account:
 
@@ -77,6 +77,36 @@ To set it up, signed in to Google as the society's account:
 6. An Owner opens `/admin/drive`, chooses **Connect Google Drive**, signs in as the society's account, clicks past the "unverified app" warning, and chooses the folder.
 
 If the society's Google password changes, Google may end the connection. The Drive page then asks an Owner to connect again.
+
+### Roles, tasks and the committee's work
+
+Everyone on the committee has roles (President, Treasurer, Events Organiser and so on), set by an Owner at `/admin/people`. A role decides whose tasks its people can see and whether they can create events, see finances, see the content calendar or manage sponsors. The database enforces this in `supabase/migrations/20261114100000_roles_and_tasks.sql` onwards, and the admin only hides what the database would refuse. Owners can always do everything, so a mistake in the role settings can be put right.
+
+Tasks go to a person or to everyone in a role. Most are made by the database as work moves along, so nobody has to be told by message:
+
+| When | Who gets a task |
+|---|---|
+| An event is published | Social Media Managers: announce it, remind a week before and on the day. The lead organiser: the post-event form, two days after |
+| An event's date moves, or it's cancelled | Those tasks move or close. A cancellation also asks for a post saying so |
+| A budget is sent | The Treasurer, to approve or send back. Free budgets are approved straight away |
+| The post-event form is filled in | Social Media Managers: a recap post |
+| An expense claim is made | The Treasurer (or the President, for the Treasurer's own), then whoever is next at each step |
+| Minutes are saved | The Secretary checks the actions found, which become tasks for each person |
+| The next meeting's date or the AGM date is set | The Secretary sends the agenda three days before. The AGM sets off everyone's tasks, ending with each role's handover note |
+| A grant deadline, an expected payment or a sponsor follow-up is added | The Treasurer or the Industry Liaison, on that date |
+
+Files the admin makes go in the society's Drive: `Minutes`, `Agendas`, `Documents`, `Events/<year>/<date> <title>` (write-ups and risk assessments, with a `Photos` folder) and `Money/<year>/Receipts`. Photos and receipts go straight from the browser to Google: the `google-drive` function only starts each upload, so large files never pass through it.
+
+The `draft-risk-assessment` function drafts an event's risk assessment with Workers AI, using the same Cloudflare secrets as the minutes. It follows the Students' Union's risk assessment form (Heriot-Watt's Risk Assessment Appendix 1, version 2). The function fills in the form's header, the scoring key and the review date itself, and the AI writes the task, the PPE and the hazards table. The admin works out each R as L × S, so a hazard's score is never a wrong sum. If the SU changes its form, change `instructions`, `SCORING` and `assemble` in the function. Events reach the society's Google Calendar by subscribing it to the site's `/events.ics` feed (Other calendars, then From URL), which the admin's calendar view explains.
+
+The database's rules for all of this, who can see and do what and the tasks each step hands on, are tested by `supabase/tests/committee_rules.sql`. Run it against the test project as the postgres role, in the SQL editor or with psql. It acts as each role in turn, so row level security and the triggers apply as they do in the admin, then raises an error on purpose so that nothing it did is kept: `PASSED: all N checks` means every rule held, and `FAIL: …` names the first that didn't. Run it after changing any of these migrations. It's for the test project only.
+
+**Before this goes live**, in this order:
+
+1. Run `supabase/tests/committee_rules.sql` on the test project and check it passes. Then apply the migrations from `20261114100000` to `20261115100000` to the production project with `supabase db push`, so they're recorded. They were run on the test project by hand, so its migration history doesn't list them, and a `db push` to the test project would try to run them again.
+2. Straight away, give everyone their roles at `/admin/people`. Until then only Owners can create or edit events.
+3. Deploy the functions: `supabase functions deploy google-drive --no-verify-jwt`, `supabase functions deploy generate-minutes --no-verify-jwt` and `supabase functions deploy draft-risk-assessment --no-verify-jwt`.
+4. Deploy the site. The old "Tell Amanda and Kevin" step is gone: publishing now creates the social post tasks.
 
 ### Resources switch
 

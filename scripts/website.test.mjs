@@ -10,7 +10,7 @@ import {DISCORD_INVITE} from './live-content.mjs';
 import {passageLink,textFragment} from '../src/fragment.ts';
 import {commitHash,discordMembers} from '../src/content.ts';
 import {GUIDE_COLUMNS} from '../src/supabase-config.ts';
-import {minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
+import {taskHref,fixRiskScores,monthGrid,agmTasks,agmNoticeDate,committeeSummary,sponsorProblems,blankSponsor,termOf,termEvents,blankEntry,entryProblems,directoryMatches,blankClaim,claimProblems,claimEditable,claimAction,spentOn,waitingOn,yearReport,incomeProblems,postText,platformsOf,postFinished,platformProblem,weekStart,weekLabel,spaceChecklist,spaceProgress,spaceStage,blankPlan,budgetTotal,budgetProblems,money,academicYear,eventFolder,agendaMarkdown,carriedForward,dueFromText,matchAssignee,minutesActions,assigneeLabel,blankTask,byDue,dueGroup,dueLabel,isMine,taskProblems,expectedMinutesSeconds,minutesStage,minutesHtml,minutesDocName,driveKind,cleanTranscript,minutesProblems,TRANSCRIPT_MAX,blankProfile,discordHandle,githubHandle,linkedinHandle,profileFields,profileProblems,slugTyping,documentPhase,documentProblem,documentUrl,readableSize,blankGuide,guideEditable,guidePhase,guideProblems,reviewDue,todayInUk,committeePhase,faqPhase,moved,nextPosition,photoProblem,photoUrl,committeeNameProblem,coverDownload,coverProblem,coverSize,coverUrl,missingSteps,slugify,ukInputToIso,isoToUkInput,blankEvent,eventDetailsText,passwordProblem,adminRoute,safeNext,checklist,progress,nextStep,eventTab,whenToIso,isoToWhen,whenProblems,slugAttempt,editableFields,shortDate,fullDate,timeRange,sitePhase,siteBusy,siteSlow,badgeFor,matchesSite} from '../src/admin-rules.ts';
 test('Visitor site keeps all six routes and the exact user-supplied joining/contact destinations',()=>{
  assert.equal(pages.length,6);for(const page of pages)assert.deepEqual(route(pagePath(page.id)),{view:page.id,item:''});
  assert.equal(links.discord,'https://discord.gg/VwXhpb7mZW');assert.equal(links.instagram,'https://www.instagram.com/hwcompsoc');assert.equal(links.membership,'https://www.hwunion.com/societies/compsci/');assert.equal(links.email,'compsci.society@hw.ac.uk');
@@ -30,20 +30,20 @@ test('Live events become site events in UK time, and real calendar files carry n
 test('The form explains exactly what stands between an event and going live',()=>{
  const ready={...blankEvent(),title:'Talk',slug:'talk',starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',venue:'EM1.82',description:'A talk',cover_path:'00000000-0000-0000-0000-000000000000.jpg',square_path:'00000000-0000-0000-0000-000000000001.jpg',cover_alt:'A poster',native_url:'https://native.fm/x',luma_url:'https://luma.com/x',socials_sent:true};
  assert.deepEqual(missingSteps(ready),[]);assert.ok(missingSteps(blankEvent()).length>5);
- assert.deepEqual(missingSteps({...ready,native_url:null}),['Create it on Native and paste the link, or skip it']);assert.deepEqual(missingSteps({...ready,native_url:null,native_skipped:true}),[]);assert.deepEqual(missingSteps({...ready,luma_url:null}),['Create it on Luma and paste the link']);assert.deepEqual(missingSteps({...ready,luma_url:null,signup_required:false}),[]);assert.deepEqual(missingSteps({...ready,socials_sent:false}),['Send the details to Amanda and Kevin']);assert.deepEqual(missingSteps({...ready,native_url:'javascript:alert(1)'}),['Create it on Native and paste the link, or skip it']);assert.deepEqual(missingSteps({...ready,ends_at:ready.starts_at}),['Make the end time later than the start']);
+ assert.deepEqual(missingSteps({...ready,native_url:null}),['Create it on Native and paste the link, or skip it']);assert.deepEqual(missingSteps({...ready,native_url:null,native_skipped:true}),[]);assert.deepEqual(missingSteps({...ready,luma_url:null}),['Create it on Luma and paste the link']);assert.deepEqual(missingSteps({...ready,luma_url:null,signup_required:false}),[]);assert.deepEqual(missingSteps({...ready,socials_sent:false}),[],'social posts are tasks now, so they don’t hold up publishing');assert.deepEqual(missingSteps({...ready,native_url:'javascript:alert(1)'}),['Create it on Native and paste the link, or skip it']);assert.deepEqual(missingSteps({...ready,ends_at:ready.starts_at}),['Make the end time later than the start']);
  assert.equal(slugify('Your First Web App!'),'your-first-web-app');assert.equal(slugTyping('my-'),'my-');assert.equal(slugTyping('My Event '),'my-event-');assert.equal(slugify('my-'),'my');assert.equal(slugify('Café & Code'),'cafe-and-code');assert.equal(slugify('---'),'');assert.ok(slugify('x'.repeat(90)).length<=60);
  assert.equal(ukInputToIso('2027-07-01T18:30'),'2027-07-01T17:30:00.000Z');assert.equal(ukInputToIso('2027-01-14T18:30'),'2027-01-14T18:30:00.000Z');assert.equal(isoToUkInput('2027-07-01T17:30:00Z'),'2027-07-01T18:30');assert.equal(isoToUkInput('2027-01-14T18:30:00Z'),'2027-01-14T18:30');assert.equal(ukInputToIso(''),null);assert.equal(isoToUkInput(null),'');
  assert.ok(eventDetailsText(ready).includes('Sign up: https://luma.com/x'));assert.ok(eventDetailsText(ready,'https://site.example').includes('Website: https://site.example/events/talk'));
 });
 test('Admin routes and the return address after sign-in',()=>{
  const id='3647cf31-c4d8-467e-88a9-cd3b12d256b6';const name=path=>adminRoute(path).name;
- assert.equal(name('/admin/documents'),'documents');assert.equal(name('/admin/minutes'),'minutes');assert.equal(name('/admin/drive'),'drive');assert.equal(name('/admin/drive/x'),'notfound');assert.equal(name('/admin/minutes/x'),'notfound');assert.equal(name('/admin/help'),'help');assert.equal(name('/admin/help/x'),'notfound');assert.equal(name('/admin/guides'),'guides');assert.equal(name('/admin/guides/new'),'guide');assert.equal(name('/admin/guides/'+id),'guide');assert.equal(adminRoute('/admin/guides/'+id).id,id);assert.equal(name('/admin/guides/nope'),'notfound');assert.equal(name('/admin/guides/'+id+'/x'),'notfound');assert.equal(name('/admin/faqs'),'faqs');assert.equal(name('/admin/faqs/x'),'notfound');assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
+ assert.equal(name('/admin/documents'),'documents');assert.equal(name('/admin/minutes'),'minutes');assert.equal(name('/admin/su'),'su');assert.equal(name('/admin/drive'),'drive');assert.equal(name('/admin/drive/x'),'notfound');assert.equal(name('/admin/minutes/x'),'notfound');assert.equal(name('/admin/help'),'help');assert.equal(name('/admin/help/x'),'notfound');assert.equal(name('/admin/guides'),'guides');assert.equal(name('/admin/guides/new'),'guide');assert.equal(name('/admin/guides/'+id),'guide');assert.equal(adminRoute('/admin/guides/'+id).id,id);assert.equal(name('/admin/guides/nope'),'notfound');assert.equal(name('/admin/guides/'+id+'/x'),'notfound');assert.equal(name('/admin/faqs'),'faqs');assert.equal(name('/admin/faqs/x'),'notfound');assert.equal(name('/admin/committee'),'committee');assert.equal(name('/admin/committee/x'),'notfound');assert.equal(name('/admin/people'),'people');assert.equal(name('/admin/people/x'),'notfound');assert.equal(name('/admin'),'overview');assert.equal(name('/admin/'),'overview');assert.equal(name('/admin/login'),'login');assert.equal(name('/admin/set-password'),'set-password');assert.equal(name('/admin/account'),'account');assert.equal(name('/admin/events'),'events');assert.equal(name('/admin/events/new'),'new');assert.deepEqual(adminRoute('/admin/events/'+id),{name:'event',id});assert.deepEqual(adminRoute('/admin/events/'+id+'/edit'),{name:'edit',id});
  for(const bad of ['/admin/nope','/admin/events/nope','/admin/events/'+id+'/nope','/admin/events/new/x','/admin/login/x'])assert.equal(name(bad),'notfound',bad);
  assert.equal(safeNext('/admin/events?tab=past'),'/admin/events?tab=past');for(const bad of [null,'','https://evil.example','//evil.example','/events','/administrator','/admin//evil.example','/admin/login','/admin/set-password'])assert.equal(safeNext(bad),'/admin',String(bad));
 });
 test('The checklist adapts to sign-up, and events sort into the right tab',()=>{
- const empty=blankEvent();assert.deepEqual(checklist(empty).map(s=>s.id),['details','native','luma','socials']);assert.deepEqual(checklist({...empty,signup_required:false}).map(s=>s.id),['details','native','socials']);assert.deepEqual(progress(empty),{done:0,total:4});assert.equal(nextStep(empty),'Finish the event details');
- const full={...empty,title:'T',slug:'t',starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',venue:'V',description:'D',cover_path:'00000000-0000-0000-0000-000000000000.jpg',square_path:'00000000-0000-0000-0000-000000000001.jpg',cover_alt:'A poster'};assert.equal(nextStep(full),'Create it on Native');assert.equal(nextStep({...full,native_skipped:true}),'Create it on Luma');assert.deepEqual(progress({...full,native_skipped:true,luma_url:'https://l.co/x',socials_sent:true}),{done:4,total:4});assert.equal(editableFields(full).native_skipped,false);assert.deepEqual(progress({...full,native_url:'https://n.co/x',luma_url:'https://l.co/x',socials_sent:true}),{done:4,total:4});
+ const empty=blankEvent();assert.deepEqual(checklist(empty).map(s=>s.id),['details','native','luma']);assert.deepEqual(checklist({...empty,signup_required:false}).map(s=>s.id),['details','native']);assert.deepEqual(progress(empty),{done:0,total:3});assert.equal(nextStep(empty),'Finish the event details');
+ const full={...empty,title:'T',slug:'t',starts_at:'2027-01-14T17:30:00Z',ends_at:'2027-01-14T19:00:00Z',venue:'V',description:'D',cover_path:'00000000-0000-0000-0000-000000000000.jpg',square_path:'00000000-0000-0000-0000-000000000001.jpg',cover_alt:'A poster'};assert.equal(nextStep(full),'Create it on Native');assert.equal(nextStep({...full,native_skipped:true}),'Create it on Luma');assert.deepEqual(progress({...full,native_skipped:true,luma_url:'https://l.co/x',socials_sent:true}),{done:3,total:3});assert.equal(editableFields(full).native_skipped,false);assert.deepEqual(progress({...full,native_url:'https://n.co/x',luma_url:'https://l.co/x',socials_sent:true}),{done:3,total:3});
  const now=Date.parse('2027-02-01');assert.equal(eventTab(full,now),'drafts');assert.equal(eventTab({...full,status:'published'},now),'past');assert.equal(eventTab({...full,status:'published'},Date.parse('2027-01-01')),'upcoming');assert.equal(eventTab({...full,status:'cancelled'},Date.parse('2027-01-01')),'cancelled');
  assert.ok(!('id' in editableFields({...full,id:'x',published_at:'y'})));assert.ok(!('published_at' in editableFields({...full,id:'x',published_at:'y'})));
 });
@@ -311,4 +311,186 @@ test('minutes become a Google Doc with real headings, lists and tables', ()=>{
  assert.equal(minutesDocName('2026-11-12','  Committee   meeting '),'2026-11-12 Committee meeting');
  assert.equal(driveKind('application/vnd.google-apps.folder'),'folder');assert.equal(driveKind('application/vnd.google-apps.document'),'doc');assert.equal(driveKind('application/vnd.google-apps.spreadsheet'),'sheet');
  assert.equal(driveKind('application/pdf'),'pdf');assert.equal(driveKind('image/png'),'image');assert.equal(driveKind('application/vnd.openxmlformats-officedocument.wordprocessingml.document'),'doc');assert.equal(driveKind('application/zip'),'file');
+});
+
+test('the minutes progress moves from sending to reading to writing, paced by the transcript length', ()=>{
+ assert.equal(expectedMinutesSeconds(0),20);
+ assert.equal(expectedMinutesSeconds(120000),80);
+ assert.equal(minutesStage(0,40),0);
+ assert.equal(minutesStage(5,40),1);
+ assert.equal(minutesStage(20,40),2);
+ assert.equal(minutesStage(3,10),1,'reading always shows for a moment, even for a short meeting');
+});
+
+test('tasks: yours includes your roles’ tasks until someone picks them up, and overdue comes first', ()=>{
+ const task=(fields)=>({...blankTask(),title:'Do it',...fields});
+ assert.ok(isMine(task({assignee_email:'a@x'}),'a@x',[]));
+ assert.ok(isMine(task({assignee_role:'socials'}),'a@x',['socials']),'a role task nobody has picked up is everyone in the role’s');
+ assert.ok(!isMine(task({assignee_role:'socials',assignee_email:'b@x'}),'a@x',['socials']),'once picked up, it’s theirs');
+ assert.ok(!isMine(task({assignee_role:'events'}),'a@x',['socials']));
+ const members=[{email:'a@x',name:'Amanda Zhang',roles:['socials']}],roles=[{key:'socials',name:'Social Media Manager'}];
+ assert.equal(assigneeLabel(task({assignee_email:'a@x'}),members,roles),'Amanda Zhang');
+ assert.equal(assigneeLabel(task({assignee_role:'socials'}),members,roles),'Anyone in Social Media Manager');
+ assert.equal(assigneeLabel(task({}),members,roles),'Nobody yet');
+ assert.equal(dueGroup('2026-11-12','2026-11-13'),'overdue');
+ assert.equal(dueGroup('2026-11-19','2026-11-13'),'week');
+ assert.equal(dueGroup('2026-11-20','2026-11-13'),'later');
+ assert.equal(dueGroup(null,'2026-11-13'),'none');
+ assert.equal(dueLabel('2026-11-13','2026-11-13'),'Due today');
+ assert.equal(dueLabel('2026-11-14','2026-11-13'),'Due tomorrow');
+ assert.equal(dueLabel('2026-11-10','2026-11-13'),'Overdue, was due Tue 10 Nov');
+ const sorted=[task({due_on:null,created_at:'1'}),task({due_on:'2026-11-20'}),task({due_on:'2026-11-01'})].sort(byDue).map(t=>t.due_on);
+ assert.deepEqual(sorted,['2026-11-01','2026-11-20',null]);
+ assert.deepEqual(Object.keys(taskProblems(task({title:' '}))),['title']);
+ assert.deepEqual(Object.keys(taskProblems(task({link:'example.com'}))),['link']);
+ assert.equal(adminRoute('/admin/tasks').name,'tasks');
+ assert.equal(taskHref(task({details:{href:'/admin/money?tab=income'}}),'a@x',[]),'/admin/money?tab=income','a task the admin made goes where it’s done');
+ assert.equal(taskHref(task({details:{href:'https://evil.example'}}),'a@x',[]),'/admin/tasks?tab=team','only links inside the admin are followed');
+ assert.equal(taskHref(task({assignee_role:'treasurer'}),'a@x',['treasurer']),'/admin/tasks','your own deadline is under Mine');
+ assert.equal(taskHref(task({assignee_role:'secretary'}),'a@x',['treasurer']),'/admin/tasks?tab=team','someone else’s is under their team');
+});
+
+test('minutes: actions and carried-forward items are read back out, and names and dates are matched where they’re clear', ()=>{
+ const minutes='# Committee meeting\n\n## 1. Budget\nTalked about it.\n\n## Next meeting\n\n- Freshers’ fair plans\n- **Hoodie** order\n\n## Actions\n\n| Action | Who | By when |\n|---|---|---|\n| Book the room | Divine Halim | 20 November |\n| Send the **budget** | Treasurer | Friday |\n| Ask the SU | Ryan and Thomas | Not set |\n';
+ assert.deepEqual(minutesActions(minutes),[{action:'Book the room',who:'Divine Halim',by:'20 November'},{action:'Send the budget',who:'Treasurer',by:'Friday'},{action:'Ask the SU',who:'Ryan and Thomas',by:'Not set'}]);
+ assert.deepEqual(carriedForward(minutes),['Freshers’ fair plans','Hoodie order']);
+ assert.deepEqual(carriedForward('## Next meeting\n\nNothing carried forward.\n\n## Actions\n\nNo actions recorded.'),[]);
+ assert.deepEqual(minutesActions('## Actions\n\nNo actions recorded.'),[]);
+ const members=[{email:'d@x',name:'Divine Halim',roles:['events']},{email:'r@x',name:'Ryan Dawson',roles:['president']},{email:'r2@x',name:'Raymond Shell',roles:['events']}];
+ const roles=[{key:'treasurer',name:'Treasurer'},{key:'events',name:'Events Organiser'}];
+ assert.deepEqual(matchAssignee('Divine Halim',members,roles),{assignee_email:'d@x',assignee_role:null});
+ assert.deepEqual(matchAssignee('divine',members,roles),{assignee_email:'d@x',assignee_role:null});
+ assert.deepEqual(matchAssignee('The Treasurer',members,roles),{assignee_email:null,assignee_role:'treasurer'});
+ assert.deepEqual(matchAssignee('Ryan and Thomas',members,roles),{assignee_email:null,assignee_role:null},'two people is left for the Secretary');
+ assert.deepEqual(matchAssignee('R',members,roles),{assignee_email:null,assignee_role:null});
+ assert.equal(dueFromText('20 November','2026-11-13'),'2026-11-20');
+ assert.equal(dueFromText('November 20th','2026-11-13'),'2026-11-20');
+ assert.equal(dueFromText('3 January','2026-11-13'),'2027-01-03','a date already gone this year means next year');
+ assert.equal(dueFromText('20/11','2026-11-13'),'2026-11-20');
+ assert.equal(dueFromText('Friday','2026-11-13'),'2026-11-20','the meeting was on a Friday, so it means next Friday');
+ assert.equal(dueFromText('Monday','2026-11-13'),'2026-11-16');
+ assert.equal(dueFromText('Not set','2026-11-13'),null);
+ assert.equal(dueFromText('next meeting','2026-11-13'),null);
+ assert.equal(dueFromText('31/02','2026-11-13'),null);
+});
+
+test('agendas: built from the last minutes, open actions, items people added, role reports and events, leaving out empty sections', ()=>{
+ const text=agendaMarkdown({title:'Committee meeting',date:'2026-11-27',last:{title:'Committee meeting',held_on:'2026-11-13',minutes_link:'https://docs.google.com/d/1'},actions:[{title:'Book the room',who:'Divine Halim',due:'2026-11-20'}],carried:['Hoodie order'],items:[],reports:[{role:'Treasurer',people:'Nathan Walker'}],events:[]});
+ assert.match(text,/^# Committee meeting\n\n\*\*Date:\*\* Friday 27 November 2026/);
+ assert.match(text,/## 2\. Minutes of the last meeting\n\nApprove the minutes of Committee meeting, Friday 13 November 2026\. \[Read them\]\(https:\/\/docs\.google\.com\/d\/1\)/);
+ assert.match(text,/\| Book the room \| Divine Halim \| Friday 20 November 2026 \|/);
+ assert.match(text,/## 4\. Carried forward\n\n- Hoodie order/);
+ assert.doesNotMatch(text,/Items raised|Coming up/);
+ assert.match(text,/## 5\. Officer reports\n\n- Treasurer \(Nathan Walker\)/);
+ assert.match(text,/## 7\. Date of the next meeting\n$/);
+ assert.match(minutesHtml('See [the doc](https://docs.google.com/d/1) and [this](javascript:alert(1))','x'),/<a href="https:\/\/docs\.google\.com\/d\/1">the doc<\/a> and \[this\]\(javascript:alert\(1\)\)/,'only https links become links');
+});
+
+test('event space: one checklist across planning, the day and afterwards, with the stage each card shows', ()=>{
+ const event={...blankEvent(),id:'e1',title:'Rust workshop',slug:'rust',starts_at:'2026-11-26T17:00:00Z',ends_at:'2026-11-26T19:00:00Z',venue:'EM 2.50',description:'Learn Rust',cover_path:'a.jpg',square_path:'b.jpg',cover_alt:'Crab',native_skipped:true,signup_required:false,status:'published'};
+ const before=Date.parse('2026-11-13T12:00:00Z'),after=Date.parse('2026-11-27T12:00:00Z');
+ const plan={...blankPlan('e1'),lead_email:'d@x',budget_status:'approved',venue_status:'confirmed',requirements:[{item:'Projector',kind:'tech',done:true}],risk_status:'done',run_sheet:[{time:'17:00',what:'Doors',who:''}]};
+ assert.deepEqual(spaceChecklist(event,plan,before).filter(s=>!s.done).map(s=>s.id),[],'everything done before the event');
+ assert.ok(!spaceChecklist(event,plan,before).some(s=>s.id==='post-event'),'the post-event form only appears once the event starts');
+ assert.deepEqual(spaceChecklist(event,plan,after).filter(s=>!s.done).map(s=>s.id),['post-event']);
+ assert.equal(spaceStage(event,plan,before),'live');
+ assert.equal(spaceStage(event,plan,after),'write-up');
+ assert.equal(spaceStage(event,{...plan,post_event:{submitted_at:'x'}},after),'done');
+ assert.equal(spaceStage({...event,status:'draft'},plan,before),'planning');
+ assert.equal(spaceProgress(event,null,before).next.id,'lead','a new plan starts with choosing a lead');
+ const tabs=spaceChecklist({...blankEvent(),id:'e2',signup_required:true},null,before).map(s=>s.tab).filter((tab,i,all)=>tab!==all[i-1]);
+ assert.deepEqual(tabs,['details','planning','details','day'],'steps on the same tab sit together: details, planning, then back only to publish');
+ assert.ok(!spaceChecklist(event,{...plan,requirements:[{item:'Projector',kind:'tech',done:false}]},before).find(s=>s.id==='requirements').done);
+ assert.ok(!spaceChecklist(event,{...plan,requirements:[]},before).find(s=>s.id==='requirements').done,'an empty list isn’t sorted until someone says nothing’s needed');
+ assert.equal(budgetTotal([{item:'Pizza',amount:'45.50'},{item:'Drinks',amount:'£10'}]),55.5);
+ assert.equal(money(55.5),'£55.50');assert.equal(money(40),'£40');
+ assert.deepEqual(Object.keys(budgetProblems([{item:'',amount:'5'},{item:'Pizza',amount:'lots'},{item:'',amount:''}])),['item-0','amount-1']);
+ assert.equal(academicYear('2026-11-26T17:00:00Z'),'2026-27');
+ assert.equal(academicYear('2027-03-01T17:00:00Z'),'2026-27');
+ assert.equal(academicYear('2027-08-01T17:00:00Z'),'2027-28');
+ assert.equal(eventFolder(event),'Events/2026-27/2026-11-26 Rust workshop');
+ assert.equal(eventFolder({...event,title:'AI / ML night'}),'Events/2026-27/2026-11-26 AI - ML night','a slash in a title can’t make another folder');
+ assert.ok(!checklist(event).some(s=>s.id==='socials'),'publishing no longer waits for the socials tick');
+});
+
+test('social posts: the words follow the event, and a post is done once every platform is posted or skipped', ()=>{
+ const event={...blankEvent(),title:'Rust workshop',slug:'rust',starts_at:'2026-11-26T17:00:00Z',ends_at:'2026-11-26T19:00:00Z',venue:'EM 2.50',description:'Learn Rust.',luma_url:'https://lu.ma/rust'};
+ assert.equal(postText(event,'announce','https://x.org'),'Rust workshop\nWhen: Thursday 26 November, 17:00–19:00\nWhere: EM 2.50\n\nLearn Rust.\n\nSign up: https://lu.ma/rust\nMore: https://x.org/events/rust');
+ assert.match(postText(event,'week'),/^One week to go: Rust workshop\n/);
+ assert.match(postText(event,'day'),/^Rust workshop is today!\nFrom 17:00–19:00 at EM 2\.50\./);
+ assert.match(postText(event,'cancelled'),/^Sorry, Rust workshop on Thursday 26 November is cancelled\./);
+ const none=platformsOf({details:{}});assert.deepEqual(Object.keys(none),['instagram','discord','linkedin']);assert.ok(!postFinished(none));
+ assert.ok(postFinished({instagram:{state:'posted'},discord:{state:'skipped'},linkedin:{state:'posted'}}));
+ assert.equal(platformProblem({state:'posted',link:'instagram.com/p/1'}),'Paste the full link to the post, starting https://');
+ assert.equal(weekStart('2026-11-13'),'2026-11-09');assert.equal(weekStart('2026-11-09'),'2026-11-09');
+ assert.equal(weekLabel('2026-11-09','2026-11-13'),'This week');assert.equal(weekLabel('2026-11-16','2026-11-13'),'Next week');assert.equal(weekLabel('2026-11-23','2026-11-13'),'Week of Mon 23 Nov');
+});
+
+test('money: claims need a receipt and say who pays them back, each person sees only their next step, and the year report adds up', ()=>{
+ const claim={...blankClaim('2026-11-13'),description:'Pizza',amount:'45.50',receipt_link:'https://drive.google.com/x'};
+ assert.deepEqual(claimProblems(claim),{});
+ assert.deepEqual(Object.keys(claimProblems({...claim,receipt_link:null,payer:'company',payer_name:''})),['payer_name','receipt']);
+ assert.equal(claimEditable({...claim,amount:'£1,045.50'}).amount,1045.5);
+ const c=(status,claimant='a@x')=>({...claim,status,claimant_email:claimant});
+ assert.equal(claimAction(c('submitted'),'t@x',true),'approve');
+ assert.equal(claimAction(c('submitted','t@x'),'t@x',true),null,'nobody approves their own claim');
+ assert.equal(claimAction(c('approved'),'t@x',true),'submit-to-su');
+ assert.equal(claimAction(c('sent-back'),'a@x',false),'resubmit');
+ assert.equal(claimAction(c('tracking'),'a@x',false),'mark-sent');
+ assert.equal(claimAction(c('sent'),'a@x',false),'mark-paid');
+ assert.equal(claimAction(c('sent'),'t@x',true),null,'only the claimant knows when they’ve been paid');
+ const event={...blankEvent(),id:'e1',title:'Board games',starts_at:'2026-11-19T17:00:00Z',status:'published'};
+ const plans=[{...blankPlan('e1'),budget_lines:[{item:'Pizza',amount:'50'}],budget_status:'approved',budget_approved:'40.00'}];
+ const claims=[{...c('paid'),amount:45.5,spent_on:'2026-11-19',event_id:'e1'},{...c('sent-back'),amount:10,spent_on:'2026-11-19',event_id:'e1'},{...c('submitted'),amount:12,spent_on:'2026-11-19',event_id:'e1'},{...c('tracking'),payer:'company',payer_name:'Acme',amount:30,spent_on:'2026-11-19',event_id:'e1'},{...c('tracking'),payer:'company',payer_name:'Acme',amount:80,spent_on:'2026-11-20',event_id:null}];
+ assert.equal(spentOn('e1',claims),45.5,'only approved society claims count as spent');
+ assert.equal(waitingOn('e1',claims),12,'a claim waiting for approval is counted apart');
+ const income=[{kind:'membership',description:'Fees',amount:'300',status:'received',received_on:'2026-10-01',due_on:null,event_id:null},{kind:'grant',description:'SU grant',amount:'200',status:'expected',due_on:'2027-01-10',received_on:null,event_id:null},{kind:'tickets',description:'Old',amount:'99',status:'received',received_on:'2026-07-01',due_on:null,event_id:null}];
+ const report=yearReport({year:'2026-27',claims,income,events:[event],plans});
+ assert.match(report,/\*\*Money in:\*\* £300\n\*\*Paid out by the society:\*\* £45\.50\n\*\*Balance for the year:\*\* £254\.50/);
+ assert.match(report,/Still expected: SU grant \(£200\)\./);
+ assert.match(report,/\| Board games \| £40 \| £45\.50 \|/);
+ assert.match(report,/2 paid back by companies or sponsors, totalling £110\. These didn’t use society money\./);
+ assert.match(report,/1 waiting for approval, totalling £12\./,'a claim nobody has approved isn’t counted as paid out');
+ assert.deepEqual(Object.keys(incomeProblems({kind:'grant',description:'Grant',amount:'200',status:'applying',due_on:null})),['due_on'],'a grant application needs its deadline');
+});
+
+test('directory: entries need a name, passwords are refused, and search covers who holds a login', ()=>{
+ assert.deepEqual(Object.keys(entryProblems({...blankEntry('login'),name:'Instagram',notes:'Password: hunter2'})),['notes']);
+ assert.deepEqual(entryProblems({...blankEntry('login'),name:'Instagram',notes:'In the society password manager.'}),{},'mentioning where the password is kept is fine');
+ assert.deepEqual(Object.keys(entryProblems({...blankEntry(),email:'not-an-email',url:'example.com'})),['name','email','url']);
+ const members=[{email:'a@x',name:'Amanda Zhang',roles:[]}];
+ const login={...blankEntry('login'),name:'Instagram',holder_email:'a@x'};
+ assert.ok(directoryMatches(login,'amanda insta',members));assert.ok(!directoryMatches(login,'linkedin',members));assert.ok(directoryMatches(login,'',members));
+});
+
+test('SU, AGM, sponsors and numbers: the AGM sets off everyone’s tasks, and terms and events are counted the same way everywhere', ()=>{
+ const tasks=agmTasks('2027-03-20','2026-11-13',['secretary','treasurer']);
+ assert.deepEqual(tasks.map(t=>[t.assignee_role,t.due_on,t.kind]),[['secretary','2027-03-06','agm'],['secretary','2027-03-13','agm'],['treasurer','2027-03-17','agm'],['president','2027-03-17','agm'],['secretary','2027-03-22','agm'],['secretary','2027-04-03','handover'],['treasurer','2027-04-03','handover']]);
+ assert.equal(agmTasks('2026-11-20','2026-11-13')[0].due_on,'2026-11-13','a notice already overdue is due today');
+ assert.equal(agmNoticeDate('2027-03-20'),'2027-03-06');
+ const summary=committeeSummary([{key:'treasurer',name:'Treasurer',position:4},{key:'president',name:'President',position:1}],[{email:'n@x',name:'Nathan Walker',roles:['treasurer']},{email:'r@x',name:'Ryan Dawson',roles:['president']}]);
+ assert.equal(summary.text,'President: Ryan Dawson <r@x>\nTreasurer: Nathan Walker <n@x>');
+ assert.deepEqual(Object.keys(sponsorProblems({...blankSponsor(),website:'acme.com'})),['name','website']);
+ assert.equal(termOf('2026-11-13'),'2026-27 Semester 1');assert.equal(termOf('2027-02-01'),'2026-27 Semester 2');assert.equal(termOf('2027-07-01'),'2026-27 Summer');
+ const events=[{...blankEvent(),id:'a',status:'published',starts_at:'2026-10-01T17:00:00Z',ends_at:'2026-10-01T19:00:00Z'},{...blankEvent(),id:'b',status:'published',starts_at:'2026-11-01T17:00:00Z',ends_at:'2026-11-01T19:00:00Z'},{...blankEvent(),id:'c',status:'cancelled',starts_at:'2026-11-02T17:00:00Z',ends_at:'2026-11-02T19:00:00Z'}];
+ const plans=[{...blankPlan('a'),post_event:{attendance:30}}];
+ assert.deepEqual(termEvents('2026-27 Semester 1',events,plans,Date.parse('2026-11-13T00:00:00Z')),{held:2,attendance:30,counted:1});
+});
+
+test('risk assessments: R is always L × S on the SU form, and anything unreadable is left for the organiser', ()=>{
+ const form=['| School/Directorate | Location | Reference | Date | Assessor |','|---|---|---|---|---|','| CompSoc: Rust | EM 2.50 | ---- | 15 November 2026 | Divine |','','## Hazards','',
+  '| What are the hazards? | Who might be harmed? | Control measures | L | S | R | Additional control measures | Action by whom? | Action by date |','|---|---|---|---|---|---|---|---|---|',
+  '| Slips, trips and falls | Members | Dry floor | 2 | 2 | 5 | No further action | Divine | 24 November |','| Cables | Members | Taped down | 3 | 3 |  | Check before doors | Divine | 26 November |','| Allergies | Attendees | None yet | high | 4 | 9 | Ask at sign-up | Divine | 20 November |','','Some notes after.'].join('\n');
+ const fixed=fixRiskScores(form).split('\n');
+ assert.equal(fixed[8],'| Slips, trips and falls | Members | Dry floor | 2 | 2 | 4 | No further action | Divine | 24 November |','a wrong sum is put right');
+ assert.equal(fixed[9],'| Cables | Members | Taped down | 3 | 3 | 9 | Check before doors | Divine | 26 November |','a missing R is filled in');
+ assert.equal(fixed[10],'| Allergies | Attendees | None yet | high | 4 | 9 | Ask at sign-up | Divine | 20 November |','a score that isn’t 1 to 4 is left alone');
+ assert.deepEqual(fixed.slice(0,3),form.split('\n').slice(0,3),'other tables, like the header, are untouched');
+ assert.equal(fixRiskScores('No tables here.'),'No tables here.');
+});
+
+test('the events calendar shows whole Monday-to-Sunday weeks', ()=>{
+ const weeks=monthGrid('2026-11');
+ assert.equal(weeks[0][0],'2026-10-26');assert.equal(weeks.at(-1)[6],'2026-12-06');assert.equal(weeks.length,6);assert.ok(weeks.every(w=>w.length===7));
+ assert.equal(monthGrid('2027-02')[0][0],'2027-02-01','February 2027 starts on a Monday');assert.equal(monthGrid('2027-02').length,4);
 });

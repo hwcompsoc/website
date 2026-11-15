@@ -11,7 +11,7 @@ type Status={configured:boolean;connected:boolean;account:string|null;root:{id:s
 type DriveFile={id:string;name:string;mimeType:string;modified:string|null;link:string|null};
 type Listing={trail:{id:string;name:string}[];files:DriveFile[]};
 // Everything goes through a server function, which holds the society's Google connection.
-export const drive=<T,>(body:Record<string,string>)=>callFunction<T>('google-drive',body);
+export const drive=<T,>(body:Record<string,string|number>)=>callFunction<T>('google-drive',body);
 const redirect=()=>`${location.origin}/admin/drive`;
 const icons:Record<DriveKind,LucideIcon>={folder:Folder,doc:FileText,sheet:Sheet,slides:Presentation,form:FileText,pdf:FileText,image:ImageIcon,video:Video,file:FileIcon};
 const changed=(iso:string)=>new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',day:'numeric',month:'short',year:'numeric'}).format(new Date(iso));
@@ -20,6 +20,11 @@ const folderHref=(id:string,root:string)=>id===root?'/admin/drive':`/admin/drive
 function Row({file,root}:{file:DriveFile;root:string}){const kind=driveKind(file.mimeType);const Icon=icons[kind];const detail=[driveKindLabel[kind],file.modified&&`changed ${changed(file.modified)}`].filter(Boolean).join(', ');
  const body=<><Icon size={16} aria-hidden="true"/><span className="admin-row-main"><b>{file.name}</b><small>{detail}</small></span></>;
  return <li>{kind==='folder'?<a href={folderHref(file.id,root)}>{body}<ChevronRight size={16} aria-hidden="true"/></a>:<a href={file.link??'#'} target="_blank" rel="noopener noreferrer">{body}<ExternalLink size={16} aria-hidden="true"/><span className="sr-only"> (opens Google Drive in a new tab)</span></a>}</li>}
+
+// One folder inside the society folder, such as Documents, listed on another page. Made the first time it's opened.
+export function DriveFolderList({path,title,intro}:{path:string;title:string;intro:string}){const {data,error,loading}=useLoad(async()=>{const {id,link}=await drive<{id:string;link:string}>({action:'folder',folder:path});const listing=await drive<Listing>({action:'list',folder:id});return {id,link,files:listing.files}},`drive-list-${path}`);
+ return <section className="admin-block" aria-labelledby="drive-folder-list"><div className="admin-block-head"><h2 id="drive-folder-list">{title}</h2>{data&&<a className="text-link" href={data.link} target="_blank" rel="noopener noreferrer">Open the folder<ExternalLink size={16} aria-hidden="true"/><span className="sr-only"> (opens Google Drive in a new tab)</span></a>}</div><p className="admin-quiet admin-people-intro">{intro}</p>
+  <Failure>{error}</Failure>{loading&&!data?<PeopleSkeleton/>:data&&(data.files.length?<ul className="admin-rows admin-drive">{data.files.map(file=><Row key={file.id} file={file} root={data.id}/>)}</ul>:<EmptyNote kind="none">Nothing in the folder yet.</EmptyNote>)}</section>}
 
 function Browser({root,folder}:{root:{id:string;name:string};folder:string}){const {data,error,loading}=useLoad(()=>drive<Listing>({action:'list',folder}),`drive-${root.id}-${folder}`);const [query,setQuery]=useState('');const [found,setFound]=useState<{query:string;files:DriveFile[]}|null>(null);const [searching,setSearching]=useState(false);const [searchError,setSearchError]=useState('');
  useEffect(()=>{setFound(null);setQuery('');setSearchError('')},[folder]);

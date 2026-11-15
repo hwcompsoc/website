@@ -1,0 +1,34 @@
+import {useState,type FormEvent} from 'react';
+import {CalendarPlus} from 'lucide-react';
+import {Button} from '../components/ui/button';
+import {Input} from '../components/ui/input';
+import {supabase} from '../supabase';
+import {agmNoticeDate,agmTasks,blankTask,committeeSummary,dueLabel,fullDate,todayInUk,type Task} from '../admin-rules';
+import {loadTeam} from './access';
+import {loadDirectory} from './Directory';
+import {CopyButton,EmptyNote,Failure,Field,fieldProps,friendly,useLoad,useTitle} from './ui';
+import {PeopleSkeleton} from './skeletons';
+
+async function loadDeadlines(){const {data,error}=await supabase.from('tasks').select('*').in('kind',['deadline','agm']).eq('status','open').order('due_on');if(error)throw new Error(friendly(error));return (data as Task[]).filter(t=>t.details?.su||t.kind==='agm')}
+async function addTasks(tasks:Task[]){const {error}=await supabase.from('tasks').insert(tasks.map(({id:_i,created_at:_c,created_by:_b,done_by:_d,done_at:_a,...t})=>t));if(error)throw new Error(friendly(error))}
+
+// SU paperwork and the AGM, for the Secretary. The re-affiliation form itself will be filled from here once it's added.
+// Its own page, so the Secretary's yearly paperwork isn't mixed in with each meeting's minutes.
+export function SuPage(){useTitle('SU and AGM');return <section className="admin-page admin-narrow"><header className="admin-head"><h1>SU and AGM</h1></header><Paperwork/></section>}
+
+function Paperwork(){const [version,setVersion]=useState(0);const team=useLoad(loadTeam,'team');const directory=useLoad(loadDirectory,'paperwork-directory');const deadlines=useLoad(loadDeadlines,`deadlines-${version}`);
+ const [reaffiliation,setReaffiliation]=useState('');const [agm,setAgm]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');const today=todayInUk();
+ async function run(tasks:Task[],message:string){setBusy(true);setError('');setNotice('');try{await addTasks(tasks);setNotice(message);setVersion(v=>v+1)}catch(f){setError((f as Error).message)}finally{setBusy(false)}}
+ function setDeadline(e:FormEvent){e.preventDefault();if(!reaffiliation)return;run([{...blankTask(),title:'Re-affiliate the society with the SU',assignee_role:'secretary',due_on:reaffiliation,kind:'deadline',notes:'The committee’s details and the SU contacts are on the SU and AGM page.',details:{su:'reaffiliation',href:'/admin/su'}}],'Deadline added. The Secretary has a task for it.');setReaffiliation('')}
+ function setAgmDate(e:FormEvent){e.preventDefault();if(!agm)return;run(agmTasks(agm,today,(team.data?.roles??[]).map(r=>r.key)),`AGM tasks added, from the notice to the handover.`);setAgm('')}
+ const members=team.data?.members??[];const roles=team.data?.roles??[];const summary=committeeSummary(roles,members);const su=(directory.data??[]).filter(e=>e.kind==='contact'&&/\b(su|union|students[’']? union)\b/i.test(`${e.organisation} ${e.about}`));
+ if((team.loading&&!team.data)||(deadlines.loading&&!deadlines.data))return <PeopleSkeleton/>;
+ return <><Failure>{team.error||deadlines.error||directory.error||error}</Failure><p role="status" className="admin-notice">{notice}</p>
+  <section className="admin-block" aria-labelledby="su-deadlines"><h2 id="su-deadlines">Coming up</h2>{deadlines.data?.length?<ul className="admin-rows admin-people">{deadlines.data.map(t=><li key={t.id} className="admin-person"><span className="admin-row-main"><b>{t.title}</b><small>{dueLabel(t.due_on,today)}</small></span></li>)}</ul>:deadlines.data&&<EmptyNote kind="none">No SU deadlines or AGM set.</EmptyNote>}</section>
+  <section className="admin-form-block" aria-labelledby="su-reaffiliation"><h2 id="su-reaffiliation">Re-affiliation</h2><p className="admin-quiet">Each year the society re-affiliates with the SU. Add the deadline and the Secretary gets a task for it. The details the form asks for are below.</p>
+   <form className="admin-link-form" onSubmit={setDeadline} noValidate><Field id="reaffiliation-date" label="Deadline"><Input id="reaffiliation-date" type="date" min={today} value={reaffiliation} onChange={e=>setReaffiliation(e.target.value)}/></Field><Button type="submit" variant="outline" disabled={busy||!reaffiliation}><CalendarPlus aria-hidden="true"/>Add deadline</Button></form></section>
+  <section className="admin-form-block" aria-labelledby="su-committee"><div className="admin-block-head"><h2 id="su-committee">The committee</h2><CopyButton label="Copy all" value={summary.text}/></div><p className="admin-quiet">From the roles on the People page. Names come from each person’s account.</p>
+   {summary.rows.length?<div className="admin-table-scroll"><table className="admin-budget admin-money-table"><thead><tr><th scope="col">Role</th><th scope="col">Name</th><th scope="col">Email</th></tr></thead><tbody>{summary.rows.map((r,i)=><tr key={i}><th scope="row">{r.role}</th><td>{r.name}</td><td className="admin-code">{r.email}</td></tr>)}</tbody></table></div>:team.data&&<EmptyNote kind="none">Nobody has a role yet. An Owner can give roles on the People page.</EmptyNote>}</section>
+  <section className="admin-block" aria-labelledby="su-contacts"><h2 id="su-contacts">SU contacts</h2>{su.length?<ul className="admin-rows admin-people">{su.map(e=><li key={e.id} className="admin-person"><span className="admin-row-main"><b>{e.name}</b><small>{[e.about,e.email].filter(Boolean).join(' · ')}</small></span>{e.email&&<CopyButton label="Copy email" value={e.email}/>}</li>)}</ul>:directory.data&&<EmptyNote kind="none">Add the SU’s contacts in the <a className="text-link" href="/admin/directory">Directory</a>, with the organisation set to Students’ Union.</EmptyNote>}</section>
+  <section className="admin-form-block" aria-labelledby="su-agm"><h2 id="su-agm">AGM and elections</h2><p className="admin-quiet">The society elects next year’s committee at its AGM. Set the date and everyone gets their tasks: the Secretary sends the notice two weeks before and collects nominations, the Treasurer prepares the year’s finances, and after the AGM each role writes its handover note.</p>
+   <form className="admin-link-form" onSubmit={setAgmDate} noValidate><Field id="agm-date" label="Date of the AGM" hint={agm?`The notice has to go out by ${fullDate(`${agmNoticeDate(agm)}T12:00:00Z`)}.`:undefined}><Input {...fieldProps('agm-date',undefined,!!agm)} type="date" min={today} value={agm} onChange={e=>setAgm(e.target.value)}/></Field><Button type="submit" variant="outline" disabled={busy||!agm}><CalendarPlus aria-hidden="true"/>Set the AGM</Button></form></section></>}
