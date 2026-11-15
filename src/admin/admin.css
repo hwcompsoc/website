@@ -442,7 +442,8 @@
 .admin-space-facts dt{color:var(--text-quiet)}
 .admin-space-facts dd{margin:0;color:var(--ink);min-width:0;overflow-wrap:anywhere}
 .admin-space-facts ul{margin:0;padding-left:1.2em}
-.admin-table-scroll{overflow-x:auto}
+/* position:relative keeps visually hidden labels (position:absolute) inside the scroll area, so they can't widen the page. */
+.admin-table-scroll{overflow-x:auto;position:relative}
 .admin-budget{width:100%;border-collapse:collapse;font-size:var(--fs-body)}
 .admin-budget th{text-align:left;font-size:var(--fs-sm);font-weight:600;color:var(--text-quiet);padding:0 var(--space-8) var(--space-8) 0}
 .admin-budget td{padding:0 var(--space-8) var(--space-8) 0;vertical-align:top}
