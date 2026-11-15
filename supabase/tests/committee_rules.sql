@@ -14,8 +14,9 @@ declare
   org    constant text := 'rules-test-organiser@example.invalid';
   social constant text := 'rules-test-socials@example.invalid';
   member constant text := 'rules-test-member@example.invalid';
+  owner  constant text := 'rules-test-owner@example.invalid';
   passed text[] := '{}';
-  ev uuid; ev2 uuid; meet uuid; meet2 uuid; today date := (now() at time zone 'Europe/London')::date; claim uuid; own uuid; company uuid; grant_id uuid; n int; t public.tasks%rowtype; c public.expense_claims%rowtype; p public.event_plans%rowtype; starts timestamptz := date_trunc('hour', now()) + interval '30 days 17 hours';
+  ev uuid; ev2 uuid; team uuid; kept uuid; linked uuid; who text; meet uuid; meet2 uuid; today date := (now() at time zone 'Europe/London')::date; claim uuid; own uuid; company uuid; grant_id uuid; n int; t public.tasks%rowtype; c public.expense_claims%rowtype; p public.event_plans%rowtype; starts timestamptz := date_trunc('hour', now()) + interval '30 days 17 hours';
 begin
   alter table public.events disable trigger events_rebuild_site;
 
@@ -317,6 +318,52 @@ begin
   select count(*) into n from public.tasks where kind = 'agenda' and status = 'open' and details ->> 'meeting' in (meet::text, meet2::text);
   if n <> 0 then raise exception 'FAIL: clearing a meeting''s date should cancel its agenda task (% open)', n; end if;
   passed := passed || 'saving the agenda completes the task, and clearing the date cancels it'::text;
+
+  ------------------------------------------------------------------ The About page follows the roles on People
+  insert into public.committee_members (email, role, name) values (owner, 'owner', 'Test Owner');
+  insert into public.committee_roles (key, name, position) values ('rules-test', 'Rules test role', 99);
+  perform set_config('request.jwt.claims', json_build_object('email', member, 'role', 'authenticated')::text, true); set local role authenticated;
+  begin
+    insert into public.committee_teams (name, role) values ('Not allowed team', 'rules-test');
+    raise exception using message = 'NO ERROR';
+  exception when others then if sqlerrm = 'NO ERROR' then raise exception 'FAIL: someone who isn''t an Owner tied a team to a role'; end if; end;
+  insert into public.committee_teams (name, position) values ('Rules test team', 99) returning id into team;
+  insert into public.committee_people (team_id, name, position) values (team, 'Test Socials', 1) returning id into kept;
+  passed := passed || 'only Owners tie a team to a role'::text;
+
+  perform set_config('request.jwt.claims', json_build_object('email', owner, 'role', 'authenticated')::text, true); set local role authenticated;
+  update public.committee_teams set role = 'rules-test' where id = team;
+  insert into public.committee_member_roles (email, role) values (member, 'rules-test'), (social, 'rules-test');
+  reset role; perform set_config('request.jwt.claims', '', true);
+  select count(*) into n from public.committee_people where team_id = team;
+  if n <> 2 then raise exception 'FAIL: giving two people the role should put them both on its team, reusing the existing entry (got %)', n; end if;
+  select person_id into linked from public.committee_member_roles where email = social and role = 'rules-test';
+  if linked is distinct from kept then raise exception 'FAIL: someone already on the team should keep their entry and photo'; end if;
+  passed := passed || 'giving a role puts the person on its team, keeping an entry they already had'::text;
+
+  perform set_config('request.jwt.claims', json_build_object('email', member, 'role', 'authenticated')::text, true); set local role authenticated;
+  begin
+    update public.committee_people set name = 'Someone else' where id = kept;
+    raise exception using message = 'NO ERROR';
+  exception when others then if sqlerrm = 'NO ERROR' then raise exception 'FAIL: a role holder was renamed on the Committee page'; end if; end;
+  begin
+    delete from public.committee_people where id = kept;
+    raise exception using message = 'NO ERROR';
+  exception when others then if sqlerrm = 'NO ERROR' then raise exception 'FAIL: a role holder was removed on the Committee page'; end if; end;
+  update public.committee_people set bio = 'Likes pub quizzes.' where id = kept;
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'FAIL: the committee should still be able to edit a role holder''s profile'; end if;
+  passed := passed || 'the Committee page can''t rename or remove role holders, but can edit their profile'::text;
+
+  perform set_config('request.jwt.claims', json_build_object('email', owner, 'role', 'authenticated')::text, true); set local role authenticated;
+  update public.committee_members set name = 'Renamed Socials' where email = social;
+  delete from public.committee_member_roles where email = member and role = 'rules-test';
+  reset role; perform set_config('request.jwt.claims', '', true);
+  select name into who from public.committee_people where id = kept;
+  if who is distinct from 'Renamed Socials' then raise exception 'FAIL: renaming someone on People should rename them on the About page (got %)', who; end if;
+  select count(*) into n from public.committee_people where team_id = team;
+  if n <> 1 then raise exception 'FAIL: taking a role away should take them off the team (% left)', n; end if;
+  passed := passed || 'renaming on People renames them there, and taking the role away removes them'::text;
 
   reset role; perform set_config('request.jwt.claims', '', true);
   raise exception 'PASSED: all % checks. Everything this test did has been undone. %', cardinality(passed), array_to_string(passed, '; ');
