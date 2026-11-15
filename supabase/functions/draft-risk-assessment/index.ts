@@ -20,10 +20,10 @@ const HAZARDS_HEADER='| What are the hazards? | Who might be harmed? | Control m
 const instructions=`You draft risk assessments for events run by the Heriot-Watt University Computer Science Society (CompSoc), a student society in Edinburgh, on the Students' Union's risk assessment form. You're given an event's details. Write three sections of the form.
 
 Rules:
-- Include the hazards that realistically apply to this kind of event in this venue, usually five to ten. Always include slips, trips and falls. Think about crowding, electrical equipment and cables, food and allergies, alcohol if it's a social, accessibility, lone working, travel if it's off campus, and anything the details mention.
-- "Control measures" are only what's already in place: what the details say, or what's normal for a university room booking (such as fire alarms and marked exits). Anything else goes under "Additional control measures" as an action, such as "Ask attendees about allergies when they sign up". If nothing more is needed, write "No further action".
+- Include the hazards that realistically apply to this kind of event in this venue, usually five to ten. Always include slips, trips and falls. Think about crowding, electrical equipment and cables, food and allergies, alcohol if there's a social or a pub, accessibility, travel if it's off campus, and anything the details mention. Outdoors, also think about weather, daylight, getting lost, mobile signal and what happens in an emergency. Lone working means a committee member setting up or packing down on their own, so only include it if that might happen.
+- "Control measures" are only what's already in place: what the details say, or what every university room has (fire alarms, extinguishers and marked exits). Don't claim anything else is already done, such as equipment being checked, a room being accessible or someone knowing first aid. Put those under "Additional control measures" as actions, such as "Check extension leads before the event" or "Ask attendees about allergies when they sign up". If nothing more is needed, write "No further action".
 - Score L (likelihood) and S (severity) from 1 to 4, with the controls already in place. L: 1 Unlikely, 2 Possible, 3 Likely, 4 Certain. S: 1 Insignificant or no injury, 2 Minor injury, 3 Moderate injury, 4 Major injury or fatality. R is L multiplied by S. Any hazard with an R of 9 or more must have additional control measures.
-- "Action by whom?" is the lead organiser's name if given, otherwise "Lead organiser". "Action by date" is a real date before the event, such as two days before it.
+- "Action by whom?" is the lead organiser's name if given, otherwise "Lead organiser". "Action by date" is a date before the event, such as two days before it, written like "25 November 2026". When the action is "No further action", write "—" in both.
 - Never invent facts about the venue, people or numbers. Write "To confirm" where something isn't known.
 - Write in British English, plainly. Keep each table cell short.
 - Reply in Markdown with exactly these three sections and nothing else, starting with the first heading:
@@ -53,7 +53,11 @@ async function draft(details:string){const account=Deno.env.get('CLOUDFLARE_ACCO
  let written=String(body?.choices?.[0]?.message?.content??'').trim().replace(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```$/,'$1').trim();
  // Keep only the three sections, in case the model adds a title or a sign-off of its own.
  const start=written.search(/^##\s*Describe the task/im);if(start>0)written=written.slice(start);
- if(!written)throw new Error('Workers AI sent back nothing.');return written}
+ if(!written)throw new Error('Workers AI sent back nothing.');return tidyActions(written)}
+
+// A hazard that needs no further action has nobody to do it and no date, whatever the model put there.
+const tidyActions=(markdown:string)=>markdown.split('\n').map(line=>{const row=line.trim();if(!/^\|.*\|$/.test(row))return line;const cells=row.slice(1,-1).split('|').map(c=>c.trim());
+ if(cells.length!==9||!/^no further action\.?$/i.test(cells[6]))return line;cells[7]='—';cells[8]='—';return `| ${cells.join(' | ')} |`}).join('\n');
 
 // The whole form: the header and the scoring key from what's known, around the sections the AI wrote.
 function assemble(input:Record<string,unknown>,body:string){const title=text(input.title,120);const venue=text(input.venue,120)||'To confirm';const lead=text(input.lead,80)||'To confirm';
