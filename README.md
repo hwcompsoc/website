@@ -99,9 +99,11 @@ Files the admin makes go in the society's Drive: `Minutes`, `Agendas`, `Document
 
 The `draft-risk-assessment` function drafts an event's risk assessment with Workers AI, using the same Cloudflare secrets as the minutes. It follows the Students' Union's risk assessment form (Heriot-Watt's Risk Assessment Appendix 1, version 2). The function fills in the form's header, the scoring key and the review date itself, and the AI writes the task, the PPE and the hazards table. The admin works out each R as L × S, so a hazard's score is never a wrong sum. If the SU changes its form, change `instructions`, `SCORING` and `assemble` in the function. Events reach the society's Google Calendar by subscribing it to the site's `/events.ics` feed (Other calendars, then From URL), which the admin's calendar view explains.
 
+The database's rules for all of this, who can see and do what and the tasks each step hands on, are tested by `supabase/tests/committee_rules.sql`. Run it against the test project as the postgres role, in the SQL editor or with psql. It acts as each role in turn, so row level security and the triggers apply as they do in the admin, then raises an error on purpose so that nothing it did is kept: `PASSED: all N checks` means every rule held, and `FAIL: …` names the first that didn't. Run it after changing any of these migrations. It's for the test project only.
+
 **Before this goes live**, in this order:
 
-1. Apply the migrations from `20261114100000` to `20261114160000` to the production project. They've been applied to the test project.
+1. Run `supabase/tests/committee_rules.sql` on the test project and check it passes. Then apply the migrations from `20261114100000` to `20261114160000` to the production project with `supabase db push`, so they're recorded. They were run on the test project by hand, so its migration history doesn't list them, and a `db push` to the test project would try to run them again.
 2. Straight away, give everyone their roles at `/admin/people`. Until then only Owners can create or edit events.
 3. Deploy the functions: `supabase functions deploy google-drive --no-verify-jwt`, `supabase functions deploy generate-minutes --no-verify-jwt` and `supabase functions deploy draft-risk-assessment --no-verify-jwt`.
 4. Deploy the site. The old "Tell Amanda and Kevin" step is gone: publishing now creates the social post tasks.

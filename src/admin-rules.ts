@@ -223,6 +223,9 @@ export const taskEditable=(task:Task)=>({title:task.title.trim(),notes:task.note
 
 // Yours: given to you, or given to one of your roles and not yet picked up by anyone.
 export const isMine=(task:Task,email:string,roles:string[])=>task.assignee_email===email||(!task.assignee_email&&!!task.assignee_role&&roles.includes(task.assignee_role));
+// Where a link to a task should go: the admin page where it's done, if the admin made it with one, or else the Tasks tab it's on.
+export function taskHref(task:Pick<Task,'details'|'assignee_email'|'assignee_role'>,email:string,roles:string[]){const href=task.details?.href;
+ if(typeof href==='string'&&href.startsWith('/admin/'))return href;return isMine(task as Task,email,roles)?'/admin/tasks':'/admin/tasks?tab=team'}
 export function assigneeLabel(task:Task,members:Member[],roles:Role[]){const person=members.find(m=>m.email===task.assignee_email);const role=roles.find(r=>r.key===task.assignee_role);
  if(task.assignee_email)return person?personName(person):task.assignee_email;if(role)return `Anyone in ${role.name}`;return 'Nobody yet'}
 
