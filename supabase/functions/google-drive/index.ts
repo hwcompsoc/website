@@ -66,23 +66,20 @@ async function find(query:string){const found=await withRoot();const words=query
  for(const file of matches){if(inside.length>=50)break;const parent=file.parents?.[0];if(parent&&await trail(token,parent,found.root_id,'',known))inside.push(file)}
  return {files:inside.map(shown)}}
 
-async function minutesFolder(token:string,found:Link&{root_id:string}){
- if(found.minutes_id){try{const folder=await get(token,found.minutes_id,'id,trashed');if(!folder.trashed)return folder.id}catch(failure){if(!(failure instanceof Refused))throw failure}}
- const [existing]=await search(token,`${quoted(found.root_id)} in parents and name='Minutes' and mimeType='${FOLDER}' and trashed=false`,'id','name',1);
- const id=existing?.id??(await google(token,'drive/v3/files?fields=id',{type:'application/json',body:JSON.stringify({name:'Minutes',mimeType:FOLDER,parents:[found.root_id]})})).id;
- await update({minutes_id:id});return id as string}
-
-// A folder inside the society folder, such as Agendas or Events/2026-27/Rust workshop, made if it isn't there yet.
+// A folder inside the society folder, such as Meetings/Agendas or Events/2026-27/Rust workshop, made if it isn't there yet.
+// If two requests make the same folder at once, both end up using the older one, so files never split between two copies.
 async function folderAt(token:string,found:Link&{root_id:string},path:string){const parts=path.split('/').map(part=>part.trim());
  if(!parts.length||parts.length>5||parts.some(part=>!part||part.length>100||part==='.'||part==='..'))throw new Refused('That folder name isn’t right.');
- if(parts.length===1&&parts[0]==='Minutes')return minutesFolder(token,found);
- let parent=found.root_id;for(const part of parts){const [existing]=await search(token,`${quoted(parent)} in parents and name=${quoted(part)} and mimeType='${FOLDER}' and trashed=false`,'id','name',1);
-  parent=existing?.id??(await google(token,'drive/v3/files?fields=id',{type:'application/json',body:JSON.stringify({name:part,mimeType:FOLDER,parents:[parent]})})).id}
+ let parent=found.root_id;for(const part of parts){const query=`${quoted(parent)} in parents and name=${quoted(part)} and mimeType='${FOLDER}' and trashed=false`;
+  const [existing]=await search(token,query,'id','createdTime',1);
+  if(existing){parent=existing.id;continue}
+  await google(token,'drive/v3/files?fields=id',{type:'application/json',body:JSON.stringify({name:part,mimeType:FOLDER,parents:[parent]})});
+  parent=(await search(token,query,'id','createdTime',1))[0].id}
  return parent}
 
 // Saves HTML as a new Google Doc. Saving again makes another doc: nothing here can overwrite one.
 async function saveDoc(name:string,html:string,path:string){const found=await withRoot();if(!name.trim()||name.length>200)throw new Refused('The document needs a name.');if(!html||html.length>500_000)throw new Refused('That’s too long to save.');
- const token=await accessToken(found.refresh_token);const folder=await folderAt(token,found,path||'Minutes');const boundary=`minutes-${crypto.randomUUID()}`;
+ const token=await accessToken(found.refresh_token);const folder=await folderAt(token,found,path||'Meetings/Minutes');const boundary=`minutes-${crypto.randomUUID()}`;
  const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name:name.trim(),mimeType:'application/vnd.google-apps.document',parents:[folder]})}\r\n--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n--${boundary}--`;
  const file=await google(token,'upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{type:`multipart/related; boundary=${boundary}`,body});return {id:file.id,link:file.webViewLink}}
 
@@ -134,7 +131,7 @@ Deno.serve(async request=>{
   const {data:member,error:failure}=await admin.from('committee_members').select('role').eq('email',actor).maybeSingle();if(failure)throw failure;if(!member)throw new Refused('This is only for the committee.',403);
   const input=await request.json();const text=(key:string)=>String(input[key]??'');const action=text('action');
   const forOwners:Record<string,()=>Promise<unknown>>={'connect-url':()=>connectUrl(actor,text('redirect')),connect:()=>connect(actor,text('code'),text('state'),text('redirect')),folders:folderChoices,'choose-folder':()=>chooseRoot(text('folder')),disconnect};
-  const forEveryone:Record<string,()=>Promise<unknown>>={status,list:()=>list(text('folder')),search:()=>find(text('query')),'save-minutes':()=>saveDoc(text('name'),text('html'),'Minutes'),'save-doc':()=>saveDoc(text('name'),text('html'),text('folder')),folder:()=>openFolder(text('folder')),'upload-url':()=>uploadUrl(text('folder'),text('name'),text('type'),Number(input.size),text('origin'))};
+  const forEveryone:Record<string,()=>Promise<unknown>>={status,list:()=>list(text('folder')),search:()=>find(text('query')),'save-minutes':()=>saveDoc(text('name'),text('html'),'Meetings/Minutes'),'save-doc':()=>saveDoc(text('name'),text('html'),text('folder')),folder:()=>openFolder(text('folder')),'upload-url':()=>uploadUrl(text('folder'),text('name'),text('type'),Number(input.size),text('origin'))};
   if(forOwners[action]&&member.role!=='owner')throw new Refused('Only an Owner can do this.',403);
   const run=forOwners[action]??forEveryone[action];if(!run)throw new Refused('Unknown action.');
   const result=await run();
