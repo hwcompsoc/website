@@ -396,6 +396,8 @@ test('event space: one checklist across planning, the day and afterwards, with t
  assert.equal(spaceStage(event,{...plan,post_event:{submitted_at:'x'}},after),'done');
  assert.equal(spaceStage({...event,status:'draft'},plan,before),'planning');
  assert.equal(spaceProgress(event,null,before).next.id,'lead','a new plan starts with choosing a lead');
+ const tabs=spaceChecklist({...blankEvent(),id:'e2',signup_required:true},null,before).map(s=>s.tab).filter((tab,i,all)=>tab!==all[i-1]);
+ assert.deepEqual(tabs,['details','planning','details','day'],'steps on the same tab sit together: details, planning, then back only to publish');
  assert.ok(!spaceChecklist(event,{...plan,requirements:[{item:'Projector',kind:'tech',done:false}]},before).find(s=>s.id==='requirements').done);
  assert.ok(!spaceChecklist(event,{...plan,requirements:[]},before).find(s=>s.id==='requirements').done,'an empty list isn’t sorted until someone says nothing’s needed');
  assert.equal(budgetTotal([{item:'Pizza',amount:'45.50'},{item:'Drinks',amount:'£10'}]),55.5);

@@ -307,10 +307,11 @@ export type SpaceTab='overview'|'details'|'planning'|'day'|'after';
 export const spaceTabs:{id:SpaceTab;label:string}[]=[{id:'overview',label:'Overview'},{id:'details',label:'Details'},{id:'planning',label:'Planning'},{id:'day',label:'On the day'},{id:'after',label:'After'}];
 export type SpaceStep={id:string;label:string;done:boolean;tab:SpaceTab};
 // One list of everything an event needs, in the order it usually happens, each pointing at the tab where it's done.
+// Steps on the same tab sit together, so working down the list doesn't bounce between tabs: Details, then Planning, then publishing.
 export function spaceChecklist(event:AdminEvent,plan:EventPlan|null,now=Date.now()):SpaceStep[]{const p=plan??blankPlan(event.id??'');const started=!!event.starts_at&&new Date(event.starts_at).getTime()<=now;
- const steps:SpaceStep[]=[{id:'details',label:'Add the details and both images',done:!detailsMissing(event).length,tab:'details'},{id:'lead',label:'Choose a lead organiser',done:!!p.lead_email,tab:'planning'},{id:'native',label:event.native_skipped?'Native skipped':'Create it on Native',done:isLink(event.native_url)||!!event.native_skipped,tab:'details'}];
+ const steps:SpaceStep[]=[{id:'details',label:'Add the details and both images',done:!detailsMissing(event).length,tab:'details'},{id:'native',label:event.native_skipped?'Native skipped':'Create it on Native',done:isLink(event.native_url)||!!event.native_skipped,tab:'details'}];
  if(event.signup_required)steps.push({id:'luma',label:'Create it on Luma',done:isLink(event.luma_url),tab:'details'});
- steps.push({id:'budget',label:p.budget_status==='pending'?'Wait for the Treasurer to approve the budget':p.budget_status==='sent-back'?'Change the budget and send it again':'Get the budget approved',done:p.budget_status==='approved',tab:'planning'},
+ steps.push({id:'lead',label:'Choose a lead organiser',done:!!p.lead_email,tab:'planning'},{id:'budget',label:p.budget_status==='pending'?'Wait for the Treasurer to approve the budget':p.budget_status==='sent-back'?'Change the budget and send it again':'Get the budget approved',done:p.budget_status==='approved',tab:'planning'},
   {id:'venue',label:p.venue_status==='not-needed'?'No venue booking needed':p.venue_status==='requested'?'Get the venue booking confirmed':'Book the venue',done:p.venue_status==='confirmed'||p.venue_status==='not-needed',tab:'planning'},
   {id:'requirements',label:'Sort the requirements',done:p.requirements.length>0&&p.requirements.every(r=>r.done),tab:'planning'},
   {id:'risk',label:p.risk_status==='not-needed'?'No risk assessment needed':'Save the risk assessment',done:p.risk_status==='done'||p.risk_status==='not-needed',tab:'planning'},
