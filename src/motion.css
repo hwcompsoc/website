@@ -11,6 +11,7 @@
 /* Typed: invisible full copy reserves the space; live text sits on top */
 .typed-visual{position:relative;display:inline-block;max-width:100%}
 .typed-ghost{visibility:hidden}
+.typed-ghost::before,.typed-live::before,.select-fill::before,.flip-shown::before{content:attr(data-text)}
 .typed-live{position:absolute;inset:0}
 .caret{display:inline-block;width:.55em;height:1em;margin-left:.08em;vertical-align:-.12em;background:currentColor;animation:caret-blink 1s linear infinite}
 .caret[data-typing]{animation:none}
@@ -113,7 +114,7 @@ mark.match{padding:0 .08em;margin:0 -.08em;background:var(--select-strong);color
 .board-text{min-width:0}
 .board-cover{flex:none;display:block;width:96px;height:auto;aspect-ratio:16/9;object-fit:cover;background:var(--tint)}
 .board-main h3{font-size:var(--fs-card);line-height:1.3;margin:0 0 var(--space-4)}
-.board-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left}
+.board-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;text-decoration:none}
 .board-open::after{content:'';position:absolute;inset:0;z-index:2}
 .board-venue{display:block;font-size:var(--fs-sm);color:var(--text-quiet)}
 .board-level{font-size:var(--pixel-sm);color:var(--text);text-align:right}
