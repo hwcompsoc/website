@@ -12,10 +12,11 @@ import {PixelImage} from '../motion/PixelImage';
 // Departures board. Rows that leave collapse, rows that arrive open and build in pixel by pixel,
 // and dates/times flip whenever `replay` changes (the filter state). Each row opens its event from the date block. `search` marks matches in titles.
 // Like the committee explorer, the board moves with the keys once a row has focus: ↑ ↓ go between rows, Home and End to the ends,
-// and Enter opens (the row is a button). `hint` shows the keys under the board, on screens with a mouse.
+// and Enter opens. Each row is a link to the event's own address, so search engines can find every event from the list and a
+// new-tab or modified click opens the page as usual; a plain click opens the dialog from the row instead. `hint` shows the keys under the board, on screens with a mouse.
 // `log` is for past events: the same board read as `git log --graph`, with each event's short commit hash where the time goes, a graph
 // line down the left with a node per row, and the year in the date. The hash is made from the event's address, so it never changes.
-function moveFocus(event:KeyboardEvent<HTMLUListElement>){const rows=[...event.currentTarget.querySelectorAll<HTMLButtonElement>('.board-open')];const now=rows.indexOf(document.activeElement as HTMLButtonElement);if(now<0)return;
+function moveFocus(event:KeyboardEvent<HTMLUListElement>){const rows=[...event.currentTarget.querySelectorAll<HTMLAnchorElement>('.board-open')];const now=rows.indexOf(document.activeElement as HTMLAnchorElement);if(now<0)return;
  const next=event.key==='ArrowDown'?Math.min(now+1,rows.length-1):event.key==='ArrowUp'?Math.max(now-1,0):event.key==='Home'?0:event.key==='End'?rows.length-1:-1;if(next<0)return;event.preventDefault();rows[next].focus()}
 export function EventBoard({events,onOpen,replay,search,hint=false,log=false}:{events:Event[];onOpen:(event:Event,origin:DOMRect)=>void;replay?:unknown;search?:string;hint?:boolean;log?:boolean}){
  const level=useMotionLevel();const settled=useRef(false);useEffect(()=>{settled.current=true},[]);
@@ -33,7 +34,7 @@ function EventRow({event:e,entering,replay,onOpen,holdCover,search,log}:{event:E
   <span className="board-date" ref={date}>{log?<><FlipText value={e.day} replay={replay}/> <FlipText value={e.month} replay={replay}/> <FlipText value={e.date.split(' ').at(-1)!} replay={replay}/></>:<><FlipText value={e.weekday} replay={replay}/> <FlipText value={e.day} replay={replay}/> <FlipText value={e.month} replay={replay}/></>}</span>
   {log?<span className="board-time board-hash" aria-hidden="true"><FlipText value={commitHash(e.id)} replay={replay}/></span>:<span className="board-time"><FlipText value={start} replay={replay}/></span>}
   <span className="board-cat"><Highlight text={e.category} query={search}/></span>
-  <div className="board-main">{e.thumb?<PixelImage className="board-cover" src={e.thumb} alt="" width={96} height={54} lazy/>:holdCover&&<span className="board-cover board-cover-empty" aria-hidden="true"/>}<div className="board-text"><h3><button type="button" className="board-open" onClick={()=>onOpen(e,date.current!.getBoundingClientRect())}>{e.cancelled?<span className="board-struck"><Highlight text={e.title} query={search}/></span>:<Highlight text={e.title} query={search}/>}<span className="sr-only">, view details</span></button></h3><span className="board-venue">{e.venue}</span></div></div>
+  <div className="board-main">{e.thumb?<PixelImage className="board-cover" src={e.thumb} alt="" width={96} height={54} lazy/>:holdCover&&<span className="board-cover board-cover-empty" aria-hidden="true"/>}<div className="board-text"><h3><a href={`/events/${e.id}`} className="board-open" onClick={click=>{if(click.button!==0||click.metaKey||click.ctrlKey||click.shiftKey||click.altKey)return;click.preventDefault();onOpen(e,date.current!.getBoundingClientRect())}}>{e.cancelled?<span className="board-struck"><Highlight text={e.title} query={search}/></span>:<Highlight text={e.title} query={search}/>}<span className="sr-only">, view details</span></a></h3><span className="board-venue">{e.venue}</span></div></div>
   <span className="board-level">{e.level}{status&&<span className="board-sample board-status" data-live={status!=='Cancelled'||undefined}><FlipText value={status} replay={replay}/></span>}{!e.cancelled&&e.luma&&!e.past&&<span className="board-sample">Sign-up needed</span>}</span>
   <ArrowRight className="board-arrow" aria-hidden="true"/>
  </PixelBuild>;

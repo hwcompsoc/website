@@ -2,7 +2,7 @@ import {Fragment,useEffect,useRef,useState} from 'react';
 import {m,animate,useMotionValue,useMotionValueEvent,type Transition} from 'motion/react';
 import {ArrowRight,Users} from 'lucide-react';
 import {events,links,type Event} from '../content';
-import {asset,DiscordButton,External} from './shared';
+import {asset,DiscordButton,External,usePageHeading} from './shared';
 import {dur,ease} from '../motion';
 import {useMotionLevel} from '../motion/level';
 import {Reveal} from '../motion/Reveal';
@@ -106,8 +106,9 @@ export function Hero({onEvent}:{onEvent:(event:Event,origin:DOMRect)=>void}){
  else if(path&&at('click')){pose={scale:.62,rotate:0,opacity:1};transition={duration:.1}}
  else if(path){pose={scale:.7,rotate:0,opacity:1};transition={...journey.out,opacity:{duration:.2}}}
 
+ const heading=usePageHeading();
  return <section className="home-hero wrap"><div className="hero-copy">
-  <Reveal as="h1" trigger="manual" play={at('headline')} stagger={.08} lines={['Find your people.',<span className="hero-accent" ref={accent}><Select mode="persist" trigger="manual" play={at('drag')} from="right" instant={skip} driven={skip?undefined:clip}>Build what’s next.</Select></span>]}/>
+  <Reveal as={heading} className="page-title" trigger="manual" play={at('headline')} stagger={.08} lines={['Find your people.',<span className="hero-accent" ref={accent}><Select mode="persist" trigger="manual" play={at('drag')} from="right" instant={skip} driven={skip?undefined:clip}>Build what’s next.</Select></span>]}/>
   <p>Whether you code every day or you’ve never opened a terminal, CompSoc is Heriot-Watt’s computer science society, where students in Edinburgh meet to learn, build things and hang out.</p><div className="hero-actions"><DiscordButton/><External href={links.instagram} className="text-link">Follow us on Instagram</External></div><div className="hero-note"><Users size={16} aria-hidden="true"/><span>You don’t need any experience to join in.</span></div></div>
   <div className="hero-art" ref={panel} role="group" aria-label="A community for learning, making and connecting">
    {skip?<div className="art-grid" aria-hidden="true"/>:<PixelBuild className="art-grid" style={{position:'absolute'}} cover="var(--panel)" cols={12} rows={10} trigger="manual" play={at('grid')}>{null}</PixelBuild>}
