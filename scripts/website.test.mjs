@@ -71,8 +71,10 @@ test('Did you mean finds close addresses and stays quiet otherwise',()=>{
  for(const [typed,expected] of [['/evnts','/events'],['/abuot','/about'],['/partner','/partners'],['/jion','/join'],['/RESORCES','/resources'],['/home','/'],['/events/wbe','/events'],['/resources/gti','/resources/git'],['/events/nope','/events'],['/evnts/nope','/events']])assert.equal(suggestPath(typed),expected,typed);
  for(const typed of ['/x','/abc','/wp-admin','/contact','/'])assert.equal(suggestPath(typed),null,typed);
 });
-test('The host sends every address to the app, so paths survive a refresh',()=>{
- const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(rewrites,[{source:'/((?!assets/).*)',destination:'/index.html'}]);
+test('Real pages are files, unknown addresses are real 404s, and only the admin is sent to its app',()=>{
+ const {rewrites,redirects,trailingSlash}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(rewrites,[{source:'/admin/(.*)',destination:'/admin/index.html'}]);
+ assert.equal(trailingSlash,false,'/events/ redirects to /events, so each page has one address');assert.deepEqual(redirects,[{source:'/index.html',destination:'/',permanent:true}]);
+ const pages=readFileSync(new URL('./write-pages.mjs',import.meta.url),'utf8');for(const written of ["'404.html'","write('/admin'",'<lastmod>','render('])assert.ok(pages.includes(written),written);
 });
 test('Event filters separate past events',()=>{
  const base={title:'Talk',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'A talk',signup_required:false,luma_url:null,status:'published'};const list=[liveEvent({...base,slug:'next',starts_at:'2030-01-01T18:00:00Z',ends_at:'2030-01-01T19:00:00Z'}),liveEvent({...base,slug:'old',category:'Talk',starts_at:'2020-01-01T18:00:00Z',ends_at:'2020-01-01T19:00:00Z'})];
@@ -161,12 +163,32 @@ test('The privacy page keeps the expected order, a date, and everything the ICO 
 test('Every address has its own share details, and they are written safely into the page',()=>{
  const base={title:'Rust & "friends"',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'x '.repeat(200),signup_required:false,luma_url:null,status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust'};
  const event=liveEvent({...base,cover_path:'00000000-0000-0000-0000-000000000000.jpg',cover_alt:'A crab <holding> a laptop'},Date.parse('2027-01-01'));const list=sharePages([event,liveEvent({...base,slug:'off',status:'cancelled'},Date.parse('2027-01-01'))]);
- const paths=list.map(s=>s.path);for(const path of ['/','/join','/events','/resources','/about','/partners','/events/rust','/events/off','/resources/git'])assert.ok(paths.includes(path),path);assert.equal(new Set(paths).size,paths.length);for(const share of list){assert.ok(share.path==='/'?share.title==='HW CompSoc | Heriot-Watt Computer Science Society':share.title.endsWith(share.path.startsWith('/events/')?' | HW CompSoc Events':share.path.startsWith('/resources/')?' | HW CompSoc Resources':' | HW CompSoc'),share.path);assert.ok(share.description.length>0&&share.description.length<=200,share.path);assert.equal(route(share.path).view==='notfound',share.path.startsWith('/events/'),share.path)}
+ const paths=list.map(s=>s.path);for(const path of ['/','/join','/events','/resources','/about','/partners','/events/rust','/events/off','/resources/git'])assert.ok(paths.includes(path),path);assert.equal(new Set(paths).size,paths.length);for(const share of list){assert.ok(share.path==='/privacy'?share.title==='Privacy | HW CompSoc':share.title.endsWith(share.path.startsWith('/events/')?' | HW CompSoc Events':share.path.startsWith('/resources/')?' | HW CompSoc Resources':'Heriot-Watt Computer Science Society'),share.path);assert.ok(share.description.length>0&&share.description.length<=200,share.path);assert.equal(route(share.path).view==='notfound',share.path.startsWith('/events/'),share.path)}
  const shared=list.find(s=>s.path==='/events/rust');assert.equal(shared.image,'/event-covers/00000000-0000-0000-0000-000000000000.jpg');assert.ok(shared.description.startsWith('Thursday 1 July 2027, 18:30–20:00 BST, EM1.82. '));assert.equal(list.find(s=>s.path==='/about').image,DEFAULT_IMAGE);assert.ok(list.find(s=>s.path==='/events/off').description.startsWith('Cancelled. '));
  const template='<html><head><meta name="description" content="old"><title>old</title></head></html>';const page=sharePage(template,shared,'https://example.com');
  assert.ok(page.includes('<title>Rust &amp; &quot;friends&quot; | HW CompSoc Events</title>'));assert.ok(!page.includes('content="old"')&&!page.includes('<title>old'));assert.ok(page.includes('<meta property="og:image" content="https://example.com/event-covers/00000000-0000-0000-0000-000000000000.jpg">'));assert.ok(page.includes('<meta property="og:url" content="https://example.com/events/rust">'));assert.ok(page.includes('content="A crab &lt;holding&gt; a laptop"'));assert.ok(page.includes('<link rel="canonical" href="https://example.com/events/rust">'));
  assert.ok(sharePage(template,list.find(s=>s.path==='/'),'https://example.com').includes('<meta property="og:url" content="https://example.com">'));const local=sharePage(template,shared,'');assert.ok(!local.includes('og:image'));assert.ok(local.includes('<meta property="og:title"'));
  assert.ok(readFileSync(new URL('../public'+DEFAULT_IMAGE,import.meta.url)).length>1000);
+});
+test('Pages tell search engines what they are about, in structured data they can read',()=>{
+ const base={title:'Rust </script> night',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'A talk',signup_required:true,luma_url:'https://luma.com/x',status:'published',starts_at:'2027-07-01T17:30:00Z',ends_at:'2027-07-01T19:00:00Z',slug:'rust',cost:'Free',open_to:'All students',updated_at:'2027-06-01T10:00:00+00:00'};
+ const now=Date.parse('2027-01-01');const list=sharePages([liveEvent(base,now),liveEvent({...base,slug:'off',status:'cancelled',cost:'£5'},now),liveEvent({...base,slug:'odd',cost:'Bring a snack'},now)]);const template='<html><head><meta name="description" content="old"><title>old</title></head></html>';
+ const graph=(path,site='https://example.com')=>{const page=sharePage(template,list.find(s=>s.path===path),site);const found=page.match(/<script type="application\/ld\+json">(.*?)<\/script>/);return found?{page,data:JSON.parse(found[1])['@graph']}:{page,data:null}};
+ const home=graph('/').data;assert.deepEqual(home.map(d=>d['@type']),['Organization','WebSite']);assert.equal(home[0].url,'https://example.com/');assert.ok(home[0].sameAs.includes(links.instagram));assert.ok(readFileSync(new URL('../public'+new URL(home[0].logo).pathname,import.meta.url)).length>1000,'the logo exists');
+ const {page,data}=graph('/events/rust');const [event,trail]=data;assert.ok(!page.includes('</script> night'),'a title cannot close the script early');
+ assert.equal(event['@type'],'Event');assert.equal(event.name,base.title);assert.equal(event.startDate,'2027-07-01T17:30:00Z');assert.equal(event.endDate,'2027-07-01T19:00:00Z');assert.equal(event.eventStatus,'https://schema.org/EventScheduled');assert.equal(event.location.name,'EM1.82');assert.equal(event.location.address.addressLocality,'Edinburgh');
+ assert.deepEqual(event.offers,{'@type':'Offer',price:0,priceCurrency:'GBP',url:'https://luma.com/x',availability:'https://schema.org/InStock'});assert.equal(event.organizer['@id'],'https://example.com/#organization');
+ assert.deepEqual(trail.itemListElement.map(i=>i.item),['https://example.com/','https://example.com/events','https://example.com/events/rust']);
+ const off=graph('/events/off').data[0];assert.equal(off.eventStatus,'https://schema.org/EventCancelled');assert.equal(off.offers.price,5);assert.equal(off.offers.availability,undefined);assert.equal(graph('/events/odd').data[0].offers,undefined,'a cost that isn’t a price is left out');
+ assert.equal(list.find(s=>s.path==='/events/rust').lastModified,base.updated_at);assert.equal(graph('/about').data,null);assert.equal(graph('/events/rust','').data,null,'no structured data without full addresses');
+ for(const tag of ['twitter:title','twitter:description','og:locale'])assert.ok(page.includes(tag),tag);
+});
+test('Each page is written with its content, and the shell has what browsers and search results look for',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('<html lang="en-GB">'));assert.ok(html.includes('<link rel="manifest" href="/site.webmanifest">'));assert.ok(html.includes('rel="apple-touch-icon"'));
+ for(const icon of ['icon-48.png','apple-touch-icon.png','icon-192.png','icon-512.png'])assert.ok(readFileSync(new URL('../public/website-assets/'+icon,import.meta.url)).length>500,icon);
+ const manifest=JSON.parse(readFileSync(new URL('../public/site.webmanifest',import.meta.url),'utf8'));for(const icon of manifest.icons)assert.ok(readdirSync(new URL('../public/website-assets/',import.meta.url)).includes(icon.src.split('/').pop()),icon.src);
+ const prerender=readFileSync(new URL('../src/prerender.tsx',import.meta.url),'utf8');assert.ok(prerender.indexOf("import './server-globals'")<prerender.indexOf("import Website"),'the stand-ins load before the site');
+ assert.ok(readFileSync(new URL('../package.json',import.meta.url),'utf8').includes('vite build --ssr src/prerender.tsx --outDir .prerender'));
 });
 
 test('Calendar files follow the format, and their links carry the event',()=>{
@@ -231,7 +253,7 @@ test('The footer stays compact: contact and legal links only, with invitations t
 });
 test('A missing build file is a real 404, and the page retries instead of staying blank',()=>{
  const {rewrites}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));const sends=new RegExp(`^${rewrites[0].source}$`);
- for(const path of ['/','/about','/admin/documents','/events/some-talk','/assetsfolder'])assert.ok(sends.test(path),path);assert.ok(!sends.test('/assets/index-abc.js'));
+ for(const path of ['/admin/documents','/admin/events/x'])assert.ok(sends.test(path),path);for(const path of ['/assets/index-abc.js','/nope','/events/nope','/about'])assert.ok(!sends.test(path),path);
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('hwcs-load-retries'));assert.ok(html.indexOf('hwcs-load-retries')<html.indexOf('type="module"'),'the retry has to be listening before the app loads');
 });
 test('Resources is left out of the site unless VITE_SHOW_RESOURCES is "true"',async()=>{

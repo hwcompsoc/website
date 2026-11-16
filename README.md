@@ -19,9 +19,10 @@ npm test
 - `src/pages`, `src/components`: the site. `src/components/ui` holds the shadcn/ui components it uses.
 - `src/motion`, `src/motion.ts`: the motion system. `scripts/webkit-guard.test.mjs` fails on animation patterns that stutter on iPhones.
 - `src/content.ts`: how the content copied from Supabase becomes what the site shows. `src/guide-format.ts`: the simple formatting guides are written in.
-- `src/router.ts`: real paths, back and forward, and scroll restore. `route()` in `src/content.ts` decides what each address shows, and `vercel.json` sends every address to the app.
+- `src/router.ts`: real paths, back and forward, and scroll restore. `route()` in `src/content.ts` decides what each address shows. Every public address is a real file, so `vercel.json` only sends `/admin/...` to its app, and anything else gets `404.html` with a real 404 status.
 - `src/website.css`: styles, with the colour tokens and the dark theme. `src/motion.css`: motion component styles.
-- `src/share.ts`, `scripts/write-pages.mjs`: what a link to each address previews as. The build writes a real page per address, because link previews don't run the app. It uses Vercel's production address, or `SITE_URL` if that's set.
+- `src/share.ts`, `scripts/write-pages.mjs`: what each address shows to link previews and search engines. The build writes a real page per address with its title, description, canonical link, structured data (schema.org: the society on Home, each event on its page) and its content, rendered by `src/prerender.tsx` from a server build in `.prerender`. That content is the page's first frame: the app renders over it when it starts. It also writes the sitemap (events have a `<lastmod>`), `robots.txt`, `404.html` and the admin's empty shell. It uses Vercel's production address, or `SITE_URL` if that's set.
+- `src/server-globals.ts`: the little of a browser the site needs to render in Node. A component that reads something else from the browser while rendering, rather than in an effect, breaks the build until it's added here.
 - `src/pages/Privacy.tsx`: the privacy note. It states what the site stores and contacts, so if that changes, such as by adding analytics, change the note too.
 - `src/calendar.ts`: the calendar feed at `/events.ics`, one file per event and the links that add them. The build writes the files, so they don't exist under `npm run dev`.
 - `src/theme.ts`: light and dark themes. A short script in `index.html` applies the theme before first paint, so keep the two in step.
