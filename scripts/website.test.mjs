@@ -186,6 +186,8 @@ test('Pages tell search engines what they are about, in structured data they can
 test('Each page is written with its content, and the shell has what browsers and search results look for',()=>{
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('<html lang="en-GB">'));assert.ok(html.includes('<link rel="manifest" href="/site.webmanifest">'));assert.ok(html.includes('rel="apple-touch-icon"'));
  for(const icon of ['icon-48.png','apple-touch-icon.png','icon-192.png','icon-512.png'])assert.ok(readFileSync(new URL('../public/website-assets/'+icon,import.meta.url)).length>500,icon);
+ // Link previews (Linktree, Slack, Google's favicon service) often ask for these at the root without reading the page, so they must exist there.
+ for(const icon of ['favicon.ico','apple-touch-icon.png'])assert.ok(readFileSync(new URL('../public/'+icon,import.meta.url)).length>500,icon);assert.ok(html.includes('href="/favicon.ico"'));
  const manifest=JSON.parse(readFileSync(new URL('../public/site.webmanifest',import.meta.url),'utf8'));for(const icon of manifest.icons)assert.ok(readdirSync(new URL('../public/website-assets/',import.meta.url)).includes(icon.src.split('/').pop()),icon.src);
  const prerender=readFileSync(new URL('../src/prerender.tsx',import.meta.url),'utf8');assert.ok(prerender.indexOf("import './server-globals'")<prerender.indexOf("import Website"),'the stand-ins load before the site');
  assert.ok(readFileSync(new URL('../package.json',import.meta.url),'utf8').includes('vite build --ssr src/prerender.tsx --outDir .prerender'));
