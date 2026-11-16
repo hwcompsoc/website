@@ -1,5 +1,6 @@
 .claude
 dist
+.prerender
 node_modules
 qa
 *.tsbuildinfo

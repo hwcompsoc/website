@@ -6,6 +6,15 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// The classes are shared with the copy of an open dialog written into pages built ahead of time (StaticDetail in DetailDialog.tsx).
+export const dialogClasses = {
+  overlay: "overlay-dim fixed inset-0 z-50 bg-black/80",
+  content: "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+  close: "overlay-close absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground",
+  title: "text-lg font-semibold leading-none tracking-tight",
+  description: "text-sm text-muted-foreground",
+}
+
 const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
@@ -20,10 +29,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      "overlay-dim fixed inset-0 z-50 bg-black/80",
-      className
-    )}
+    className={cn(dialogClasses.overlay, className)}
     {...props}
   />
 ))
@@ -37,14 +43,11 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
-        className
-      )}
+      className={cn(dialogClasses.content, className)}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="overlay-close absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+      <DialogPrimitive.Close className={dialogClasses.close}>
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -87,10 +90,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
-      className
-    )}
+    className={cn(dialogClasses.title, className)}
     {...props}
   />
 ))
@@ -102,7 +102,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn(dialogClasses.description, className)}
     {...props}
   />
 ))
