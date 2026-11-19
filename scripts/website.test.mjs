@@ -74,7 +74,7 @@ test('Did you mean finds close addresses and stays quiet otherwise',()=>{
 test('Real pages are files, unknown addresses are real 404s, and only the admin is sent to its app',()=>{
  const {rewrites,redirects,trailingSlash}=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(rewrites,[{source:'/admin/(.*)',destination:'/admin/index.html'}]);
  assert.equal(trailingSlash,false,'/events/ redirects to /events, so each page has one address');assert.deepEqual(redirects,[{source:'/index.html',destination:'/',permanent:true}]);
- const pages=readFileSync(new URL('./write-pages.mjs',import.meta.url),'utf8');for(const written of ["'404.html'","write('/admin'",'<lastmod>','render('])assert.ok(pages.includes(written),written);
+ const pages=readFileSync(new URL('./write-pages.mjs',import.meta.url),'utf8');for(const written of ["'404.html'","write('/admin'",'<lastmod>','render(',"'indexnow.json'",'${INDEXNOW_KEY}.txt'])assert.ok(pages.includes(written),written);
 });
 test('Event filters separate past events',()=>{
  const base={title:'Talk',category:'Workshop',level:'Everyone welcome',venue:'EM1.82',description:'A talk',signup_required:false,luma_url:null,status:'published'};const list=[liveEvent({...base,slug:'next',starts_at:'2030-01-01T18:00:00Z',ends_at:'2030-01-01T19:00:00Z'}),liveEvent({...base,slug:'old',category:'Talk',starts_at:'2020-01-01T18:00:00Z',ends_at:'2020-01-01T19:00:00Z'})];
