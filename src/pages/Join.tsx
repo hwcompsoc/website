@@ -19,7 +19,7 @@ function StepNumber({num}:{num:string}){const fire=useClickBurst();const {ref,ac
 
 // A named person makes the first message on Discord less daunting. Left out if nobody holds the role.
 const greeter=committee.find(team=>team.role==='Community Manager');
-function SayHiTo(){const person=greeter?.members[0];if(!person)return null;return <p className="join-person">{person.photo&&<PixelBuild className="join-person-photo" cols={4} rows={4} order="scatter" duration={.25} delay={.5}><img src={person.photo} alt="" width={28} height={28} loading="lazy"/></PixelBuild>}<span>Say hi to <a href={`/about#${anchor(person.name)}`}>{person.name}</a>, our {greeter!.role}.</span></p>}
+function SayHiTo(){const person=greeter?.members[0];if(!person)return null;return <p className="join-person">{person.photo&&<PixelBuild className="join-person-photo" cols={4} rows={4} order="scatter" duration={.25} delay={.5}><img src={person.photo} alt={person.name} aria-hidden="true" width={28} height={28} loading="lazy"/></PixelBuild>}<span>Say hi to <a href={`/about#${anchor(person.name)}`}>{person.name}</a>, our {greeter!.role}.</span></p>}
 // The usual worries about joining, answered as a diff: each worry is taken out and the reality put in. Static, because it's body text.
 // del and ins carry the meaning; the -/+ signs are decoration, so screen readers get a word for each line instead.
 const worries=[

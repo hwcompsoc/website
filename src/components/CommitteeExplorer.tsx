@@ -22,7 +22,7 @@ const fromHash=()=>{const hash=decodeURIComponent(location.hash.slice(1));return
 // Where to go to reach a role. Only real routes, so people can act on who does what.
 const reach=(role:string)=>role==='Industry Liaison'?{href:'/partners#enquiry',label:'talk about partnering'}:role==='Community Manager'?{href:links.discord,label:'say hi on Discord',external:true}:null;
 
-function Face({person,className}:{person:Person;className:string}){return person.photo?<img className={className} src={person.photo} alt="" width={200} height={200} loading="lazy"/>:<span className={`${className} cx-initials`} aria-hidden="true">{initials(person.name)}</span>}
+function Face({person,className}:{person:Person;className:string}){return person.photo?<img className={className} src={person.photo} alt={person.name} aria-hidden="true" width={200} height={200} loading="lazy"/>:<span className={`${className} cx-initials`} aria-hidden="true">{initials(person.name)}</span>}
 
 // If copying fails, the name is still on screen to select by hand.
 function CopyHandle({handle}:{handle:string}){const {copy,count,copied}=useCopy();

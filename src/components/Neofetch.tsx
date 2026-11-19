@@ -18,7 +18,7 @@ export function Neofetch(){const upcoming=events.filter(e=>!e.past&&!e.cancelled
   ['experience','none needed'],
  ] as [string,string][]).filter(([,value])=>value);
  return <div className="fetch-window"><div className="window-bar" aria-hidden="true"><span className="window-name">~/compsoc $ neofetch</span></div>
-  <div className="fetch-body"><span className="fetch-art" aria-hidden="true"><img className="fetch-art-light" src={asset('cursor-blue.svg')} alt="" width={134} height={207}/><img className="fetch-art-dark" src={asset('cursor-white.svg')} alt="" width={134} height={207}/></span>
+  <div className="fetch-body"><span className="fetch-art" aria-hidden="true"><img className="fetch-art-light" src={asset('cursor-blue.svg')} alt="CompSoc cursor" width={134} height={207}/><img className="fetch-art-dark" src={asset('cursor-white.svg')} alt="CompSoc cursor" width={134} height={207}/></span>
    <div className="fetch-info"><p className="fetch-host"><b>compsoc</b>@<b>heriot-watt</b></p><span className="fetch-rule" aria-hidden="true">-------------------</span>
     <dl>{lines.map(([key,value])=><div key={key}><dt>{key}:</dt><dd>{value}</dd></div>)}</dl>
     <span className="fetch-swatches" aria-hidden="true">{swatches.map(name=><span key={name} style={{background:`var(${name})`}}/>)}</span></div></div></div>}
